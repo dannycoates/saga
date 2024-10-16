@@ -85,41 +85,43 @@
 
     <script type="text/plain" id="default-elev-implementation">
 /**
-* @class Elevator
-*
-* @event idle
-* @event floor_button_pressed (floorNum: number)
-* @event passing_floor (floorNum: number, direction: "up" | "down")
-* @event stopped_at_floor (floorNum: number)
-*
-* @member {number[]} destinationQueue
-*
-* @func goToFloor(floorNum: number, immediately: boolean = false)
-* @func stop()
-* @func currentFloor() => number
-* @func goingUpIndicator(set: boolean = false) => boolean
-* @func goingDownIndicator(set: boolean = false) => boolean
-* @func maxPassengerCount() => number
-* @func loadFactor() => number
-* @func destinationDirection() => "up" | "down"
-* @func checkDestinationQueue()
-* @func getPressedFloors() => number
-*/
+ * @class Elevator
+ *
+ * @event idle
+ * @event floor_button_pressed (floorNum: number)
+ * @event passing_floor (floorNum: number, direction: "up" | "down" | "stopped")
+ * @event stopped_at_floor (floorNum: number)
+ *
+ * @member {number[]} destinationQueue
+ *
+ * @func goToFloor(floorNum: number, immediately: boolean = false)
+ * @func stop()
+ * @func currentFloor() => number
+ * @func goingUpIndicator(set: boolean = false) => boolean
+ * @func goingDownIndicator(set: boolean = false) => boolean
+ * @func maxPassengerCount() => number
+ * @func loadFactor() => number
+ * @func destinationDirection() => "up" | "down"
+ * @func checkDestinationQueue()
+ * @func getPressedFloors() => number
+ */
 
 /**
-* @class Floor
-*
-* @event up_button_pressed
-* @event down_button_pressed
-*
-* @func floorNum() => number
-*/
+ * @class Floor
+ *
+ * @event up_button_pressed
+ * @event down_button_pressed
+ * 
+ * @member {{up: "" | "activated", down: "" | "activated"}} buttonStates
+ *
+ * @func floorNum() => number
+ */
 
 /** 
-* Init gets called once at the start
-* @param {Elevator[]} elevators
-* @param {Floor[]} floors
-*/
+ * Init gets called once at the start
+ * @param {Elevator[]} elevators
+ * @param {Floor[]} floors
+ */
 export function init(elevators, floors) {
     const elevator = elevators[0]
 
@@ -131,11 +133,11 @@ export function init(elevators, floors) {
 }
 
 /**
-* Update gets called on each animation frame
-* @param {number} dt - elapsed game time since last update in seconds
-* @param {Elevator[]} elevators
-* @param {Floor[]} floors
-*/
+ * Update gets called on each animation frame
+ * @param {number} dt - elapsed game time since last update in seconds
+ * @param {Elevator[]} elevators
+ * @param {Floor[]} floors
+ */
 export function update(dt, elevators, floors) {
     
 }
