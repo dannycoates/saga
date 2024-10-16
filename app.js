@@ -227,7 +227,7 @@ $(function() {
         }, {});
         var requestedChallenge = 0;
         var autoStart = false;
-        var timeScale = parseFloat(localStorage.getItem(tsKey)) || 2.0;
+        var timeScale = parseFloat(localStorage.getItem(tsKey)) || 5.0;
         _.each(params, function(val, key) {
             if(key === "challenge") {
                 requestedChallenge = _.parseInt(val) - 1;
