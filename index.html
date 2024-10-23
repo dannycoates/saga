@@ -88,32 +88,32 @@
  * @class Elevator
  *
  * @event idle
- * @event floor_button_pressed (floorNum: number)
- * @event passing_floor (floorNum: number, direction: "up" | "down" | "stopped")
- * @event stopped_at_floor (floorNum: number)
  *
  * @member {number[]} destinationQueue
  *
- * @func goToFloor(floorNum: number, immediately: boolean = false)
- * @func stop()
+ * Accessors:
  * @func currentFloor() => number
- * @func goingUpIndicator(set: boolean = false) => boolean
- * @func goingDownIndicator(set: boolean = false) => boolean
+ * @func getPressedFloors() => number
  * @func maxPassengerCount() => number
  * @func loadFactor() => number
- * @func destinationDirection() => "up" | "down"
+ * @func destinationDirection() => "up" | "down" | "stopped"
+ *
+ * Mutators:
+ * @func goingUpIndicator([set]: boolean) => boolean
+ * @func goingDownIndicator([set]: boolean) => boolean
+ *
+ * Actions:
+ * @func goToFloor(floorNum: number, [immediately]: boolean = false)
+ * @func stop()
  * @func checkDestinationQueue()
- * @func getPressedFloors() => number
  */
 
 /**
  * @class Floor
- *
- * @event up_button_pressed
- * @event down_button_pressed
  * 
  * @member {{up: "" | "activated", down: "" | "activated"}} buttonStates
  *
+ * Accessors:
  * @func floorNum() => number
  */
 
@@ -133,7 +133,7 @@ export function init(elevators, floors) {
 }
 
 /**
- * Update gets called on each animation frame
+ * Update gets called on a regular, fast interval (a game loop)
  * @param {number} dt - elapsed game time since last update in seconds
  * @param {Elevator[]} elevators
  * @param {Floor[]} floors
