@@ -21,7 +21,7 @@ function Elevator(speedFloorsPerSec, floorCount, floorHeight, maxUsers) {
 
     elevator.currentFloor = 0;
     elevator.previousTruncFutureFloorIfStopped = 0;
-    elevator.buttonStates = _.map(_.range(floorCount), function(e, i){ return false; });
+    elevator.buttons = _.map(_.range(floorCount), function(e, i){ return false; });
     elevator.moveCount = 0;
     elevator.removed = false;
     elevator.userSlots = _.map(_.range(elevator.maxUsers), function(user, i) {
@@ -64,11 +64,11 @@ Elevator.prototype.userEntering = function(user) {
 Elevator.prototype.pressFloorButton = function(floorNumber) {
     var prev;
     floorNumber = limitNumber(floorNumber, 0, this.floorCount - 1);
-    prev = this.buttonStates[floorNumber];
-    this.buttonStates[floorNumber] = true;
+    prev = this.buttons[floorNumber];
+    this.buttons[floorNumber] = true;
     if(!prev) {
         this.trigger("floor_button_pressed", floorNumber);
-        this.trigger("floor_buttons_changed", this.buttonStates, floorNumber);
+        this.trigger("floor_buttons_changed", this.buttons, floorNumber);
     }
 };
 
@@ -139,8 +139,8 @@ Elevator.prototype.handleDestinationArrival = function() {
     this.trigger("stopped", this.getExactCurrentFloor());
 
     if(this.isOnAFloor()) {
-        this.buttonStates[this.currentFloor] = false;
-        this.trigger("floor_buttons_changed", this.buttonStates, this.currentFloor);
+        this.buttons[this.currentFloor] = false;
+        this.trigger("floor_buttons_changed", this.buttons, this.currentFloor);
         this.trigger("stopped_at_floor", this.currentFloor);
         // Need to allow users to get off first, so that new ones
         // can enter on the same floor
@@ -157,15 +157,15 @@ Elevator.prototype.goToFloor = function(floor) {
 
 Elevator.prototype.getFirstPressedFloor = function() {
     deprecationWarning("getFirstPressedFloor");
-    for(var i=0; i<this.buttonStates.length; i++) {
-        if(this.buttonStates[i]) { return i; }
+    for(var i=0; i<this.buttons.length; i++) {
+        if(this.buttons[i]) { return i; }
     }
     return 0;
 };
 
 Elevator.prototype.getPressedFloors = function() {
-    for(var i=0, arr=[]; i<this.buttonStates.length; i++) {
-        if(this.buttonStates[i]) {
+    for(var i=0, arr=[]; i<this.buttons.length; i++) {
+        if(this.buttons[i]) {
             arr.push(i);
         }
     }
