@@ -61,17 +61,14 @@ var asElevatorInterface = function (obj, elevator, floorCount, errorHandler) {
             return elevator.destinationY;
         },
     },
-    maxPassengers: {
+    capacity: {
         get() {
             return elevator.maxUsers;
         },
     },
     movingDirection: {
         get() {
-            if (elevator.destinationY === elevator.y) {
-                return 0;
-            }
-            return elevator.destinationY > elevator.y ? -1 : 1;
+            return elevator.isMoving ? Math.sign(elevator.y - elevator.destinationY) : 0;
         },
     },
     loadFactor: {

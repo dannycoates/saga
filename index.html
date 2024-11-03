@@ -97,18 +97,15 @@
 * @event "idle"
 *
 * Accessors:
+* @member capacity {number}
 * @member currentFloor {number}
 * @member destinationFloor {number}
-* @member pressedFloors {number[]}
-* @member maxPassengers {number}
-* @member loadFactor {number}
+* @member loadFactor {0..1}
 * @member movingDirection {-1 | 0 | 1}
+* @member pressedFloors {number[]}
 *
 * Actions:
 * @func goToFloor(floorNum: number)
-* @func stop()
-* @func setUpLight(on: boolean) => void
-* @func setDownLight(on: boolean) => void
 */
 
 /** 
@@ -132,19 +129,7 @@ export function init(elevators, floors) {
 * @param {Floor[]} floors
 */
 export function update(dt, elevators, floors) {
-    for (const elevator of elevators) {
-        setElevatorLights(elevator)
-    }
-}
 
-/**
-* An example helper function to set the lights on the elevator.
-* You can choose to use this or not.
-* @param {Elevator} elevator
-*/
-function setElevatorLights(elevator) {
-    elevator.setUpLight(elevator.movingDirection < 1)
-    elevator.setDownLight(elevator.movingDirection > -1)
 }
     </script>
     <script type="text/plain" id="devtest-elev-implementation">
