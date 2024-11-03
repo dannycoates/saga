@@ -85,61 +85,66 @@
 
     <script type="text/plain" id="default-elev-implementation">
 /**
- * @class Elevator
- *
- * @event idle
- *
- * @member {number[]} destinationQueue
- *
- * Accessors:
- * @func currentFloor() => number
- * @func getPressedFloors() => number
- * @func maxPassengerCount() => number
- * @func loadFactor() => number
- * @func destinationDirection() => "up" | "down" | "stopped"
- *
- * Mutators:
- * @func goingUpIndicator([set]: boolean) => boolean
- * @func goingDownIndicator([set]: boolean) => boolean
- *
- * Actions:
- * @func goToFloor(floorNum: number, [immediately]: boolean = false)
- * @func stop()
- * @func checkDestinationQueue()
- */
-
-/**
- * @class Floor
- * 
- * @member {{up: "" | "activated", down: "" | "activated"}} buttonStates
- *
- * Accessors:
- * @func floorNum() => number
- */
+* @class Floor
+* 
+* Accessors:
+* @member buttons {{up: boolean, down: boolean}}
+* @member level {number}
+*
+*
+* @class Elevator
+*
+* @event "idle"
+*
+* Accessors:
+* @member currentFloor {number}
+* @member destinationFloor {number}
+* @member pressedFloors {number[]}
+* @member maxPassengers {number}
+* @member loadFactor {number}
+* @member movingDirection {-1 | 0 | 1}
+*
+* Actions:
+* @func goToFloor(floorNum: number)
+* @func stop()
+* @func setUpLight(on: boolean) => void
+* @func setDownLight(on: boolean) => void
+*/
 
 /** 
- * Init gets called once at the start
- * @param {Elevator[]} elevators
- * @param {Floor[]} floors
- */
+* Init gets called once at the start
+* @param {Elevator[]} elevators
+* @param {Floor[]} floors
+*/
 export function init(elevators, floors) {
+    let nextFloor = 0
     const elevator = elevators[0]
-
     elevator.on("idle", () => {
-        elevator.goToFloor(0);
-        elevator.goToFloor(1);
-        // ...
+        nextFloor = (nextFloor + 1) % floors.length
+        elevator.goToFloor(nextFloor)
     })
 }
 
 /**
- * Update gets called on a regular, fast interval (a game loop)
- * @param {number} dt - elapsed game time since last update in seconds
- * @param {Elevator[]} elevators
- * @param {Floor[]} floors
- */
+* Update gets called on a regular, fast interval (a game loop)
+* @param {number} dt - elapsed game time since last update in seconds
+* @param {Elevator[]} elevators
+* @param {Floor[]} floors
+*/
 export function update(dt, elevators, floors) {
-    
+    for (const elevator of elevators) {
+        setElevatorLights(elevator)
+    }
+}
+
+/**
+* An example helper function to set the lights on the elevator.
+* You can choose to use this or not.
+* @param {Elevator} elevator
+*/
+function setElevatorLights(elevator) {
+    elevator.setUpLight(elevator.movingDirection < 1)
+    elevator.setDownLight(elevator.movingDirection > -1)
 }
     </script>
     <script type="text/plain" id="devtest-elev-implementation">
