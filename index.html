@@ -14,7 +14,10 @@
     <script type="text/javascript" src="libs/riot.js"></script>
 
     <script type="text/javascript" src="libs/codemirror/codemirror.js"></script>
+    <script type="text/javascript" src="libs/codemirror/addon/comment/comment.js"></script>
+    <script type="text/javascript" src="libs/codemirror/addon/comment/continuecomment.js"></script>
     <script type="text/javascript" src="libs/codemirror/addon/edit/closebrackets.js"></script>
+    <script type="text/javascript" src="libs/codemirror/addon/edit/matchbrackets.js"></script>
     <script type="text/javascript" src="libs/codemirror/mode/javascript/javascript.js"></script>
 
     <script type="text/javascript" src="libs/unobservable.js"></script>
@@ -114,12 +117,12 @@
 * @param {Floor[]} floors
 */
 export function init(elevators, floors) {
-    let nextFloor = 0
-    const elevator = elevators[0]
-    elevator.on("idle", () => {
-        nextFloor = (nextFloor + 1) % floors.length
-        elevator.goToFloor(nextFloor)
-    })
+  let nextFloor = 0
+  const elevator = elevators[0]
+  elevator.on("idle", () => {
+    nextFloor = (nextFloor + 1) % floors.length
+    elevator.goToFloor(nextFloor)
+  })
 }
 
 /**
