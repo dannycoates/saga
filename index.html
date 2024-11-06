@@ -120,7 +120,7 @@ export function init(elevators, floors) {
   let nextFloor = 0
   const elevator = elevators[0]
   elevator.on("idle", () => {
-    nextFloor = (nextFloor + 1) % floors.length
+    nextFloor = nextFloor + 1 // what about when we reach the top?
     elevator.goToFloor(nextFloor)
   })
 }
