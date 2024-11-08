@@ -43,7 +43,7 @@ function presentChallenge($parent, challenge, app, world, worldController, chall
         challenge: challenge,
         num: challengeNum,
         timeScale: worldController.timeScale.toFixed(0) + "x",
-        startButtonText: world.challengeEnded ? "<i class='fa fa-repeat'></i> Restart" : (worldController.isPaused ? "Start" : "Pause")
+        startButtonText: worldController.isPaused ? "Start" : "Stop",
     }));
     $parent.html($challenge);
 

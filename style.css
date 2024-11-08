@@ -225,13 +225,12 @@ button.right {
 
 
 .feedbackcontainer {
-    position: absolute;
 }
 
 .feedback {
     position: absolute;
     width: 1220px;
-    height: 80cqh;
+    height: 100%;
     padding-top: 20px;
     line-height: 20px;
     text-align: center;
