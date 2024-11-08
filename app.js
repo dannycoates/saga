@@ -37,10 +37,10 @@ var createEditor = function () {
     reset();
   }
 
-  $("#button_save").click(function () {
-    saveCode();
-    cm.focus();
-  });
+  // $("#button_save").click(function () {
+  //   saveCode();
+  //   cm.focus();
+  // });
 
   $("#button_reset").click(function () {
     if (confirm("Do you really want to reset to the default implementation?")) {
@@ -147,8 +147,8 @@ $(function () {
   app.currentChallengeIndex = 0;
 
   app.startStopOrRestart = function () {
-    if (app.world.challengeEnded) {
-      app.startChallenge(app.currentChallengeIndex);
+    if (app.worldController.isPaused) {
+      app.startChallenge(app.currentChallengeIndex, true);
     } else {
       app.worldController.setPaused(!app.worldController.isPaused);
     }
