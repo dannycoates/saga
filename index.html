@@ -97,35 +97,24 @@
 *
 * @class Elevator
 *
-*   @event "idle"
-*
 *   Accessors:
-*    @member capacity {number}
 *    @member currentFloor {number}
-*    @member destinationFloor {number}
-*    @member loadFactor {0..1}
-*    @member movingDirection {-1 | 0 | 1}
-*    @member pressedFloors {number[]}
+*    @member destinationFloor {number | null}
+*    @member pressedFloorButtons {number[]}
+*    @member percentFull {0..1}
 *
 *   Actions:
 *    @func goToFloor(floorNum: number)
 */
 
+let nextFloor = 0
 /** 
 * Init gets called once at the start
 * @param {Elevator[]} elevators
 * @param {Floor[]} floors
 */
 export function init(elevators, floors) {
-  let nextFloor = 0
-  const elevator = elevators[0]
-  elevator.on("idle", () => {
-    if (nextFloor === floors.length) {
-        nextFloor = 0
-    }
-    nextFloor = nextFloor + 1
-    elevator.goToFloor(nextFloor)
-  })
+  nextFloor = elevators[0].currentFloor + 1
 }
 
 /**
@@ -135,7 +124,14 @@ export function init(elevators, floors) {
 * @param {Floor[]} floors
 */
 export function update(dt, elevators, floors) {
-
+  const elevator = elevators[0]
+  if (elevator.destinationFloor === null) {
+    if (nextFloor === floors.length) {
+      nextFloor = 0
+    }
+    nextFloor = nextFloor + 1
+    elevator.goToFloor(nextFloor)
+  }
 }
     </script>
     <script type="text/plain" id="devtest-elev-implementation">

@@ -51,27 +51,17 @@ var asElevatorInterface = function (obj, elevator, floorCount, errorHandler) {
         return elevator.currentFloor;
       },
     },
-    pressedFloors: {
+    pressedFloorButtons: {
         get() {
             return elevator.getPressedFloors();
         },
     },
     destinationFloor: {
         get() {
-            return elevator.destinationY;
+            return elevatorInterface.destinationQueue[0] ?? null;
         },
     },
-    capacity: {
-        get() {
-            return elevator.maxUsers;
-        },
-    },
-    movingDirection: {
-        get() {
-            return elevator.isMoving ? Math.sign(elevator.y - elevator.destinationY) : 0;
-        },
-    },
-    loadFactor: {
+    percentFull: {
         get() {
             return elevator.getLoadFactor();
         },
