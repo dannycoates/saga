@@ -47,17 +47,13 @@ describe('Elevator class', () => {
   });
 
   it('presses floor button and triggers events', () => {
-    const buttonPressHandler = vi.fn();
     const buttonsChangedHandler = vi.fn();
     
-    elevator.on('floor_button_pressed', buttonPressHandler);
     elevator.on('floor_buttons_changed', buttonsChangedHandler);
     
     elevator.pressFloorButton(5);
     
     expect(elevator.buttons[5]).toBe(true);
-    expect(buttonPressHandler).toHaveBeenCalled();
-    expect(buttonPressHandler.mock.calls[0][0]).toBe(5);
     expect(buttonsChangedHandler).toHaveBeenCalled();
     expect(buttonsChangedHandler.mock.calls[0][0]).toBe(elevator.buttons);
     expect(buttonsChangedHandler.mock.calls[0][1]).toBe(5);

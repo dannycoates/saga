@@ -70,7 +70,6 @@ export class User extends Movable {
     if (pos) {
       // Success
       this.setParent(elevator);
-      this.trigger("entered_elevator", elevator);
       const self = this;
       this.moveToOverTime(pos[0], pos[1], 1, undefined, function() {
         elevator.pressFloorButton(self.destinationFloor);

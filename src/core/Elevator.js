@@ -44,19 +44,6 @@ export class Elevator extends Movable {
     // Bind event handlers
     this.on("new_state", () => this.handleNewState());
 
-    this.on("change:goingUpIndicator", (value) => {
-      this.trigger("indicatorstate_change", {
-        up: this.goingUpIndicator,
-        down: this.goingDownIndicator
-      });
-    });
-
-    this.on("change:goingDownIndicator", (value) => {
-      this.trigger("indicatorstate_change", {
-        up: this.goingUpIndicator,
-        down: this.goingDownIndicator
-      });
-    });
   }
 
   setFloorPosition(floor) {
@@ -83,7 +70,6 @@ export class Elevator extends Movable {
     const prev = this.buttons[floorNumber];
     this.buttons[floorNumber] = true;
     if (!prev) {
-      this.trigger("floor_button_pressed", floorNumber);
       this.trigger("floor_buttons_changed", this.buttons, floorNumber);
     }
   }
@@ -153,12 +139,9 @@ export class Elevator extends Movable {
   }
 
   handleDestinationArrival() {
-    this.trigger("stopped", this.getExactCurrentFloor());
-
     if (this.isOnAFloor()) {
       this.buttons[this.currentFloor] = false;
       this.trigger("floor_buttons_changed", this.buttons, this.currentFloor);
-      this.trigger("stopped_at_floor", this.currentFloor);
       // Need to allow users to get off first, so that new ones
       // can enter on the same floor
       this.trigger("exit_available", this.currentFloor, this);
@@ -285,12 +268,7 @@ export class Elevator extends Movable {
       // But I can't currently be arsed to implement it because it's overkill.
       const floorBeingPassed = Math.round(this.getExactFutureFloorIfStopped());
 
-      // Never emit passing_floor event for the destination floor
-      // Because if it's the destination we're not going to pass it, at least not intentionally
-      if (this.getDestinationFloor() !== floorBeingPassed && this.isApproachingFloor(floorBeingPassed)) {
-        const direction = this.velocityY > 0.0 ? "down" : "up";
-        this.trigger("passing_floor", floorBeingPassed, direction);
-      }
+      // The passing_floor event was removed as it's not used by the UI
     }
     this.previousTruncFutureFloorIfStopped = futureTruncFloorIfStopped;
   }
