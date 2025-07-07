@@ -221,7 +221,11 @@ export class World extends Observable {
   unWind() {
     console.log("Unwinding", this);
     const allObjects = [...this.elevators, ...this.elevatorInterfaces, ...this.users, ...this.floors, this];
-    allObjects.forEach(obj => obj.off("*"));
+    allObjects.forEach(obj => {
+      if (typeof obj.off === 'function') {
+        obj.off("*");
+      }
+    });
     this.challengeEnded = true;
     this.elevators = [];
     this.elevatorInterfaces = [];
@@ -230,10 +234,7 @@ export class World extends Observable {
   }
 
   init() {
-    // Checking the floor queue of the elevators triggers the idle event here
-    for (let i = 0; i < this.elevatorInterfaces.length; ++i) {
-      this.elevatorInterfaces[i].checkDestinationQueue();
-    }
+    // No initialization needed for simplified interface
   }
 }
 

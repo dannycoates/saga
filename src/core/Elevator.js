@@ -5,7 +5,6 @@ import {
   distanceNeededToAchieveSpeed,
   accelerationNeededToAchieveChangeDistance,
   epsilonEquals,
-  deprecationWarning,
   randomInt,
   map,
   find
@@ -173,15 +172,6 @@ export class Elevator extends Movable {
     this.destinationY = this.getYPosOfFloor(floor);
   }
 
-  getFirstPressedFloor() {
-    deprecationWarning("getFirstPressedFloor");
-    for (let i = 0; i < this.buttons.length; i++) {
-      if (this.buttons[i]) {
-        return i;
-      }
-    }
-    return 0;
-  }
 
   getPressedFloors() {
     const arr = [];
