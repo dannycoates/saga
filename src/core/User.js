@@ -1,16 +1,14 @@
-import { Movable } from './Movable.js';
-import { newGuard } from './utils.js';
+import { Movable } from "./Movable.js";
 
 // Simple linear interpolate function
-const linearInterpolate = function(value0, value1, x) {
+const linearInterpolate = function (value0, value1, x) {
   return value0 + (value1 - value0) * x;
 };
 
 export class User extends Movable {
   constructor(weight) {
     super();
-    newGuard(this, User);
-    
+
     this.weight = weight;
     this.currentFloor = 0;
     this.destinationFloor = 0;
@@ -46,11 +44,17 @@ export class User extends Movable {
       this.trigger("new_state");
       this.trigger("new_display_state");
       const self = this;
-      this.moveToOverTime(destination, null, 1 + Math.random() * 0.5, linearInterpolate, function lastMove() {
-        self.removeMe = true;
-        self.trigger("removed");
-        self.off("*");
-      });
+      this.moveToOverTime(
+        destination,
+        null,
+        1 + Math.random() * 0.5,
+        linearInterpolate,
+        function lastMove() {
+          self.removeMe = true;
+          self.trigger("removed");
+          self.off("*");
+        },
+      );
 
       elevator.off("exit_available", this.exitAvailableHandler);
     }
@@ -61,7 +65,12 @@ export class User extends Movable {
       return;
     }
 
-    if (!elevator.isSuitableForTravelBetween(this.currentFloor, this.destinationFloor)) {
+    if (
+      !elevator.isSuitableForTravelBetween(
+        this.currentFloor,
+        this.destinationFloor,
+      )
+    ) {
       // Not suitable for travel - don't use this elevator
       return;
     }
@@ -71,10 +80,10 @@ export class User extends Movable {
       // Success
       this.setParent(elevator);
       const self = this;
-      this.moveToOverTime(pos[0], pos[1], 1, undefined, function() {
+      this.moveToOverTime(pos[0], pos[1], 1, undefined, function () {
         elevator.pressFloorButton(self.destinationFloor);
       });
-      this.exitAvailableHandler = function(floorNum, elevator) {
+      this.exitAvailableHandler = function (floorNum, elevator) {
         self.handleExit(elevator.currentFloor, elevator);
       };
       elevator.on("exit_available", this.exitAvailableHandler);

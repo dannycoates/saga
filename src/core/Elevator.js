@@ -1,20 +1,16 @@
-import { Movable } from './Movable.js';
-import { 
-  newGuard, 
-  limitNumber, 
+import { Movable } from "./Movable.js";
+import {
+  limitNumber,
   distanceNeededToAchieveSpeed,
   accelerationNeededToAchieveChangeDistance,
   epsilonEquals,
   randomInt,
-  map,
-  find
-} from './utils.js';
+} from "./utils.js";
 
 export class Elevator extends Movable {
   constructor(speedFloorsPerSec, floorCount, floorHeight, maxUsers = 4) {
     super();
-    newGuard(this, Elevator);
-    
+
     this.ACCELERATION = floorHeight * 2.1;
     this.DECELERATION = floorHeight * 2.6;
     this.MAXSPEED = floorHeight * speedFloorsPerSec;
@@ -35,15 +31,14 @@ export class Elevator extends Movable {
     this.moveCount = 0;
     this.removed = false;
     this.userSlots = Array.from({ length: this.maxUsers }, (_, i) => ({
-      pos: [2 + (i * 10), 30],
-      user: null
+      pos: [2 + i * 10, 30],
+      user: null,
     }));
     this.width = this.maxUsers * 10;
     this.destinationY = this.getYPosOfFloor(this.currentFloor);
 
     // Bind event handlers
     this.on("new_state", () => this.handleNewState());
-
   }
 
   setFloorPosition(floor) {
@@ -99,25 +94,43 @@ export class Elevator extends Movable {
     const directionSign = Math.sign(destinationDiff);
     const velocitySign = Math.sign(this.velocityY);
     let acceleration = 0.0;
-    
+
     if (destinationDiff !== 0.0) {
       if (directionSign === velocitySign) {
         // Moving in correct direction
-        const distanceNeededToStop = distanceNeededToAchieveSpeed(this.velocityY, 0.0, this.DECELERATION);
+        const distanceNeededToStop = distanceNeededToAchieveSpeed(
+          this.velocityY,
+          0.0,
+          this.DECELERATION,
+        );
         if (distanceNeededToStop * 1.05 < -Math.abs(destinationDiff)) {
           // Slow down
           // Allow a certain factor of extra breaking, to enable a smooth breaking movement after detecting overshoot
-          const requiredDeceleration = accelerationNeededToAchieveChangeDistance(this.velocityY, 0.0, destinationDiff);
-          const deceleration = Math.min(this.DECELERATION * 1.1, Math.abs(requiredDeceleration));
+          const requiredDeceleration =
+            accelerationNeededToAchieveChangeDistance(
+              this.velocityY,
+              0.0,
+              destinationDiff,
+            );
+          const deceleration = Math.min(
+            this.DECELERATION * 1.1,
+            Math.abs(requiredDeceleration),
+          );
           this.velocityY -= directionSign * deceleration * dt;
         } else {
           // Speed up (or keep max speed...)
-          acceleration = Math.min(Math.abs(destinationDiff * 5), this.ACCELERATION);
+          acceleration = Math.min(
+            Math.abs(destinationDiff * 5),
+            this.ACCELERATION,
+          );
           this.velocityY += directionSign * acceleration * dt;
         }
       } else if (velocitySign === 0) {
         // Standing still - should accelerate
-        acceleration = Math.min(Math.abs(destinationDiff * 5), this.ACCELERATION);
+        acceleration = Math.min(
+          Math.abs(destinationDiff * 5),
+          this.ACCELERATION,
+        );
         this.velocityY += directionSign * acceleration * dt;
       } else {
         // Moving in wrong direction - decelerate as much as possible
@@ -129,7 +142,11 @@ export class Elevator extends Movable {
       }
     }
 
-    if (this.isMoving && Math.abs(destinationDiff) < 0.5 && Math.abs(this.velocityY) < 3) {
+    if (
+      this.isMoving &&
+      Math.abs(destinationDiff) < 0.5 &&
+      Math.abs(this.velocityY) < 3
+    ) {
       // Snap to destination and stop
       this.moveTo(null, this.destinationY);
       this.velocityY = 0.0;
@@ -154,7 +171,6 @@ export class Elevator extends Movable {
     this.isMoving = true;
     this.destinationY = this.getYPosOfFloor(floor);
   }
-
 
   getPressedFloors() {
     const arr = [];
@@ -190,7 +206,9 @@ export class Elevator extends Movable {
   }
 
   getYPosOfFloor(floorNum) {
-    return (this.floorCount - 1) * this.floorHeight - floorNum * this.floorHeight;
+    return (
+      (this.floorCount - 1) * this.floorHeight - floorNum * this.floorHeight
+    );
   }
 
   getExactFloorOfYPos(y) {
@@ -210,18 +228,30 @@ export class Elevator extends Movable {
   }
 
   getExactFutureFloorIfStopped() {
-    const distanceNeededToStop = distanceNeededToAchieveSpeed(this.velocityY, 0.0, this.DECELERATION);
-    return this.getExactFloorOfYPos(this.y - Math.sign(this.velocityY) * distanceNeededToStop);
+    const distanceNeededToStop = distanceNeededToAchieveSpeed(
+      this.velocityY,
+      0.0,
+      this.DECELERATION,
+    );
+    return this.getExactFloorOfYPos(
+      this.y - Math.sign(this.velocityY) * distanceNeededToStop,
+    );
   }
 
   isApproachingFloor(floorNum) {
     const floorYPos = this.getYPosOfFloor(floorNum);
     const elevToFloor = floorYPos - this.y;
-    return this.velocityY !== 0.0 && (Math.sign(this.velocityY) === Math.sign(elevToFloor));
+    return (
+      this.velocityY !== 0.0 &&
+      Math.sign(this.velocityY) === Math.sign(elevToFloor)
+    );
   }
 
   isOnAFloor() {
-    return epsilonEquals(this.getExactCurrentFloor(), this.getRoundedCurrentFloor());
+    return epsilonEquals(
+      this.getExactCurrentFloor(),
+      this.getRoundedCurrentFloor(),
+    );
   }
 
   getLoadFactor() {
@@ -259,7 +289,9 @@ export class Elevator extends Movable {
     }
 
     // Check if we are about to pass a floor
-    const futureTruncFloorIfStopped = Math.trunc(this.getExactFutureFloorIfStopped());
+    const futureTruncFloorIfStopped = Math.trunc(
+      this.getExactFutureFloorIfStopped(),
+    );
     if (futureTruncFloorIfStopped !== this.previousTruncFutureFloorIfStopped) {
       // The following is somewhat ugly.
       // A formally correct solution should iterate and generate events for all passed floors,

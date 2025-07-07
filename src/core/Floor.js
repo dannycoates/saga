@@ -1,9 +1,9 @@
-import { Observable } from './utils.js';
+import { Observable } from "./utils.js";
 
 export class Floor extends Observable {
   constructor(floorLevel, yPosition, errorHandler) {
     super();
-    
+
     this.level = floorLevel;
     this.yPosition = yPosition;
     this.buttons = { up: false, down: false };
@@ -55,12 +55,4 @@ export class Floor extends Observable {
   floorNum() {
     return this.level;
   }
-}
-
-// Factory function for backward compatibility
-export function asFloor(obj, floorLevel, yPosition, errorHandler) {
-  const floor = new Floor(floorLevel, yPosition, errorHandler);
-  // Copy any existing properties from obj to floor if needed
-  Object.assign(floor, obj);
-  return floor;
 }

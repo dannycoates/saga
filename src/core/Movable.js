@@ -1,16 +1,13 @@
-import { Observable, newGuard } from './utils.js';
+import { Observable } from "./utils.js";
 
-const EPSILON = 0.00001;
-
-const linearInterpolate = function(value0, value1, x) {
-  return value0 + (value1 - value0) * x;
+const powInterpolate = function (value0, value1, x, a) {
+  return (
+    value0 +
+    ((value1 - value0) * Math.pow(x, a)) / (Math.pow(x, a) + Math.pow(1 - x, a))
+  );
 };
 
-const powInterpolate = function(value0, value1, x, a) {
-  return value0 + (value1 - value0) * Math.pow(x, a) / (Math.pow(x, a) + Math.pow(1 - x, a));
-};
-
-const coolInterpolate = function(value0, value1, x) {
+const coolInterpolate = function (value0, value1, x) {
   return powInterpolate(value0, value1, x, 1.3);
 };
 
@@ -21,8 +18,7 @@ const _tmpPosStorage = [0, 0];
 export class Movable extends Observable {
   constructor() {
     super();
-    newGuard(this, Movable);
-    
+
     this.x = 0.0;
     this.y = 0.0;
     this.parent = null;
@@ -30,7 +26,7 @@ export class Movable extends Observable {
     this.worldY = 0.0;
     this.currentTask = null;
 
-    this.trigger('new_state', this);
+    this.trigger("new_state", this);
   }
 
   updateDisplayPosition(forceTrigger) {
@@ -40,7 +36,7 @@ export class Movable extends Observable {
     this.worldX = _tmpPosStorage[0];
     this.worldY = _tmpPosStorage[1];
     if (oldX !== this.worldX || oldY !== this.worldY || forceTrigger === true) {
-      this.trigger('new_display_state', this);
+      this.trigger("new_display_state", this);
     }
   }
 
@@ -112,7 +108,10 @@ export class Movable extends Observable {
         }
       } else {
         const factor = timeSpent / timeToSpend;
-        self.moveToFast(interpolator(origX, newX, factor), interpolator(origY, newY, factor));
+        self.moveToFast(
+          interpolator(origX, newX, factor),
+          interpolator(origY, newY, factor),
+        );
       }
     };
   }
@@ -150,7 +149,10 @@ export class Movable extends Observable {
       const parentWorld = [0, 0];
       movableParent.getWorldPosition(parentWorld);
       this.parent = movableParent;
-      this.moveToFast(objWorld[0] - parentWorld[0], objWorld[1] - parentWorld[1]);
+      this.moveToFast(
+        objWorld[0] - parentWorld[0],
+        objWorld[1] - parentWorld[1],
+      );
     }
   }
 }

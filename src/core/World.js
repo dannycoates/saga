@@ -1,7 +1,7 @@
-import { Observable, randomInt, random, map, range, each, limitNumber } from './utils.js';
-import { Floor, asFloor } from './Floor.js';
-import { Elevator } from './Elevator.js';
-import { User } from './User.js';
+import { Observable, randomInt, range, limitNumber } from "./utils.js";
+import { Floor } from "./Floor.js";
+import { Elevator } from "./Elevator.js";
+import { User } from "./User.js";
 
 export class WorldCreator {
   createFloors(floorCount, floorHeight, errorHandler) {
@@ -12,16 +12,26 @@ export class WorldCreator {
     return floors;
   }
 
-  createElevators(elevatorCount, floorCount, floorHeight, elevatorCapacities = [4]) {
+  createElevators(
+    elevatorCount,
+    floorCount,
+    floorHeight,
+    elevatorCapacities = [4],
+  ) {
     let currentX = 200.0;
     const elevators = range(0, elevatorCount).map((_, i) => {
-      const elevator = new Elevator(2.6, floorCount, floorHeight, elevatorCapacities[i % elevatorCapacities.length]);
+      const elevator = new Elevator(
+        2.6,
+        floorCount,
+        floorHeight,
+        elevatorCapacities[i % elevatorCapacities.length],
+      );
 
       // Move to right x position
       elevator.moveTo(currentX, null);
       elevator.setFloorPosition(0);
       elevator.updateDisplayPosition();
-      currentX += (20 + elevator.width);
+      currentX += 20 + elevator.width;
       return elevator;
     });
     return elevators;
@@ -43,7 +53,8 @@ export class WorldCreator {
   spawnUserRandomly(floorCount, floorHeight, floors) {
     const user = this.createRandomUser();
     user.moveTo(105 + randomInt(0, 40), 0);
-    const currentFloor = randomInt(0, 1) === 0 ? 0 : randomInt(0, floorCount - 1);
+    const currentFloor =
+      randomInt(0, 1) === 0 ? 0 : randomInt(0, floorCount - 1);
     let destinationFloor;
     if (currentFloor === 0) {
       // Definitely going up
@@ -51,7 +62,8 @@ export class WorldCreator {
     } else {
       // Usually going down, but sometimes not
       if (randomInt(0, 10) === 0) {
-        destinationFloor = (currentFloor + randomInt(1, floorCount - 1)) % floorCount;
+        destinationFloor =
+          (currentFloor + randomInt(1, floorCount - 1)) % floorCount;
       } else {
         destinationFloor = 0;
       }
@@ -62,9 +74,14 @@ export class WorldCreator {
 
   createWorld(options) {
     console.log("Creating world with options", options);
-    const defaultOptions = { floorHeight: 50, floorCount: 4, elevatorCount: 2, spawnRate: 0.5 };
+    const defaultOptions = {
+      floorHeight: 50,
+      floorCount: 4,
+      elevatorCount: 2,
+      spawnRate: 0.5,
+    };
     options = { ...defaultOptions, ...options };
-    
+
     const world = new World(options, this);
     return world;
   }
@@ -73,7 +90,7 @@ export class WorldCreator {
 export class World extends Observable {
   constructor(options, creator) {
     super();
-    
+
     this.creator = creator;
     this.floorHeight = options.floorHeight;
     this.transportedCounter = 0;
@@ -84,20 +101,29 @@ export class World extends Observable {
     this.avgWaitTime = 0.0;
     this.challengeEnded = false;
     this.options = options;
-    
+
     this.elapsedSinceSpawn = 1.001 / options.spawnRate;
     this.elapsedSinceStatsUpdate = 0.0;
 
     this.handleUserCodeError = this.handleUserCodeError.bind(this);
-    
-    this.floors = creator.createFloors(options.floorCount, this.floorHeight, this.handleUserCodeError);
-    this.elevators = creator.createElevators(options.elevatorCount, options.floorCount, this.floorHeight, options.elevatorCapacities);
-    
+
+    this.floors = creator.createFloors(
+      options.floorCount,
+      this.floorHeight,
+      this.handleUserCodeError,
+    );
+    this.elevators = creator.createElevators(
+      options.elevatorCount,
+      options.floorCount,
+      this.floorHeight,
+      options.elevatorCapacities,
+    );
+
     // Wrap elevators with error handling for user code
-    this.elevatorInterfaces = this.elevators.map(elevator => {
+    this.elevatorInterfaces = this.elevators.map((elevator) => {
       // Store original goToFloor method
       const originalGoToFloor = elevator.goToFloor.bind(elevator);
-      
+
       // Override goToFloor with error handling and validation
       elevator.goToFloor = (floorNum) => {
         floorNum = limitNumber(Number(floorNum), 0, options.floorCount - 1);
@@ -107,10 +133,10 @@ export class World extends Observable {
           this.handleUserCodeError(e);
         }
       };
-      
+
       return elevator;
     });
-    
+
     this.users = [];
 
     this.setupEventHandlers();
@@ -123,7 +149,10 @@ export class World extends Observable {
   recalculateStats() {
     this.transportedPerSec = this.transportedCounter / this.elapsedTime;
     // TODO: Optimize this loop?
-    this.moveCount = this.elevators.reduce((sum, elevator) => sum + elevator.moveCount, 0);
+    this.moveCount = this.elevators.reduce(
+      (sum, elevator) => sum + elevator.moveCount,
+      0,
+    );
     this.trigger("stats_changed");
   }
 
@@ -132,12 +161,18 @@ export class World extends Observable {
     user.updateDisplayPosition(true);
     user.spawnTimestamp = this.elapsedTime;
     this.trigger("new_user", user);
-    
+
     const self = this;
-    user.on("exited_elevator", function() {
+    user.on("exited_elevator", function () {
       self.transportedCounter++;
-      self.maxWaitTime = Math.max(self.maxWaitTime, self.elapsedTime - user.spawnTimestamp);
-      self.avgWaitTime = (self.avgWaitTime * (self.transportedCounter - 1) + (self.elapsedTime - user.spawnTimestamp)) / self.transportedCounter;
+      self.maxWaitTime = Math.max(
+        self.maxWaitTime,
+        self.elapsedTime - user.spawnTimestamp,
+      );
+      self.avgWaitTime =
+        (self.avgWaitTime * (self.transportedCounter - 1) +
+          (self.elapsedTime - user.spawnTimestamp)) /
+        self.transportedCounter;
       self.recalculateStats();
     });
     user.updateDisplayPosition(true);
@@ -163,14 +198,24 @@ export class World extends Observable {
 
   handleButtonRepressing(eventName, floor) {
     // Need randomize iteration order or we'll tend to fill up first elevator
-    for (let i = 0, len = this.elevators.length, offset = randomInt(0, len - 1); i < len; ++i) {
+    for (
+      let i = 0, len = this.elevators.length, offset = randomInt(0, len - 1);
+      i < len;
+      ++i
+    ) {
       const elevIndex = (i + offset) % len;
       const elevator = this.elevators[elevIndex];
-      if (eventName === "up_button_pressed" && elevator.goingUpIndicator ||
-          eventName === "down_button_pressed" && elevator.goingDownIndicator) {
-
+      if (
+        (eventName === "up_button_pressed" && elevator.goingUpIndicator) ||
+        (eventName === "down_button_pressed" && elevator.goingDownIndicator)
+      ) {
         // Elevator is heading in correct direction, check for suitability
-        if (elevator.currentFloor === floor.level && elevator.isOnAFloor() && !elevator.isMoving && !elevator.isFull()) {
+        if (
+          elevator.currentFloor === floor.level &&
+          elevator.isOnAFloor() &&
+          !elevator.isMoving &&
+          !elevator.isFull()
+        ) {
           // Potentially suitable to get into
           // Simply go to the floor (no queue functionality in simplified version)
           elevator.goToFloor(floor.level);
@@ -183,12 +228,17 @@ export class World extends Observable {
   setupEventHandlers() {
     // Bind elevators to handle availability
     for (let i = 0; i < this.elevators.length; ++i) {
-      this.elevators[i].on("entrance_available", (e) => this.handleElevAvailability(e));
+      this.elevators[i].on("entrance_available", (e) =>
+        this.handleElevAvailability(e),
+      );
     }
 
     // Handle button repressing
     for (let i = 0; i < this.floors.length; ++i) {
-      this.floors[i].on("up_button_pressed down_button_pressed", (eventName, floor) => this.handleButtonRepressing(eventName, floor));
+      this.floors[i].on(
+        "up_button_pressed down_button_pressed",
+        (eventName, floor) => this.handleButtonRepressing(eventName, floor),
+      );
     }
   }
 
@@ -196,10 +246,16 @@ export class World extends Observable {
     this.elapsedTime += dt;
     this.elapsedSinceSpawn += dt;
     this.elapsedSinceStatsUpdate += dt;
-    
+
     while (this.elapsedSinceSpawn > 1.0 / this.options.spawnRate) {
       this.elapsedSinceSpawn -= 1.0 / this.options.spawnRate;
-      this.registerUser(this.creator.spawnUserRandomly(this.options.floorCount, this.floorHeight, this.floors));
+      this.registerUser(
+        this.creator.spawnUserRandomly(
+          this.options.floorCount,
+          this.floorHeight,
+          this.floors,
+        ),
+      );
     }
 
     // Use regular for loops for performance and memory friendliness
@@ -208,11 +264,14 @@ export class World extends Observable {
       e.update(dt);
       e.updateElevatorMovement(dt);
     }
-    
+
     for (let i = 0, len = this.users.length; i < len; ++i) {
       const u = this.users[i];
       u.update(dt);
-      this.maxWaitTime = Math.max(this.maxWaitTime, this.elapsedTime - u.spawnTimestamp);
+      this.maxWaitTime = Math.max(
+        this.maxWaitTime,
+        this.elapsedTime - u.spawnTimestamp,
+      );
     }
 
     // Remove users marked for removal
@@ -222,7 +281,7 @@ export class World extends Observable {
         this.users.splice(i, 1);
       }
     }
-    
+
     this.recalculateStats();
   }
 
@@ -237,9 +296,15 @@ export class World extends Observable {
 
   unWind() {
     console.log("Unwinding", this);
-    const allObjects = [...this.elevators, ...this.elevatorInterfaces, ...this.users, ...this.floors, this];
-    allObjects.forEach(obj => {
-      if (typeof obj.off === 'function') {
+    const allObjects = [
+      ...this.elevators,
+      ...this.elevatorInterfaces,
+      ...this.users,
+      ...this.floors,
+      this,
+    ];
+    allObjects.forEach((obj) => {
+      if (typeof obj.off === "function") {
         obj.off("*");
       }
     });
@@ -256,7 +321,7 @@ export class World extends Observable {
 }
 
 export class WorldController extends Observable {
-  constructor(dtMax = 1/60) {
+  constructor(dtMax = 1 / 60) {
     super();
     this.dtMax = dtMax;
     this.timeScale = 1.0;
@@ -267,9 +332,9 @@ export class WorldController extends Observable {
     this.isPaused = true;
     let lastT = null;
     let firstUpdate = true;
-    
+
     world.on("usercode_error", (e) => this.handleUserCodeError(e));
-    
+
     const updater = (t) => {
       if (!this.isPaused && !world.challengeEnded && lastT !== null) {
         if (firstUpdate) {
@@ -278,16 +343,16 @@ export class WorldController extends Observable {
           world.init();
         }
 
-        const dt = (t - lastT);
+        const dt = t - lastT;
         let scaledDt = dt * 0.001 * this.timeScale;
         scaledDt = Math.min(scaledDt, this.dtMax * 3 * this.timeScale); // Limit to prevent unhealthy substepping
-        
+
         try {
           codeObj.update(scaledDt, world.elevatorInterfaces, world.floors);
         } catch (e) {
           this.handleUserCodeError(e);
         }
-        
+
         while (scaledDt > 0.0 && !world.challengeEnded) {
           const thisDt = Math.min(this.dtMax, scaledDt);
           world.update(thisDt);
@@ -301,7 +366,7 @@ export class WorldController extends Observable {
         animationFrameRequester(updater);
       }
     };
-    
+
     if (autoStart) {
       this.setPaused(false);
     }

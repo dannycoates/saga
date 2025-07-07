@@ -7,32 +7,6 @@ export function epsilonEquals(a, b) {
   return Math.abs(a - b) < 0.00000001;
 }
 
-export function deprecationWarning(name) {
-  console.warn(
-    "You are using a deprecated feature scheduled for removal: " + name,
-  );
-}
-
-export function newGuard(obj, type) {
-  if (!(obj instanceof type)) {
-    throw (
-      "Incorrect instantiation, got " + typeof obj + " but expected " + type
-    );
-  }
-}
-
-export function createBoolPassthroughFunction(owner, obj, objPropertyName) {
-  return function (val) {
-    if (typeof val !== "undefined") {
-      obj[objPropertyName] = val ? true : false;
-      obj.trigger("change:" + objPropertyName, obj[objPropertyName]);
-      return owner;
-    } else {
-      return obj[objPropertyName];
-    }
-  };
-}
-
 export function distanceNeededToAchieveSpeed(
   currentSpeed,
   targetSpeed,
@@ -88,14 +62,12 @@ export async function getCodeObjFromCode(code) {
   return obj;
 }
 
-// Observable implementation (replacement for unobservable)
 export class Observable {
   constructor() {
     this.callbacks = {};
   }
 
   on(events, fn) {
-    // This function is convoluted because we would like to avoid using split or regex
     let count = 0;
     for (let i = 0, len = events.length; i < len; ++i) {
       let name = "";
@@ -188,23 +160,9 @@ export class Observable {
   }
 }
 
-// Helper to make an object observable
-export function makeObservable(obj) {
-  obj.callbacks = {};
-  Observable.prototype.on.call(obj, arguments);
-  Observable.prototype.off.call(obj, arguments);
-  Observable.prototype.one.call(obj, arguments);
-  Observable.prototype.trigger.call(obj, arguments);
-  return obj;
-}
-
 // Random number utilities (replacing lodash)
 export function randomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-export function random(min, max) {
-  return Math.random() * (max - min) + min;
 }
 
 // Array utilities (replacing lodash)
@@ -232,26 +190,6 @@ export function sortBy(array, iteratee) {
     if (aVal > bVal) return 1;
     return 0;
   });
-}
-
-export function find(array, predicate) {
-  return array.find(predicate);
-}
-
-export function filter(array, predicate) {
-  return array.filter(predicate);
-}
-
-export function map(array, iteratee) {
-  return array.map(iteratee);
-}
-
-export function each(collection, iteratee) {
-  if (Array.isArray(collection)) {
-    collection.forEach(iteratee);
-  } else {
-    Object.keys(collection).forEach((key) => iteratee(collection[key], key));
-  }
 }
 
 // Throttle implementation (replacing lodash)
