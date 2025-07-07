@@ -1,0 +1,265 @@
+html,
+body {
+    background-color: #f2e5bc;
+    color: #3c3836; /* Gruvbox dark fg */
+    margin: 0;
+    padding: 0;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Oswald, Arial, Helvetica, sans-serif;
+}
+h1,
+h2,
+h3,
+h4,
+h5 {
+    margin-top: 0.4em;
+    margin-bottom: 0.3em;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+p {
+    color: #3c3836; /* Gruvbox dark fg */
+}
+
+.emphasis-color {
+    color: #d79921; /* Gruvbox yellow */
+    text-shadow: 0 2px 0.4pt #928374;
+}
+
+.error-color {
+    color: #cc241d; /* Gruvbox red */
+}
+
+a {
+    color: #458588; /* Gruvbox blue */
+    font-weight: bold;
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+    color: #076678; /* Gruvbox dark blue */
+}
+
+h2,
+h3,
+h4,
+h5 {
+    font-weight: normal;
+}
+
+dl {
+    color: #504945; /* Gruvbox gray */
+}
+dl dd {
+    font:
+        15px Arial,
+        Helvetica,
+        sans-serif;
+    margin-bottom: 1em;
+    margin-left: 1em;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 1220px;
+    margin: 0 auto;
+    padding: 10px 0 20px 0;
+    gap: 4px;
+}
+
+.unselectable {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+button {
+    height: 32px;
+    line-height: 18px;
+    font-size: 17px;
+    font-weight: bold;
+    padding-left: 12px;
+    padding-right: 12px;
+    color: #fbf1c7; /* Gruvbox light0 */
+    background-color: #458588; /* Gruvbox blue */
+    text-shadow: none;
+    border: 1px solid #076678; /* Gruvbox dark blue */
+    border-radius: 5px;
+    margin-right: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+button:hover {
+    background-color: #076678; /* Gruvbox dark blue */
+}
+
+.blink {
+    animation: blink 0.5s steps(3, start) infinite;
+    -webkit-animation: blink 0.5s steps(3, start) infinite;
+}
+@keyframes blink {
+    to {
+        visibility: hidden;
+    }
+}
+@-webkit-keyframes blink {
+    to {
+        visibility: hidden;
+    }
+}
+
+.invisible {
+    visibility: hidden;
+}
+
+.faded {
+    opacity: 0.4;
+}
+
+#save_message {
+    color: #928374; /* Gruvbox gray */
+    font-size: 12px;
+    line-height: 30px;
+    margin: 0 20px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 50px;
+    background-color: #f2e5bc; /* Gruvbox light0_soft */
+    padding: 0 12px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+}
+
+.header h1 {
+    line-height: 40px;
+    margin: 0;
+    padding: 0;
+    font-size: 28px;
+}
+
+.header a {
+    display: inline-block;
+    margin-left: 15px;
+    font-size: 18px;
+    line-height: 40px;
+    padding: 0 4px;
+}
+
+.challenge {
+    padding: 0.5rem 1.5rem;
+    background-color: #d5c4a1;
+    border-radius: 4px;
+    margin: 1rem 0;
+}
+
+.challenge h3 {
+    line-height: 30px;
+    font-size: 20px;
+    margin: 0;
+    color: #3c3836; /* Gruvbox dark fg */
+}
+
+.code {
+    flex: 1;
+    border: 2px solid #f2e5bc;
+}
+
+/* CodeMirror 6 editor styles */
+.code .cm-editor {
+    font-size: 14px;
+    height: 100%;
+}
+
+.code .cm-content {
+    font-family: Consolas, Monaco, monospace;
+}
+
+.codestatus {
+    padding-top: 10px;
+    color: #cc241d; /* Gruvbox red for errors */
+}
+
+.controls {
+    display: flex;
+    justify-content: space-between;
+    background-color: #f2e5bc; /* Gruvbox light0_soft */
+    padding: 8px;
+    border-radius: 4px;
+    margin-top: 4px;
+}
+
+.world {
+    display: flex;
+    width: 1220px;
+    background-color: #333;
+    padding: 0;
+    position: relative; /* Keep for feedbackcontainer */
+}
+
+.innerworld {
+    position: relative;
+    height: 100%;
+    flex: 1;
+    border-right: 1px solid black;
+    border-left: 1px solid black;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.statscontainer {
+    font:
+        12px Consolas,
+        Monaco,
+        monospace;
+    line-height: 10px;
+    color: #999;
+    width: 180px;
+    height: 100%;
+    padding: 4px;
+    box-sizing: border-box;
+    pointer-events: none;
+    background-color: #333;
+}
+
+.feedbackcontainer {
+}
+
+.footer {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f2e5bc; /* Gruvbox light0_soft */
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+.footer h4 {
+    font-size: 13px;
+    margin: 0;
+    color: #504945; /* Gruvbox gray */
+}
+
+.help {
+    margin-top: 20px;
+    margin-bottom: 30px;
+    font-size: 1.25rem;
+}
