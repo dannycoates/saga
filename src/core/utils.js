@@ -82,9 +82,6 @@ export async function getCodeObjFromCode(code) {
   const obj = await import(
     /* @vite-ignore */ `data:text/javascript,${encodeURIComponent(code.trim())}`
   );
-  if (typeof obj.init !== "function") {
-    throw "Code must contain an init function";
-  }
   if (typeof obj.update !== "function") {
     throw "Code must contain an update function";
   }

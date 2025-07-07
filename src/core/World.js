@@ -257,12 +257,7 @@ export class WorldController extends Observable {
         if (firstUpdate) {
           firstUpdate = false;
           // This logic prevents infinite loops in usercode from breaking the page permanently - don't evaluate user code until game is unpaused.
-          try {
-            codeObj.init(world.elevatorInterfaces, world.floors);
-            world.init();
-          } catch (e) {
-            this.handleUserCodeError(e);
-          }
+          world.init();
         }
 
         const dt = (t - lastT);

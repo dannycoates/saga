@@ -25,7 +25,6 @@ describe('World controller', () => {
     };
     
     fakeCodeObj = {
-      init: vi.fn(),
       update: vi.fn()
     };
     
@@ -61,13 +60,13 @@ describe('World controller', () => {
     expect(fakeWorld.update).not.toHaveBeenCalled();
   });
 
-  it('initializes code on first update when unpaused', () => {
+  it('initializes world on first update when unpaused', () => {
     controller.start(fakeWorld, fakeCodeObj, frameRequester.register, false);
     controller.setPaused(false);
     frameRequester.trigger();
     frameRequester.trigger();
-    expect(fakeCodeObj.init).toHaveBeenCalledWith(fakeWorld.elevatorInterfaces, fakeWorld.floors);
     expect(fakeWorld.init).toHaveBeenCalled();
+    expect(fakeCodeObj.update).toHaveBeenCalled();
   });
 
   it('handles user code errors', () => {

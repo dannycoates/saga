@@ -54,64 +54,49 @@
             </div>
         </div>
 
-        <!-- Templates removed - now using Web Components -->
-
         <script type="text/plain" id="default-elev-implementation">
             /**
-            * @class Floor
-            *
-            *   Accessors:
-            *    @member buttons {{up: boolean, down: boolean}}
-            *    @member level {number}
-            *
-            *
-            * @class Elevator
-            *
-            *   Accessors:
-            *    @member currentFloor {number}
-            *    @member destinationFloor {number | null}
-            *    @member pressedFloorButtons {number[]}
-            *    @member percentFull {0..1}
-            *
-            *   Actions:
-            *    @func goToFloor(floorNum: number)
-            */
+              * @class Floor
+              *   Accessors:
+              *    @member buttons {{up: boolean, down: boolean}}
+              *    @member level {number}
+              *
+              * @class Elevator
+              *   Accessors:
+              *    @member currentFloor {number}
+              *    @member destinationFloor {number | null}
+              *    @member pressedFloorButtons {number[]}
+              *    @member percentFull {0..1}
+              *
+              *   Actions:
+              *    @func goToFloor(floorNum: number)
+              */
 
-            let nextFloor = 0
-            /**
-            * Init gets called once at the start
-            * @param {Elevator[]} elevators
-            * @param {Floor[]} floors
-            */
-            export function init(elevators, floors) {
-              nextFloor = elevators[0].currentFloor + 1
-            }
+              let nextFloor = 1
 
-            /**
-            * Update gets called on a regular, fast interval (a game loop)
-            * @param {number} dt - elapsed game time since last update in seconds
-            * @param {Elevator[]} elevators
-            * @param {Floor[]} floors
-            */
-            export function update(dt, elevators, floors) {
-              const elevator = elevators[0]
-              if (elevator.destinationFloor === null) {
-                if (nextFloor === floors.length) {
-                  nextFloor = 0
+              /**
+              * Update gets called on a regular, fast interval (a game loop)
+              * @param {number} dt - elapsed game time since last update in seconds
+              * @param {Elevator[]} elevators
+              * @param {Floor[]} floors
+              */
+              export function update(dt, elevators, floors) {
+                const elevator = elevators[0]
+
+                if (elevator.destinationFloor === null) {
+                  if (nextFloor === floors.length) {
+                    nextFloor = 0
+                  }
+                  nextFloor = nextFloor + 1
+                  elevator.goToFloor(nextFloor)
                 }
-                nextFloor = nextFloor + 1
-                elevator.goToFloor(nextFloor)
               }
-            }
         </script>
 
         <script type="text/plain" id="devtest-elev-implementation">
-            init: function(elevators, floors) {
-                // Dev test implementation...
-                console.log("Running dev test implementation");
-            },
-            update: function(dt, elevators, floors) {
+            export function update(dt, elevators, floors) {
                 // Dev test update
+                console.log("Running dev test implementation", dt);
             }
         </script>
 
