@@ -50,12 +50,14 @@ export class Elevator extends Movable {
 
   userEntering(user) {
     const randomOffset = randomInt(0, this.userSlots.length - 1);
-    for (let i = 0; i < this.userSlots.length; i++) {
-      const slot = this.userSlots[(i + randomOffset) % this.userSlots.length];
-      if (slot.user === null) {
-        slot.user = user;
-        return slot.pos;
-      }
+    const slot = this.userSlots
+      .slice(randomOffset)
+      .concat(this.userSlots.slice(0, randomOffset))
+      .find(slot => slot.user === null);
+    
+    if (slot) {
+      slot.user = user;
+      return slot.pos;
     }
     return false;
   }
@@ -70,11 +72,9 @@ export class Elevator extends Movable {
   }
 
   userExiting(user) {
-    for (let i = 0; i < this.userSlots.length; i++) {
-      const slot = this.userSlots[i];
-      if (slot.user === user) {
-        slot.user = null;
-      }
+    const slot = this.userSlots.find(slot => slot.user === user);
+    if (slot) {
+      slot.user = null;
     }
   }
 
@@ -173,13 +173,9 @@ export class Elevator extends Movable {
   }
 
   getPressedFloors() {
-    const arr = [];
-    for (let i = 0; i < this.buttons.length; i++) {
-      if (this.buttons[i]) {
-        arr.push(i);
-      }
-    }
-    return arr;
+    return this.buttons
+      .map((pressed, floor) => pressed ? floor : null)
+      .filter(floor => floor !== null);
   }
 
   // Interface properties for user code
@@ -262,21 +258,11 @@ export class Elevator extends Movable {
   }
 
   isFull() {
-    for (let i = 0; i < this.userSlots.length; i++) {
-      if (this.userSlots[i].user === null) {
-        return false;
-      }
-    }
-    return true;
+    return this.userSlots.every(slot => slot.user !== null);
   }
 
   isEmpty() {
-    for (let i = 0; i < this.userSlots.length; i++) {
-      if (this.userSlots[i].user !== null) {
-        return false;
-      }
-    }
-    return true;
+    return this.userSlots.every(slot => slot.user === null);
   }
 
   handleNewState() {

@@ -162,87 +162,75 @@ export class World extends EventTarget {
     user.spawnTimestamp = this.elapsedTime;
     this.dispatchEvent(new CustomEvent("new_user", { detail: user }));
 
-    const self = this;
-    user.addEventListener("exited_elevator", function () {
-      self.transportedCounter++;
-      self.maxWaitTime = Math.max(
-        self.maxWaitTime,
-        self.elapsedTime - user.spawnTimestamp,
+    user.addEventListener("exited_elevator", () => {
+      this.transportedCounter++;
+      this.maxWaitTime = Math.max(
+        this.maxWaitTime,
+        this.elapsedTime - user.spawnTimestamp
       );
-      self.avgWaitTime =
-        (self.avgWaitTime * (self.transportedCounter - 1) +
-          (self.elapsedTime - user.spawnTimestamp)) /
-        self.transportedCounter;
-      self.recalculateStats();
+      this.avgWaitTime =
+        (this.avgWaitTime * (this.transportedCounter - 1) +
+          (this.elapsedTime - user.spawnTimestamp)) /
+        this.transportedCounter;
+      this.recalculateStats();
     });
     user.updateDisplayPosition(true);
   }
 
   handleElevAvailability(elevator) {
-    // Use regular loops for memory/performance reasons
     // Notify floors first because overflowing users
     // will press buttons again.
-    for (let i = 0, len = this.floors.length; i < len; ++i) {
-      const floor = this.floors[i];
-      if (elevator.currentFloor === i) {
-        floor.elevatorAvailable(elevator);
-      }
-    }
-    for (let i = 0, len = this.users.length; i < len; ++i) {
-      const user = this.users[i];
-      if (user.currentFloor === elevator.currentFloor) {
-        user.elevatorAvailable(elevator, this.floors[elevator.currentFloor]);
-      }
-    }
+    this.floors
+      .filter((floor, i) => elevator.currentFloor === i)
+      .forEach(floor => floor.elevatorAvailable(elevator));
+    
+    this.users
+      .filter(user => user.currentFloor === elevator.currentFloor)
+      .forEach(user => user.elevatorAvailable(elevator, this.floors[elevator.currentFloor]));
   }
 
   handleButtonRepressing(eventName, floor) {
     // Need randomize iteration order or we'll tend to fill up first elevator
-    for (
-      let i = 0, len = this.elevators.length, offset = randomInt(0, len - 1);
-      i < len;
-      ++i
-    ) {
-      const elevIndex = (i + offset) % len;
-      const elevator = this.elevators[elevIndex];
-      if (
+    const offset = randomInt(0, this.elevators.length - 1);
+    const shuffledElevators = [
+      ...this.elevators.slice(offset),
+      ...this.elevators.slice(0, offset)
+    ];
+    
+    const suitableElevator = shuffledElevators.find(elevator => {
+      const directionMatch = 
         (eventName === "up_button_pressed" && elevator.goingUpIndicator) ||
-        (eventName === "down_button_pressed" && elevator.goingDownIndicator)
-      ) {
-        // Elevator is heading in correct direction, check for suitability
-        if (
-          elevator.currentFloor === floor.level &&
-          elevator.isOnAFloor() &&
-          !elevator.isMoving &&
-          !elevator.isFull()
-        ) {
-          // Potentially suitable to get into
-          // Simply go to the floor (no queue functionality in simplified version)
-          elevator.goToFloor(floor.level);
-          return;
-        }
-      }
+        (eventName === "down_button_pressed" && elevator.goingDownIndicator);
+      
+      return directionMatch &&
+        elevator.currentFloor === floor.level &&
+        elevator.isOnAFloor() &&
+        !elevator.isMoving &&
+        !elevator.isFull();
+    });
+    
+    if (suitableElevator) {
+      suitableElevator.goToFloor(floor.level);
     }
   }
 
   setupEventHandlers() {
     // Bind elevators to handle availability
-    for (let i = 0; i < this.elevators.length; ++i) {
-      this.elevators[i].addEventListener("entrance_available", (e) =>
-        this.handleElevAvailability(e.detail),
+    this.elevators.forEach(elevator => {
+      elevator.addEventListener("entrance_available", (e) =>
+        this.handleElevAvailability(e.detail)
       );
-    }
+    });
 
     // Handle button repressing
-    for (let i = 0; i < this.floors.length; ++i) {
-      const floor = this.floors[i];
+    this.floors.forEach(floor => {
       floor.addEventListener("up_button_pressed", (e) =>
-        this.handleButtonRepressing("up_button_pressed", e.detail),
+        this.handleButtonRepressing("up_button_pressed", e.detail)
       );
       floor.addEventListener("down_button_pressed", (e) =>
-        this.handleButtonRepressing("down_button_pressed", e.detail),
+        this.handleButtonRepressing("down_button_pressed", e.detail)
       );
-    }
+    });
   }
 
   update(dt) {
@@ -261,40 +249,30 @@ export class World extends EventTarget {
       );
     }
 
-    // Use regular for loops for performance and memory friendliness
-    for (let i = 0, len = this.elevators.length; i < len; ++i) {
-      const e = this.elevators[i];
-      e.update(dt);
-      e.updateElevatorMovement(dt);
-    }
+    // Update all elevators
+    this.elevators.forEach(elevator => {
+      elevator.update(dt);
+      elevator.updateElevatorMovement(dt);
+    });
 
-    for (let i = 0, len = this.users.length; i < len; ++i) {
-      const u = this.users[i];
-      u.update(dt);
+    // Update all users
+    this.users.forEach(user => {
+      user.update(dt);
       this.maxWaitTime = Math.max(
         this.maxWaitTime,
-        this.elapsedTime - u.spawnTimestamp,
+        this.elapsedTime - user.spawnTimestamp
       );
-    }
+    });
 
     // Remove users marked for removal
-    for (let i = this.users.length - 1; i >= 0; i--) {
-      const u = this.users[i];
-      if (u.removeMe) {
-        this.users.splice(i, 1);
-      }
-    }
+    this.users = this.users.filter(user => !user.removeMe);
 
     this.recalculateStats();
   }
 
   updateDisplayPositions() {
-    for (let i = 0, len = this.elevators.length; i < len; ++i) {
-      this.elevators[i].updateDisplayPosition();
-    }
-    for (let i = 0, len = this.users.length; i < len; ++i) {
-      this.users[i].updateDisplayPosition();
-    }
+    this.elevators.forEach(elevator => elevator.updateDisplayPosition());
+    this.users.forEach(user => user.updateDisplayPosition());
   }
 
   unWind() {

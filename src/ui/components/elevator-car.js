@@ -8,6 +8,7 @@ export class ElevatorCar extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this._elevator = null;
     this._floorButtons = [];
+    this._abortController = null;
   }
 
   connectedCallback() {
@@ -16,11 +17,7 @@ export class ElevatorCar extends HTMLElement {
   }
 
   disconnectedCallback() {
-    if (this._elevator) {
-      this._elevator.removeEventListener("new_display_state", this._displayStateHandler);
-      this._elevator.removeEventListener("new_current_floor", this._currentFloorHandler);
-      this._elevator.removeEventListener("floor_buttons_changed", this._floorButtonsHandler);
-    }
+    this._abortController?.abort();
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -30,18 +27,18 @@ export class ElevatorCar extends HTMLElement {
   }
 
   set elevator(elevator) {
-    if (this._elevator) {
-      this._elevator.removeEventListener("new_display_state", this._displayStateHandler);
-      this._elevator.removeEventListener("new_current_floor", this._currentFloorHandler);
-      this._elevator.removeEventListener("floor_buttons_changed", this._floorButtonsHandler);
-    }
-
+    // Clean up previous listeners
+    this._abortController?.abort();
+    
     this._elevator = elevator;
 
     if (elevator) {
+      // Create new abort controller for this elevator
+      this._abortController = new AbortController();
+      const { signal } = this._abortController;
       // Set initial attributes
       this.setAttribute("width", elevator.width);
-      this._floorButtons = [...elevator.buttons];
+      this._floorButtons = structuredClone(elevator.buttons);
 
       // Display state handler
       this._displayStateHandler = () => {
@@ -51,7 +48,7 @@ export class ElevatorCar extends HTMLElement {
 
       // Current floor handler
       this._currentFloorHandler = (event) => {
-        const floor = event.detail !== undefined ? event.detail : event;
+        const floor = event.detail ?? event;
         this.setAttribute("current-floor", floor);
       };
 
@@ -60,15 +57,15 @@ export class ElevatorCar extends HTMLElement {
         const detail = event.detail;
         if (Array.isArray(detail) && detail.length === 2) {
           const [states, indexChanged] = detail;
-          this._floorButtons = [...states];
+          this._floorButtons = structuredClone(states);
           this.updateFloorButton(indexChanged, states[indexChanged]);
         }
       };
 
-      // Attach listeners
-      elevator.addEventListener("new_display_state", this._displayStateHandler);
-      elevator.addEventListener("new_current_floor", this._currentFloorHandler);
-      elevator.addEventListener("floor_buttons_changed", this._floorButtonsHandler);
+      // Attach listeners with abort signal
+      elevator.addEventListener("new_display_state", this._displayStateHandler, { signal });
+      elevator.addEventListener("new_current_floor", this._currentFloorHandler, { signal });
+      elevator.addEventListener("floor_buttons_changed", this._floorButtonsHandler, { signal });
 
       // Trigger initial updates
       elevator.dispatchEvent(new CustomEvent("new_state", { detail: elevator }));
@@ -93,7 +90,7 @@ export class ElevatorCar extends HTMLElement {
         this.updatePosition();
         break;
       case "current-floor":
-        const floorIndicator = this.shadowRoot.querySelector(".floor-number");
+        const floorIndicator = this.shadowRoot?.querySelector(".floor-number");
         if (floorIndicator) {
           floorIndicator.textContent = value;
         }
@@ -102,8 +99,8 @@ export class ElevatorCar extends HTMLElement {
   }
 
   updatePosition() {
-    const x = this.getAttribute("x-position") || "0";
-    const y = this.getAttribute("y-position") || "0";
+    const x = this.getAttribute("x-position") ?? "0";
+    const y = this.getAttribute("y-position") ?? "0";
     const style = `translate(${x}px,${y}px) translateZ(0)`;
     this.style.transform = style;
     this.style["-ms-transform"] = style;
@@ -111,10 +108,8 @@ export class ElevatorCar extends HTMLElement {
   }
 
   updateFloorButton(index, isActive) {
-    const buttons = this.shadowRoot.querySelectorAll(".buttonpress");
-    if (buttons[index]) {
-      buttons[index].classList.toggle("activated", isActive);
-    }
+    const buttons = this.shadowRoot?.querySelectorAll(".buttonpress");
+    buttons?.[index]?.classList.toggle("activated", isActive);
   }
 
   renderFloorButtons() {
@@ -127,21 +122,28 @@ export class ElevatorCar extends HTMLElement {
   }
 
   render() {
-    const width = this.getAttribute("width") || "60";
-    const currentFloor = this.getAttribute("current-floor") || "0";
+    const width = this.getAttribute("width") ?? "60";
+    const currentFloor = this.getAttribute("current-floor") ?? "0";
 
     this.shadowRoot.innerHTML = `
       <style>
         :host {
+          --elevator-width: ${width}px;
+          --elevator-bg-color: #4f8686;
+          --elevator-border-color: white;
+          --elevator-height: 48px;
+          --floor-text-color: rgba(255, 255, 255, 0.3);
+          --button-active-color: #33ff44;
+          
           position: absolute;
           top: 0;
           left: 0;
           display: block;
-          background-color: #4f8686;
-          border: 2px solid white;
-          height: 48px;
+          background-color: var(--elevator-bg-color);
+          border: 2px solid var(--elevator-border-color);
+          height: var(--elevator-height);
           z-index: 1;
-          width: ${width}px;
+          width: var(--elevator-width);
         }
 
         .floorindicator {
@@ -150,7 +152,7 @@ export class ElevatorCar extends HTMLElement {
           width: 100%;
           font-size: 15px;
           text-align: center;
-          color: rgba(255, 255, 255, 0.3);
+          color: var(--floor-text-color);
         }
 
         .buttonindicator {
@@ -161,7 +163,7 @@ export class ElevatorCar extends HTMLElement {
           text-align: center;
           font-size: 8px;
           line-height: 8px;
-          color: rgba(255, 255, 255, 0.3);
+          color: var(--floor-text-color);
         }
 
         .buttonpress {
@@ -171,7 +173,7 @@ export class ElevatorCar extends HTMLElement {
         }
 
         .buttonpress.activated {
-          color: #33ff44;
+          color: var(--button-active-color);
         }
       </style>
 
