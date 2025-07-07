@@ -4,10 +4,10 @@ import { Elevator } from "./Elevator.js";
 import { User } from "./User.js";
 
 export class WorldCreator {
-  createFloors(floorCount, floorHeight, errorHandler) {
+  createFloors(floorCount, floorHeight) {
     const floors = range(0, floorCount).map((_, i) => {
       const yPos = (floorCount - 1 - i) * floorHeight;
-      return new Floor(i, yPos, errorHandler);
+      return new Floor(i, yPos);
     });
     return floors;
   }
@@ -107,11 +107,7 @@ export class World extends EventTarget {
 
     this.handleUserCodeError = this.handleUserCodeError.bind(this);
 
-    this.floors = creator.createFloors(
-      options.floorCount,
-      this.floorHeight,
-      this.handleUserCodeError,
-    );
+    this.floors = creator.createFloors(options.floorCount, this.floorHeight);
     this.elevators = creator.createElevators(
       options.elevatorCount,
       options.floorCount,
@@ -166,7 +162,7 @@ export class World extends EventTarget {
       this.transportedCounter++;
       this.maxWaitTime = Math.max(
         this.maxWaitTime,
-        this.elapsedTime - user.spawnTimestamp
+        this.elapsedTime - user.spawnTimestamp,
       );
       this.avgWaitTime =
         (this.avgWaitTime * (this.transportedCounter - 1) +
@@ -182,11 +178,13 @@ export class World extends EventTarget {
     // will press buttons again.
     this.floors
       .filter((floor, i) => elevator.currentFloor === i)
-      .forEach(floor => floor.elevatorAvailable(elevator));
-    
+      .forEach((floor) => floor.elevatorAvailable(elevator));
+
     this.users
-      .filter(user => user.currentFloor === elevator.currentFloor)
-      .forEach(user => user.elevatorAvailable(elevator, this.floors[elevator.currentFloor]));
+      .filter((user) => user.currentFloor === elevator.currentFloor)
+      .forEach((user) =>
+        user.elevatorAvailable(elevator, this.floors[elevator.currentFloor]),
+      );
   }
 
   handleButtonRepressing(eventName, floor) {
@@ -194,21 +192,23 @@ export class World extends EventTarget {
     const offset = randomInt(0, this.elevators.length - 1);
     const shuffledElevators = [
       ...this.elevators.slice(offset),
-      ...this.elevators.slice(0, offset)
+      ...this.elevators.slice(0, offset),
     ];
-    
-    const suitableElevator = shuffledElevators.find(elevator => {
-      const directionMatch = 
+
+    const suitableElevator = shuffledElevators.find((elevator) => {
+      const directionMatch =
         (eventName === "up_button_pressed" && elevator.goingUpIndicator) ||
         (eventName === "down_button_pressed" && elevator.goingDownIndicator);
-      
-      return directionMatch &&
+
+      return (
+        directionMatch &&
         elevator.currentFloor === floor.level &&
         elevator.isOnAFloor() &&
         !elevator.isMoving &&
-        !elevator.isFull();
+        !elevator.isFull()
+      );
     });
-    
+
     if (suitableElevator) {
       suitableElevator.goToFloor(floor.level);
     }
@@ -216,19 +216,19 @@ export class World extends EventTarget {
 
   setupEventHandlers() {
     // Bind elevators to handle availability
-    this.elevators.forEach(elevator => {
+    this.elevators.forEach((elevator) => {
       elevator.addEventListener("entrance_available", (e) =>
-        this.handleElevAvailability(e.detail)
+        this.handleElevAvailability(e.detail),
       );
     });
 
     // Handle button repressing
-    this.floors.forEach(floor => {
+    this.floors.forEach((floor) => {
       floor.addEventListener("up_button_pressed", (e) =>
-        this.handleButtonRepressing("up_button_pressed", e.detail)
+        this.handleButtonRepressing("up_button_pressed", e.detail),
       );
       floor.addEventListener("down_button_pressed", (e) =>
-        this.handleButtonRepressing("down_button_pressed", e.detail)
+        this.handleButtonRepressing("down_button_pressed", e.detail),
       );
     });
   }
@@ -250,29 +250,29 @@ export class World extends EventTarget {
     }
 
     // Update all elevators
-    this.elevators.forEach(elevator => {
+    this.elevators.forEach((elevator) => {
       elevator.update(dt);
       elevator.updateElevatorMovement(dt);
     });
 
     // Update all users
-    this.users.forEach(user => {
+    this.users.forEach((user) => {
       user.update(dt);
       this.maxWaitTime = Math.max(
         this.maxWaitTime,
-        this.elapsedTime - user.spawnTimestamp
+        this.elapsedTime - user.spawnTimestamp,
       );
     });
 
     // Remove users marked for removal
-    this.users = this.users.filter(user => !user.removeMe);
+    this.users = this.users.filter((user) => !user.removeMe);
 
     this.recalculateStats();
   }
 
   updateDisplayPositions() {
-    this.elevators.forEach(elevator => elevator.updateDisplayPosition());
-    this.users.forEach(user => user.updateDisplayPosition());
+    this.elevators.forEach((elevator) => elevator.updateDisplayPosition());
+    this.users.forEach((user) => user.updateDisplayPosition());
   }
 
   unWind() {
@@ -313,7 +313,9 @@ export class WorldController extends EventTarget {
     let lastT = null;
     let firstUpdate = true;
 
-    world.addEventListener("usercode_error", (e) => this.handleUserCodeError(e.detail));
+    world.addEventListener("usercode_error", (e) =>
+      this.handleUserCodeError(e.detail),
+    );
 
     const updater = (t) => {
       if (!this.isPaused && !world.challengeEnded && lastT !== null) {

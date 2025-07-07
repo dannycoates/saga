@@ -1,4 +1,16 @@
 import { getCodeObjFromCode, throttle } from "./core/utils.js";
+import { createWorldCreator, createWorldController } from "./core/World.js";
+import { challenges } from "./game/challenges.js";
+import {
+  presentStats,
+  presentChallenge,
+  presentFeedback,
+  presentWorld,
+  presentCodeStatus,
+} from "./ui/presenters.js";
+import { basicSetup, EditorView } from "codemirror";
+import { javascript } from "@codemirror/lang-javascript";
+import { oneDark } from "@codemirror/theme-one-dark";
 
 // Helper function to dedent multi-line strings
 function dedent(str) {
@@ -17,20 +29,6 @@ function dedent(str) {
   }
   return str;
 }
-import { createWorldCreator, createWorldController } from "./core/World.js";
-import { challenges } from "./game/challenges.js";
-import {
-  presentStats,
-  presentChallenge,
-  presentFeedback,
-  presentWorld,
-  presentCodeStatus,
-  makeDemoFullscreen,
-  clearAll,
-} from "./ui/presenters.js";
-import { basicSetup, EditorView } from "codemirror";
-import { javascript } from "@codemirror/lang-javascript";
-import { oneDark } from "@codemirror/theme-one-dark";
 
 // CodeMirror editor wrapper
 class CodeEditor extends EventTarget {
@@ -173,16 +171,18 @@ export class ElevatorApp extends EventTarget {
     });
 
     this.editor.addEventListener("code_success", () => {
-      presentCodeStatus(this.codestatusElem, null);
+      presentCodeStatus(this.codestatusElem);
     });
 
     this.editor.addEventListener("usercode_error", (e) => {
-      presentCodeStatus(this.codestatusElem, null, e.detail);
+      presentCodeStatus(this.codestatusElem, e.detail);
     });
 
     // World controller error handling
     this.worldController.addEventListener("usercode_error", (e) => {
-      this.editor.dispatchEvent(new CustomEvent("usercode_error", { detail: e.detail }));
+      this.editor.dispatchEvent(
+        new CustomEvent("usercode_error", { detail: e.detail }),
+      );
     });
 
     // Handle browser back/forward navigation
@@ -208,9 +208,6 @@ export class ElevatorApp extends EventTarget {
     // Check for special modes
     if (params.devtest) {
       this.editor.setDevTestCode();
-    }
-    if (params.fullscreen) {
-      makeDemoFullscreen();
     }
 
     // Start challenge - always start paused unless explicitly specified
@@ -261,12 +258,10 @@ export class ElevatorApp extends EventTarget {
       this.challengeElem,
       challenges[challengeIndex],
       this,
-      this.world,
       this.worldController,
       challengeIndex + 1,
-      null,
     );
-    presentWorld(this.worldElem, this.world, null, null, null, null);
+    presentWorld(this.worldElem, this.world);
 
     // Setup timescale change handler
     this.worldController.addEventListener("timescale_changed", () => {
@@ -286,8 +281,6 @@ export class ElevatorApp extends EventTarget {
         if (challengeStatus) {
           presentFeedback(
             this.feedbackElem,
-            null,
-            this.world,
             "Success!",
             "Challenge completed",
             this.createParamsUrl({ challenge: challengeIndex + 2 }),
@@ -295,8 +288,6 @@ export class ElevatorApp extends EventTarget {
         } else {
           presentFeedback(
             this.feedbackElem,
-            null,
-            this.world,
             "Challenge failed",
             "Maybe your program needs an improvement?",
             "",

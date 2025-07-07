@@ -100,7 +100,9 @@ describe("World controller", () => {
     });
 
     const errorHandler = vi.fn();
-    controller.addEventListener("usercode_error", (e) => errorHandler(e.detail));
+    controller.addEventListener("usercode_error", (e) =>
+      errorHandler(e.detail),
+    );
 
     controller.start(fakeWorld, fakeCodeObj, frameRequester.register, true);
     frameRequester.trigger();
@@ -120,7 +122,7 @@ describe("World creator", () => {
   });
 
   it("creates floors with correct properties", () => {
-    const floors = creator.createFloors(4, 50, () => {});
+    const floors = creator.createFloors(4, 50);
 
     expect(floors.length).toBe(4);
     expect(floors[0].level).toBe(0);
