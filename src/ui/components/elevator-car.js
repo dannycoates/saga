@@ -134,7 +134,7 @@ export class ElevatorCar extends HTMLElement {
           display: block;
           background-color: #4f8686;
           border: 2px solid white;
-          height: 46px;
+          height: 48px;
           z-index: 1;
           width: ${width}px;
         }
