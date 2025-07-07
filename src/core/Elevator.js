@@ -183,6 +183,19 @@ export class Elevator extends Movable {
     return arr;
   }
 
+  // Interface properties for user code
+  get pressedFloorButtons() {
+    return this.getPressedFloors();
+  }
+
+  get destinationFloor() {
+    return this.isMoving ? Math.round(this.getDestinationFloor()) : null;
+  }
+
+  get percentFull() {
+    return this.getLoadFactor();
+  }
+
   isSuitableForTravelBetween(fromFloorNum, toFloorNum) {
     if (fromFloorNum > toFloorNum) {
       return this.goingDownIndicator;

@@ -1,8 +1,7 @@
-import { Observable, randomInt, random, map, range, each } from './utils.js';
+import { Observable, randomInt, random, map, range, each, limitNumber } from './utils.js';
 import { Floor, asFloor } from './Floor.js';
 import { Elevator } from './Elevator.js';
 import { User } from './User.js';
-import { asElevatorInterface } from './interfaces.js';
 
 export class WorldCreator {
   createFloors(floorCount, floorHeight, errorHandler) {
@@ -93,7 +92,25 @@ export class World extends Observable {
     
     this.floors = creator.createFloors(options.floorCount, this.floorHeight, this.handleUserCodeError);
     this.elevators = creator.createElevators(options.elevatorCount, options.floorCount, this.floorHeight, options.elevatorCapacities);
-    this.elevatorInterfaces = this.elevators.map(e => asElevatorInterface({}, e, options.floorCount, this.handleUserCodeError));
+    
+    // Wrap elevators with error handling for user code
+    this.elevatorInterfaces = this.elevators.map(elevator => {
+      // Store original goToFloor method
+      const originalGoToFloor = elevator.goToFloor.bind(elevator);
+      
+      // Override goToFloor with error handling and validation
+      elevator.goToFloor = (floorNum) => {
+        floorNum = limitNumber(Number(floorNum), 0, options.floorCount - 1);
+        try {
+          originalGoToFloor(floorNum);
+        } catch (e) {
+          this.handleUserCodeError(e);
+        }
+      };
+      
+      return elevator;
+    });
+    
     this.users = [];
 
     this.setupEventHandlers();
@@ -155,8 +172,8 @@ export class World extends Observable {
         // Elevator is heading in correct direction, check for suitability
         if (elevator.currentFloor === floor.level && elevator.isOnAFloor() && !elevator.isMoving && !elevator.isFull()) {
           // Potentially suitable to get into
-          // Use the interface queue functionality to queue up this action
-          this.elevatorInterfaces[elevIndex].goToFloor(floor.level, true);
+          // Simply go to the floor (no queue functionality in simplified version)
+          elevator.goToFloor(floor.level);
           return;
         }
       }
