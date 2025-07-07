@@ -1,4 +1,3 @@
-import { Observable } from "./utils.js";
 
 const powInterpolate = function (value0, value1, x, a) {
   return (
@@ -15,7 +14,7 @@ const DEFAULT_INTERPOLATOR = coolInterpolate;
 
 const _tmpPosStorage = [0, 0];
 
-export class Movable extends Observable {
+export class Movable extends EventTarget {
   constructor() {
     super();
 
@@ -26,7 +25,7 @@ export class Movable extends Observable {
     this.worldY = 0.0;
     this.currentTask = null;
 
-    this.trigger("new_state", this);
+    this.dispatchEvent(new CustomEvent("new_state", { detail: this }));
   }
 
   updateDisplayPosition(forceTrigger) {
@@ -36,7 +35,7 @@ export class Movable extends Observable {
     this.worldX = _tmpPosStorage[0];
     this.worldY = _tmpPosStorage[1];
     if (oldX !== this.worldX || oldY !== this.worldY || forceTrigger === true) {
-      this.trigger("new_display_state", this);
+      this.dispatchEvent(new CustomEvent("new_display_state", { detail: this }));
     }
   }
 
@@ -47,13 +46,13 @@ export class Movable extends Observable {
     if (newY !== null) {
       this.y = newY;
     }
-    this.trigger("new_state", this);
+    this.dispatchEvent(new CustomEvent("new_state", { detail: this }));
   }
 
   moveToFast(newX, newY) {
     this.x = newX;
     this.y = newY;
-    this.trigger("new_state", this);
+    this.dispatchEvent(new CustomEvent("new_state", { detail: this }));
   }
 
   isBusy() {

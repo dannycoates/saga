@@ -111,7 +111,8 @@ export function presentWorld(
   });
   
   // Setup user creation
-  world.on('new_user', (user) => {
+  world.addEventListener('new_user', (event) => {
+    const user = event.detail;
     const userComponent = document.createElement('elevator-user');
     userComponent.user = user;
     worldElem.appendChild(userComponent);

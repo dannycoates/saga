@@ -1,4 +1,4 @@
-import { Observable, getCodeObjFromCode, throttle } from "./core/utils.js";
+import { getCodeObjFromCode, throttle } from "./core/utils.js";
 
 // Helper function to dedent multi-line strings
 function dedent(str) {
@@ -33,7 +33,7 @@ import { javascript } from "@codemirror/lang-javascript";
 import { oneDark } from "@codemirror/theme-one-dark";
 
 // CodeMirror editor wrapper
-class CodeEditor extends Observable {
+class CodeEditor extends EventTarget {
   constructor(element, storageKey) {
     super();
     this.storageKey = storageKey;
@@ -74,7 +74,7 @@ class CodeEditor extends Observable {
     localStorage.setItem(this.storageKey, this.getCode());
     document.getElementById("save_message").textContent =
       "Code saved " + new Date().toTimeString();
-    this.trigger("change");
+    this.dispatchEvent(new CustomEvent("change"));
   }
 
   getCode() {
@@ -92,10 +92,10 @@ class CodeEditor extends Observable {
     const code = this.getCode();
     try {
       const obj = await getCodeObjFromCode(code);
-      this.trigger("code_success");
+      this.dispatchEvent(new CustomEvent("code_success"));
       return obj;
     } catch (e) {
-      this.trigger("usercode_error", e);
+      this.dispatchEvent(new CustomEvent("usercode_error", { detail: e }));
       return null;
     }
   }
@@ -109,7 +109,7 @@ class CodeEditor extends Observable {
 }
 
 // Main Application class
-export class ElevatorApp extends Observable {
+export class ElevatorApp extends EventTarget {
   constructor() {
     super();
 
@@ -163,26 +163,26 @@ export class ElevatorApp extends Observable {
     const applyButton = document.getElementById("button_apply");
     if (applyButton) {
       applyButton.addEventListener("click", () => {
-        this.editor.trigger("apply_code");
+        this.editor.dispatchEvent(new CustomEvent("apply_code"));
       });
     }
 
     // Editor events
-    this.editor.on("apply_code", () => {
+    this.editor.addEventListener("apply_code", () => {
       this.startChallenge(this.currentChallengeIndex, true);
     });
 
-    this.editor.on("code_success", () => {
+    this.editor.addEventListener("code_success", () => {
       presentCodeStatus(this.codestatusElem, null);
     });
 
-    this.editor.on("usercode_error", (error) => {
-      presentCodeStatus(this.codestatusElem, null, error);
+    this.editor.addEventListener("usercode_error", (e) => {
+      presentCodeStatus(this.codestatusElem, null, e.detail);
     });
 
     // World controller error handling
-    this.worldController.on("usercode_error", (error) => {
-      this.editor.trigger("usercode_error", error);
+    this.worldController.addEventListener("usercode_error", (e) => {
+      this.editor.dispatchEvent(new CustomEvent("usercode_error", { detail: e.detail }));
     });
 
     // Handle browser back/forward navigation
@@ -269,13 +269,13 @@ export class ElevatorApp extends Observable {
     presentWorld(this.worldElem, this.world, null, null, null, null);
 
     // Setup timescale change handler
-    this.worldController.on("timescale_changed", () => {
+    this.worldController.addEventListener("timescale_changed", () => {
       localStorage.setItem("elevatorTimeScale", this.worldController.timeScale);
       // The challenge control component will update automatically via its worldController property
     });
 
     // Setup challenge completion handler
-    this.world.on("stats_changed", () => {
+    this.world.addEventListener("stats_changed", () => {
       const challengeStatus = challenges[challengeIndex].condition.evaluate(
         this.world,
       );

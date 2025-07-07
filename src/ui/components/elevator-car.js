@@ -17,9 +17,9 @@ export class ElevatorCar extends HTMLElement {
 
   disconnectedCallback() {
     if (this._elevator) {
-      this._elevator.off("new_display_state", this._displayStateHandler);
-      this._elevator.off("new_current_floor", this._currentFloorHandler);
-      this._elevator.off("floor_buttons_changed", this._floorButtonsHandler);
+      this._elevator.removeEventListener("new_display_state", this._displayStateHandler);
+      this._elevator.removeEventListener("new_current_floor", this._currentFloorHandler);
+      this._elevator.removeEventListener("floor_buttons_changed", this._floorButtonsHandler);
     }
   }
 
@@ -31,9 +31,9 @@ export class ElevatorCar extends HTMLElement {
 
   set elevator(elevator) {
     if (this._elevator) {
-      this._elevator.off("new_display_state", this._displayStateHandler);
-      this._elevator.off("new_current_floor", this._currentFloorHandler);
-      this._elevator.off("floor_buttons_changed", this._floorButtonsHandler);
+      this._elevator.removeEventListener("new_display_state", this._displayStateHandler);
+      this._elevator.removeEventListener("new_current_floor", this._currentFloorHandler);
+      this._elevator.removeEventListener("floor_buttons_changed", this._floorButtonsHandler);
     }
 
     this._elevator = elevator;
@@ -50,25 +50,30 @@ export class ElevatorCar extends HTMLElement {
       };
 
       // Current floor handler
-      this._currentFloorHandler = (floor) => {
+      this._currentFloorHandler = (event) => {
+        const floor = event.detail !== undefined ? event.detail : event;
         this.setAttribute("current-floor", floor);
       };
 
       // Floor buttons handler
-      this._floorButtonsHandler = (states, indexChanged) => {
-        this._floorButtons = [...states];
-        this.updateFloorButton(indexChanged, states[indexChanged]);
+      this._floorButtonsHandler = (event) => {
+        const detail = event.detail;
+        if (Array.isArray(detail) && detail.length === 2) {
+          const [states, indexChanged] = detail;
+          this._floorButtons = [...states];
+          this.updateFloorButton(indexChanged, states[indexChanged]);
+        }
       };
 
       // Attach listeners
-      elevator.on("new_display_state", this._displayStateHandler);
-      elevator.on("new_current_floor", this._currentFloorHandler);
-      elevator.on("floor_buttons_changed", this._floorButtonsHandler);
+      elevator.addEventListener("new_display_state", this._displayStateHandler);
+      elevator.addEventListener("new_current_floor", this._currentFloorHandler);
+      elevator.addEventListener("floor_buttons_changed", this._floorButtonsHandler);
 
       // Trigger initial updates
-      elevator.trigger("new_state", elevator);
-      elevator.trigger("new_display_state", elevator);
-      elevator.trigger("new_current_floor", elevator.currentFloor);
+      elevator.dispatchEvent(new CustomEvent("new_state", { detail: elevator }));
+      elevator.dispatchEvent(new CustomEvent("new_display_state", { detail: elevator }));
+      elevator.dispatchEvent(new CustomEvent("new_current_floor", { detail: elevator.currentFloor }));
     }
   }
 

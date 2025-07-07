@@ -15,8 +15,8 @@ export class ElevatorUser extends HTMLElement {
 
   disconnectedCallback() {
     if (this._user) {
-      this._user.off("new_display_state", this._displayStateHandler);
-      this._user.off("removed", this._removedHandler);
+      this._user.removeEventListener("new_display_state", this._displayStateHandler);
+      this._user.removeEventListener("removed", this._removedHandler);
     }
   }
 
@@ -28,8 +28,8 @@ export class ElevatorUser extends HTMLElement {
 
   set user(user) {
     if (this._user) {
-      this._user.off("new_display_state", this._displayStateHandler);
-      this._user.off("removed", this._removedHandler);
+      this._user.removeEventListener("new_display_state", this._displayStateHandler);
+      this._user.removeEventListener("removed", this._removedHandler);
     }
 
     this._user = user;
@@ -54,8 +54,8 @@ export class ElevatorUser extends HTMLElement {
       };
 
       // Attach listeners
-      user.on("new_display_state", this._displayStateHandler);
-      user.on("removed", this._removedHandler);
+      user.addEventListener("new_display_state", this._displayStateHandler);
+      user.addEventListener("removed", this._removedHandler);
 
       // Update initial position
       this._displayStateHandler();

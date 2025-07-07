@@ -38,7 +38,7 @@ export class Elevator extends Movable {
     this.destinationY = this.getYPosOfFloor(this.currentFloor);
 
     // Bind event handlers
-    this.on("new_state", () => this.handleNewState());
+    this.addEventListener("new_state", () => this.handleNewState());
   }
 
   setFloorPosition(floor) {
@@ -65,7 +65,7 @@ export class Elevator extends Movable {
     const prev = this.buttons[floorNumber];
     this.buttons[floorNumber] = true;
     if (!prev) {
-      this.trigger("floor_buttons_changed", this.buttons, floorNumber);
+      this.dispatchEvent(new CustomEvent("floor_buttons_changed", { detail: [this.buttons, floorNumber] }));
     }
   }
 
@@ -158,11 +158,11 @@ export class Elevator extends Movable {
   handleDestinationArrival() {
     if (this.isOnAFloor()) {
       this.buttons[this.currentFloor] = false;
-      this.trigger("floor_buttons_changed", this.buttons, this.currentFloor);
+      this.dispatchEvent(new CustomEvent("floor_buttons_changed", { detail: [this.buttons, this.currentFloor] }));
       // Need to allow users to get off first, so that new ones
       // can enter on the same floor
-      this.trigger("exit_available", this.currentFloor, this);
-      this.trigger("entrance_available", this);
+      this.dispatchEvent(new CustomEvent("exit_available", { detail: [this.currentFloor, this] }));
+      this.dispatchEvent(new CustomEvent("entrance_available", { detail: this }));
     }
   }
 
@@ -285,7 +285,7 @@ export class Elevator extends Movable {
     if (currentFloor !== this.currentFloor) {
       this.moveCount++;
       this.currentFloor = currentFloor;
-      this.trigger("new_current_floor", this.currentFloor);
+      this.dispatchEvent(new CustomEvent("new_current_floor", { detail: this.currentFloor }));
     }
 
     // Check if we are about to pass a floor

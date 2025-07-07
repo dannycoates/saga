@@ -43,7 +43,7 @@ describe('Movable class', () => {
   });
 
   it('triggers event when moved', () => {
-    m.on('new_state', handlers.someHandler);
+    m.addEventListener('new_state', (e) => handlers.someHandler(e.detail));
     m.moveTo(1.0, 1.0);
     expect(handlers.someHandler).toHaveBeenCalled();
   });

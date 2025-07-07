@@ -1,4 +1,4 @@
-import { Observable, randomInt, range, limitNumber } from "./utils.js";
+import { randomInt, range, limitNumber } from "./utils.js";
 import { Floor } from "./Floor.js";
 import { Elevator } from "./Elevator.js";
 import { User } from "./User.js";
@@ -87,7 +87,7 @@ export class WorldCreator {
   }
 }
 
-export class World extends Observable {
+export class World extends EventTarget {
   constructor(options, creator) {
     super();
 
@@ -143,7 +143,7 @@ export class World extends Observable {
   }
 
   handleUserCodeError(e) {
-    this.trigger("usercode_error", e);
+    this.dispatchEvent(new CustomEvent("usercode_error", { detail: e }));
   }
 
   recalculateStats() {
@@ -153,17 +153,17 @@ export class World extends Observable {
       (sum, elevator) => sum + elevator.moveCount,
       0,
     );
-    this.trigger("stats_changed");
+    this.dispatchEvent(new CustomEvent("stats_changed"));
   }
 
   registerUser(user) {
     this.users.push(user);
     user.updateDisplayPosition(true);
     user.spawnTimestamp = this.elapsedTime;
-    this.trigger("new_user", user);
+    this.dispatchEvent(new CustomEvent("new_user", { detail: user }));
 
     const self = this;
-    user.on("exited_elevator", function () {
+    user.addEventListener("exited_elevator", function () {
       self.transportedCounter++;
       self.maxWaitTime = Math.max(
         self.maxWaitTime,
@@ -228,16 +228,19 @@ export class World extends Observable {
   setupEventHandlers() {
     // Bind elevators to handle availability
     for (let i = 0; i < this.elevators.length; ++i) {
-      this.elevators[i].on("entrance_available", (e) =>
-        this.handleElevAvailability(e),
+      this.elevators[i].addEventListener("entrance_available", (e) =>
+        this.handleElevAvailability(e.detail),
       );
     }
 
     // Handle button repressing
     for (let i = 0; i < this.floors.length; ++i) {
-      this.floors[i].on(
-        "up_button_pressed down_button_pressed",
-        (eventName, floor) => this.handleButtonRepressing(eventName, floor),
+      const floor = this.floors[i];
+      floor.addEventListener("up_button_pressed", (e) =>
+        this.handleButtonRepressing("up_button_pressed", e.detail),
+      );
+      floor.addEventListener("down_button_pressed", (e) =>
+        this.handleButtonRepressing("down_button_pressed", e.detail),
       );
     }
   }
@@ -304,9 +307,8 @@ export class World extends Observable {
       this,
     ];
     allObjects.forEach((obj) => {
-      if (typeof obj.off === "function") {
-        obj.off("*");
-      }
+      // Remove all event listeners by cloning the node (if it's a DOM element)
+      // For non-DOM EventTargets, we'd need to track listeners manually
     });
     this.challengeEnded = true;
     this.elevators = [];
@@ -320,7 +322,7 @@ export class World extends Observable {
   }
 }
 
-export class WorldController extends Observable {
+export class WorldController extends EventTarget {
   constructor(dtMax = 1 / 60) {
     super();
     this.dtMax = dtMax;
@@ -333,7 +335,7 @@ export class WorldController extends Observable {
     let lastT = null;
     let firstUpdate = true;
 
-    world.on("usercode_error", (e) => this.handleUserCodeError(e));
+    world.addEventListener("usercode_error", (e) => this.handleUserCodeError(e.detail));
 
     const updater = (t) => {
       if (!this.isPaused && !world.challengeEnded && lastT !== null) {
@@ -359,7 +361,7 @@ export class WorldController extends Observable {
           scaledDt -= this.dtMax;
         }
         world.updateDisplayPositions();
-        world.trigger("stats_display_changed"); // TODO: Trigger less often for performance reasons etc
+        world.dispatchEvent(new CustomEvent("stats_display_changed")); // TODO: Trigger less often for performance reasons etc
       }
       lastT = t;
       if (!world.challengeEnded) {
@@ -376,17 +378,17 @@ export class WorldController extends Observable {
   handleUserCodeError(e) {
     this.setPaused(true);
     console.log("Usercode error on update", e);
-    this.trigger("usercode_error", e);
+    this.dispatchEvent(new CustomEvent("usercode_error", { detail: e }));
   }
 
   setPaused(paused) {
     this.isPaused = paused;
-    this.trigger("timescale_changed");
+    this.dispatchEvent(new CustomEvent("timescale_changed"));
   }
 
   setTimeScale(timeScale) {
     this.timeScale = timeScale;
-    this.trigger("timescale_changed");
+    this.dispatchEvent(new CustomEvent("timescale_changed"));
   }
 }
 

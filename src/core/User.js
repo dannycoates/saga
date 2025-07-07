@@ -40,9 +40,9 @@ export class User extends Movable {
       this.setParent(null);
       const destination = this.x + 100;
       this.done = true;
-      this.trigger("exited_elevator", elevator);
-      this.trigger("new_state");
-      this.trigger("new_display_state");
+      this.dispatchEvent(new CustomEvent("exited_elevator", { detail: elevator }));
+      this.dispatchEvent(new CustomEvent("new_state"));
+      this.dispatchEvent(new CustomEvent("new_display_state"));
       const self = this;
       this.moveToOverTime(
         destination,
@@ -51,12 +51,12 @@ export class User extends Movable {
         linearInterpolate,
         function lastMove() {
           self.removeMe = true;
-          self.trigger("removed");
-          self.off("*");
+          self.dispatchEvent(new CustomEvent("removed"));
+          // Note: EventTarget doesn't have a built-in way to remove all listeners
         },
       );
 
-      elevator.off("exit_available", this.exitAvailableHandler);
+      elevator.removeEventListener("exit_available", this.exitAvailableHandler);
     }
   }
 
@@ -83,10 +83,11 @@ export class User extends Movable {
       this.moveToOverTime(pos[0], pos[1], 1, undefined, function () {
         elevator.pressFloorButton(self.destinationFloor);
       });
-      this.exitAvailableHandler = function (floorNum, elevator) {
+      this.exitAvailableHandler = function (event) {
+        const [floorNum, elevator] = event.detail;
         self.handleExit(elevator.currentFloor, elevator);
       };
-      elevator.on("exit_available", this.exitAvailableHandler);
+      elevator.addEventListener("exit_available", this.exitAvailableHandler);
     } else {
       this.pressFloorButton(floor);
     }

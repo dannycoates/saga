@@ -40,9 +40,9 @@ describe("World controller", () => {
       update: vi.fn(),
       init: vi.fn(),
       updateDisplayPositions: vi.fn(),
-      trigger: vi.fn(),
-      on: vi.fn(),
-      off: vi.fn(),
+      dispatchEvent: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
       challengeEnded: false,
       elevatorInterfaces: [],
       floors: [],
@@ -100,7 +100,7 @@ describe("World controller", () => {
     });
 
     const errorHandler = vi.fn();
-    controller.on("usercode_error", errorHandler);
+    controller.addEventListener("usercode_error", (e) => errorHandler(e.detail));
 
     controller.start(fakeWorld, fakeCodeObj, frameRequester.register, true);
     frameRequester.trigger();

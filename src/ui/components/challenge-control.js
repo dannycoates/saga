@@ -17,7 +17,7 @@ export class ChallengeControl extends HTMLElement {
 
   disconnectedCallback() {
     if (this._worldController) {
-      this._worldController.off('timescale_changed', this._timescaleHandler);
+      this._worldController.removeEventListener('timescale_changed', this._timescaleHandler);
     }
   }
 
@@ -33,7 +33,7 @@ export class ChallengeControl extends HTMLElement {
 
   set worldController(controller) {
     if (this._worldController) {
-      this._worldController.off('timescale_changed', this._timescaleHandler);
+      this._worldController.removeEventListener('timescale_changed', this._timescaleHandler);
     }
     
     this._worldController = controller;
@@ -43,7 +43,7 @@ export class ChallengeControl extends HTMLElement {
         this.setAttribute('time-scale', controller.timeScale.toFixed(0) + 'x');
         this.setAttribute('is-paused', controller.isPaused);
       };
-      controller.on('timescale_changed', this._timescaleHandler);
+      controller.addEventListener('timescale_changed', this._timescaleHandler);
       // Set initial values
       this.setAttribute('time-scale', controller.timeScale.toFixed(0) + 'x');
       this.setAttribute('is-paused', controller.isPaused);

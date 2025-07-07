@@ -21,8 +21,8 @@ describe('Floor class', () => {
     const buttonStateHandler = vi.fn();
     const upButtonHandler = vi.fn();
     
-    floor.on('buttonstate_change', buttonStateHandler);
-    floor.on('up_button_pressed', upButtonHandler);
+    floor.addEventListener('buttonstate_change', (e) => buttonStateHandler(e.detail));
+    floor.addEventListener('up_button_pressed', (e) => upButtonHandler(e.detail));
     
     floor.pressUpButton();
     
@@ -37,7 +37,7 @@ describe('Floor class', () => {
     floor.buttons.up = true;
     
     const buttonStateHandler = vi.fn();
-    floor.on('buttonstate_change', buttonStateHandler);
+    floor.addEventListener('buttonstate_change', (e) => buttonStateHandler(e.detail));
     
     floor.pressUpButton();
     
@@ -48,8 +48,8 @@ describe('Floor class', () => {
     const buttonStateHandler = vi.fn();
     const downButtonHandler = vi.fn();
     
-    floor.on('buttonstate_change', buttonStateHandler);
-    floor.on('down_button_pressed', downButtonHandler);
+    floor.addEventListener('buttonstate_change', (e) => buttonStateHandler(e.detail));
+    floor.addEventListener('down_button_pressed', (e) => downButtonHandler(e.detail));
     
     floor.pressDownButton();
     
@@ -65,7 +65,7 @@ describe('Floor class', () => {
     floor.buttons.down = true;
     
     const buttonStateHandler = vi.fn();
-    floor.on('buttonstate_change', buttonStateHandler);
+    floor.addEventListener('buttonstate_change', (e) => buttonStateHandler(e.detail));
     
     const elevator = {
       goingUpIndicator: true,
@@ -121,8 +121,8 @@ describe('Floor class', () => {
   it('handles errors with error handler', () => {
     const error = new Error('Test error');
     
-    // Mock trigger to throw an error
-    floor.trigger = vi.fn(() => { throw error; });
+    // Mock dispatchEvent to throw an error
+    floor.dispatchEvent = vi.fn(() => { throw error; });
     
     // Press button which will call tryTrigger
     floor.pressUpButton();

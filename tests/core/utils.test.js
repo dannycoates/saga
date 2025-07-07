@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import {
   limitNumber,
   epsilonEquals,
-  Observable,
 } from "../../src/core/utils.js";
 
 describe("Utils", () => {
@@ -26,34 +25,4 @@ describe("Utils", () => {
     });
   });
 
-  describe("Observable", () => {
-    it("should trigger events", () => {
-      const obs = new Observable();
-      let called = false;
-      let receivedArg;
-
-      obs.on("test", (arg) => {
-        called = true;
-        receivedArg = arg;
-      });
-
-      obs.trigger("test", "hello");
-      expect(called).toBe(true);
-      expect(receivedArg).toBe("hello");
-    });
-
-    it("should handle off", () => {
-      const obs = new Observable();
-      let callCount = 0;
-      const handler = () => callCount++;
-
-      obs.on("test", handler);
-      obs.trigger("test");
-      expect(callCount).toBe(1);
-
-      obs.off("test", handler);
-      obs.trigger("test");
-      expect(callCount).toBe(1);
-    });
-  });
 });

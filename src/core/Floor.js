@@ -1,6 +1,5 @@
-import { Observable } from "./utils.js";
 
-export class Floor extends Observable {
+export class Floor extends EventTarget {
   constructor(floorLevel, yPosition, errorHandler) {
     super();
 
@@ -11,9 +10,9 @@ export class Floor extends Observable {
   }
 
   // Helper method to safely trigger events with error handling
-  tryTrigger(event, arg1, arg2, arg3, arg4) {
+  tryTrigger(event, ...args) {
     try {
-      this.trigger(event, arg1, arg2, arg3, arg4);
+      this.dispatchEvent(new CustomEvent(event, { detail: args.length === 1 ? args[0] : args }));
     } catch (e) {
       this.errorHandler(e);
     }

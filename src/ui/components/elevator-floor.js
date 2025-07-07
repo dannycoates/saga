@@ -16,7 +16,7 @@ export class ElevatorFloor extends HTMLElement {
 
   disconnectedCallback() {
     if (this._floor) {
-      this._floor.off('buttonstate_change', this._buttonStateHandler);
+      this._floor.removeEventListener('buttonstate_change', this._buttonStateHandler);
     }
   }
 
@@ -28,7 +28,7 @@ export class ElevatorFloor extends HTMLElement {
 
   set floor(floor) {
     if (this._floor) {
-      this._floor.off('buttonstate_change', this._buttonStateHandler);
+      this._floor.removeEventListener('buttonstate_change', this._buttonStateHandler);
     }
 
     this._floor = floor;
@@ -39,11 +39,12 @@ export class ElevatorFloor extends HTMLElement {
       this.setAttribute('y-position', floor.yPosition);
       
       // Listen for button state changes
-      this._buttonStateHandler = (buttons) => {
+      this._buttonStateHandler = (event) => {
+        const buttons = event.detail || event;
         this.setAttribute('up-active', buttons.up);
         this.setAttribute('down-active', buttons.down);
       };
-      floor.on('buttonstate_change', this._buttonStateHandler);
+      floor.addEventListener('buttonstate_change', this._buttonStateHandler);
     }
   }
 

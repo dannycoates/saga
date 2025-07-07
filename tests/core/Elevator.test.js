@@ -49,7 +49,7 @@ describe('Elevator class', () => {
   it('presses floor button and triggers events', () => {
     const buttonsChangedHandler = vi.fn();
     
-    elevator.on('floor_buttons_changed', buttonsChangedHandler);
+    elevator.addEventListener('floor_buttons_changed', (e) => buttonsChangedHandler(...e.detail));
     
     elevator.pressFloorButton(5);
     
@@ -138,11 +138,11 @@ describe('Elevator class', () => {
 
   it('handles new state updates', () => {
     const newFloorHandler = vi.fn();
-    elevator.on('new_current_floor', newFloorHandler);
+    elevator.addEventListener('new_current_floor', (e) => newFloorHandler(e.detail));
     
     // Move elevator to a different floor position
     elevator.y = 200; // Floor 5 position
-    elevator.trigger('new_state');
+    elevator.dispatchEvent(new CustomEvent('new_state'));
     
     // Should update current floor
     expect(elevator.currentFloor).toBe(5);
