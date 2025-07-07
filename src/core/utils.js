@@ -40,100 +40,79 @@ export async function getCodeObjFromCode(code) {
   return obj;
 }
 
-export class Observable {
+export class Observable extends EventTarget {
   constructor() {
-    this.callbacks = {};
+    super();
+    this._listeners = new Map();
   }
 
   on(events, fn) {
-    let count = 0;
-    for (let i = 0, len = events.length; i < len; ++i) {
-      let name = "";
-      const i2 = events.indexOf(" ", i);
-      if (i2 < 0) {
-        if (i < events.length) {
-          name = events.slice(i);
-          count++;
-        }
-        i = len;
-      } else if (i2 - i > 1) {
-        name = events.slice(i, i2);
-        count++;
-        i = i2;
+    const eventNames = events.split(' ').filter(e => e.length > 0);
+    
+    const wrappedFn = (event) => {
+      const args = event.detail || [];
+      if (eventNames.length > 1) {
+        fn.call(this, event.type, ...args);
+      } else {
+        fn.call(this, ...args);
       }
-      if (name.length > 0) {
-        (this.callbacks[name] = this.callbacks[name] || []).push(fn);
+    };
+    
+    eventNames.forEach(eventName => {
+      if (!this._listeners.has(eventName)) {
+        this._listeners.set(eventName, new Map());
       }
-    }
-    fn.typed = count > 1;
+      this._listeners.get(eventName).set(fn, wrappedFn);
+      this.addEventListener(eventName, wrappedFn);
+    });
+    
     return this;
   }
 
   off(events, fn) {
     if (events === "*") {
-      this.callbacks = {};
+      this._listeners.forEach((fnMap, eventName) => {
+        fnMap.forEach(wrappedFn => {
+          this.removeEventListener(eventName, wrappedFn);
+        });
+      });
+      this._listeners.clear();
     } else if (fn) {
-      const fns = this.callbacks[events];
-      if (fns) {
-        const index = fns.indexOf(fn);
-        if (index !== -1) {
-          fns.splice(index, 1);
+      const eventNames = events.split(' ').filter(e => e.length > 0);
+      eventNames.forEach(eventName => {
+        const fnMap = this._listeners.get(eventName);
+        if (fnMap && fnMap.has(fn)) {
+          const wrappedFn = fnMap.get(fn);
+          this.removeEventListener(eventName, wrappedFn);
+          fnMap.delete(fn);
         }
-      }
+      });
     } else {
-      for (let i = 0, len = events.length; i < len; ++i) {
-        let name = "";
-        const i2 = events.indexOf(" ", i);
-        if (i2 < 0) {
-          if (i < events.length) {
-            name = events.slice(i);
-          }
-          i = len;
-        } else if (i2 - i > 1) {
-          name = events.slice(i, i2);
-          i = i2;
+      const eventNames = events.split(' ').filter(e => e.length > 0);
+      eventNames.forEach(eventName => {
+        const fnMap = this._listeners.get(eventName);
+        if (fnMap) {
+          fnMap.forEach(wrappedFn => {
+            this.removeEventListener(eventName, wrappedFn);
+          });
+          this._listeners.delete(eventName);
         }
-        if (name.length > 0) {
-          this.callbacks[name] = undefined;
-        }
-      }
+      });
     }
     return this;
   }
 
   one(name, fn) {
-    fn.one = true;
-    return this.on(name, fn);
+    const wrappedFn = (...args) => {
+      fn.apply(this, args);
+      this.off(name, fn);
+    };
+    return this.on(name, wrappedFn);
   }
 
-  trigger(name, arg1, arg2, arg3, arg4) {
-    const fns = this.callbacks[name];
-    if (!fns) {
-      return this;
-    }
-
-    // Create a copy to avoid issues with modifications during iteration
-    const fnsCopy = fns.slice();
-    for (let i = 0; i < fnsCopy.length; i++) {
-      const fn = fnsCopy[i];
-      // Check if function still exists in original array (it might have been removed)
-      if (fns.indexOf(fn) === -1) {
-        continue;
-      }
-
-      if (fn.typed) {
-        fn.call(this, name, arg1, arg2, arg3, arg4);
-      } else {
-        fn.call(this, arg1, arg2, arg3, arg4);
-      }
-      if (fn.one) {
-        const index = fns.indexOf(fn);
-        if (index !== -1) {
-          fns.splice(index, 1);
-        }
-        fn.one = false;
-      }
-    }
+  trigger(name, ...args) {
+    const event = new CustomEvent(name, { detail: args });
+    this.dispatchEvent(event);
     return this;
   }
 }
