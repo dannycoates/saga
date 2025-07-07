@@ -184,6 +184,16 @@ button:hover {
     border: 2px solid #f2e5bc;
 }
 
+/* CodeMirror 6 editor styles */
+.code .cm-editor {
+    font-size: 14px;
+    height: 100%;
+}
+
+.code .cm-content {
+    font-family: Consolas, Monaco, monospace;
+}
+
 .codestatus {
     padding-top: 10px;
     color: #cc241d; /* Gruvbox red for errors */

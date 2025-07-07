@@ -11,6 +11,8 @@ import {
 import { basicSetup, EditorView } from "codemirror";
 import { javascript } from "@codemirror/lang-javascript";
 import { gruvboxLight } from "cm6-theme-gruvbox-light";
+import { keymap } from "@codemirror/view";
+import { indentWithTab } from "@codemirror/commands";
 
 // Helper function to dedent multi-line strings
 function dedent(str) {
@@ -47,6 +49,7 @@ class CodeEditor extends EventTarget {
         basicSetup,
         javascript(),
         gruvboxLight,
+        keymap.of([indentWithTab]),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             this.autoSave();
