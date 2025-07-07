@@ -14,7 +14,6 @@ Elevator Saga is an elevator programming game where users write JavaScript code 
 - `npm run preview` - Preview production build
 
 ### Testing
-- `npm test` - Run tests in watch mode using Vitest
 - `npm run test:run` - Run tests once
 
 ## Architecture
@@ -54,10 +53,3 @@ Elevator Saga is an elevator programming game where users write JavaScript code 
 ## Testing Approach
 
 The project uses Vitest with JSDOM for testing. Test files are in `/tests/` and follow the naming pattern `*.test.js`. Tests focus on core game mechanics, entity behaviors, and utility functions.
-
-## Key Implementation Details
-
-- Game runs at 60 FPS with configurable time scaling
-- User code is evaluated in a sandboxed environment with error handling
-- State persistence via localStorage for user code
-- Observable pattern used for event handling throughout
