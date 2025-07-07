@@ -83,15 +83,15 @@ export class ElevatorStats extends HTMLElement {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          border-bottom: 1px solid #444;
+          border-bottom: 1px solid #504945; /* Gruvbox gray */
         }
 
         .key {
-          color: #999;
+          color: #928374; /* Gruvbox gray */
         }
 
         .value {
-          color: #fff;
+          color: #ebdbb2; /* Gruvbox light1 */
         }
       </style>
 

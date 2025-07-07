@@ -50,18 +50,18 @@ export class CodeStatus extends HTMLElement {
         h5 {
           margin-top: 0.4em;
           margin-bottom: 0.3em;
-          color: #555;
+          color: #3c3836; /* Gruvbox dark fg */
           font-weight: normal;
           font-size: 1em;
         }
 
         .error {
-          color: #d54;
+          color: #cc241d; /* Gruvbox red */
           display: ${hasError ? 'block' : 'none'};
         }
 
         .error-color {
-          color: #d54;
+          color: #cc241d; /* Gruvbox red */
         }
         
         .warning-icon {

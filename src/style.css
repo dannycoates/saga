@@ -1,7 +1,7 @@
 html,
 body {
-    background-color: #bfbd9f;
-    color: white;
+    background-color: #f2e5bc;
+    color: #3c3836; /* Gruvbox dark fg */
     margin: 0;
     padding: 0;
 }
@@ -28,25 +28,26 @@ h3,
 h4,
 h5,
 p {
-    color: #555;
+    color: #3c3836; /* Gruvbox dark fg */
 }
 
 .emphasis-color {
-    color: #f1f2d8;
-    text-shadow: 0 2px 0.4pt #555;
+    color: #d79921; /* Gruvbox yellow */
+    text-shadow: 0 2px 0.4pt #928374;
 }
 
 .error-color {
-    color: #d54;
+    color: #cc241d; /* Gruvbox red */
 }
 
 a {
-    color: #444;
+    color: #458588; /* Gruvbox blue */
     font-weight: bold;
     text-decoration: none;
 }
 a:hover {
     text-decoration: underline;
+    color: #076678; /* Gruvbox dark blue */
 }
 
 h2,
@@ -57,7 +58,7 @@ h5 {
 }
 
 dl {
-    color: #555;
+    color: #504945; /* Gruvbox gray */
 }
 dl dd {
     font:
@@ -75,7 +76,6 @@ dl dd {
     width: 1220px;
     margin: 0 auto;
     padding: 10px 0 20px 0;
-    background-color: #bfbd9f;
     gap: 4px;
 }
 
@@ -95,20 +95,19 @@ button {
     font-weight: bold;
     padding-left: 12px;
     padding-right: 12px;
-    color: #333;
-    background-color: #777;
-    text-shadow: 0 0 3px #aaa;
-    border: 1px solid #666;
+    color: #fbf1c7; /* Gruvbox light0 */
+    background-color: #458588; /* Gruvbox blue */
+    text-shadow: none;
+    border: 1px solid #076678; /* Gruvbox dark blue */
     border-radius: 5px;
     margin-right: 5px;
     cursor: pointer;
+    transition: background-color 0.2s ease;
 }
 
 button:hover {
-    background-color: #888;
+    background-color: #076678; /* Gruvbox dark blue */
 }
-
-/* button.right class removed - using flexbox instead */
 
 .blink {
     animation: blink 0.5s steps(3, start) infinite;
@@ -134,7 +133,7 @@ button:hover {
 }
 
 #save_message {
-    color: #555;
+    color: #928374; /* Gruvbox gray */
     font-size: 12px;
     line-height: 30px;
     margin: 0 20px;
@@ -145,6 +144,10 @@ button:hover {
     justify-content: space-between;
     align-items: center;
     height: 50px;
+    background-color: #f2e5bc; /* Gruvbox light0_soft */
+    padding: 0 12px;
+    border-radius: 4px;
+    margin-bottom: 4px;
 }
 
 .header h1 {
@@ -163,46 +166,36 @@ button:hover {
 }
 
 .challenge {
-    padding: 5px 0;
+    padding: 0.5rem 1.5rem;
+    background-color: #d5c4a1;
+    border-radius: 4px;
+    margin: 1rem 0;
 }
 
 .challenge h3 {
     line-height: 30px;
     font-size: 20px;
     margin: 0;
-}
-
-.timescale_decrease,
-.timescale_increase {
-    padding: 4px;
-    line-height: 20px;
-    cursor: pointer;
-}
-
-.timescale_increase {
-    margin-right: 10px;
+    color: #3c3836; /* Gruvbox dark fg */
 }
 
 .code {
     flex: 1;
+    border: 2px solid #f2e5bc;
 }
 
 .codestatus {
     padding-top: 10px;
-}
-
-.CodeMirror {
-    font:
-        14px Consolas,
-        Monaco,
-        monospace;
-    width: 1220px;
-    height: 100%;
+    color: #cc241d; /* Gruvbox red for errors */
 }
 
 .controls {
     display: flex;
     justify-content: space-between;
+    background-color: #f2e5bc; /* Gruvbox light0_soft */
+    padding: 8px;
+    border-radius: 4px;
+    margin-top: 4px;
 }
 
 .world {
@@ -237,8 +230,6 @@ button:hover {
     background-color: #333;
 }
 
-/* Stats styles moved to web component */
-
 .feedbackcontainer {
 }
 
@@ -247,39 +238,18 @@ button:hover {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    background-color: #f2e5bc; /* Gruvbox light0_soft */
+    padding: 8px 12px;
+    border-radius: 4px;
 }
 .footer h4 {
     font-size: 13px;
     margin: 0;
+    color: #504945; /* Gruvbox gray */
 }
 
 .help {
     margin-top: 20px;
     margin-bottom: 30px;
     font-size: 1.25rem;
-}
-
-.doctable {
-    margin-top: 10px;
-    margin-bottom: 20px;
-    color: #555;
-    border: none;
-}
-
-.doctable th,
-.doctable td {
-    text-align: left;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.doctable tr td:first-child {
-    padding-right: 5px;
-    color: #333;
-}
-
-.doctable td {
-    font:
-        1rem Consolas,
-        Monaco,
-        monospace;
 }
