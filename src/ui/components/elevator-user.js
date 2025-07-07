@@ -93,6 +93,25 @@ export class ElevatorUser extends HTMLElement {
     this.style['-webkit-transform'] = style;
   }
 
+  getUserSvg(userType) {
+    const svgMap = {
+      male: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="7" r="4"/>
+        <path d="M12 14c-4 0-7 2-7 5v2h14v-2c0-3-3-5-7-5z"/>
+      </svg>`,
+      female: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="7" r="4"/>
+        <path d="M12 14c-4 0-7 2-7 5v2h14v-2c0-3-3-5-7-5z"/>
+        <path d="M9 3c0-1 1-2 3-2s3 1 3 2c0 .5-1 4-1 4h-4s-1-3.5-1-4z"/>
+      </svg>`,
+      child: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="8" r="3"/>
+        <path d="M12 13c-3 0-5 1.5-5 3.5v1.5h10v-1.5c0-2-2-3.5-5-3.5z"/>
+      </svg>`
+    };
+    return svgMap[userType] || svgMap.male;
+  }
+
   render() {
     const userType = this.getAttribute('user-type') || 'male';
     const state = this.getAttribute('state') || '';
@@ -108,49 +127,37 @@ export class ElevatorUser extends HTMLElement {
         }
 
         .user-icon {
-          color: white;
-          text-shadow: 0 1px 3px black;
+          display: block;
+          width: 24px;
+          height: 24px;
         }
 
-        .user-icon.happy {
+        .user-icon svg {
+          width: 100%;
+          height: 100%;
+          fill: white;
+          filter: drop-shadow(0 1px 3px black);
+        }
+
+        .user-icon.happy svg {
           /* Future state */
         }
 
-        .user-icon.frustrated {
-          color: yellow;
+        .user-icon.frustrated svg {
+          fill: yellow;
         }
 
-        .user-icon.disappointed {
-          color: red;
+        .user-icon.disappointed svg {
+          fill: red;
         }
 
-        .user-icon.leaving {
-          color: #eee;
-        }
-
-        /* Font Awesome icons for users */
-        .user-icon::before {
-          font-family: FontAwesome;
-          font-weight: normal;
-          font-style: normal;
-          display: inline-block;
-          text-decoration: inherit;
-        }
-
-        .user-icon.fa-male::before {
-          content: "\\f183";
-        }
-
-        .user-icon.fa-female::before {
-          content: "\\f182";
-        }
-
-        .user-icon.fa-child::before {
-          content: "\\f1ae";
+        .user-icon.leaving svg {
+          fill: #eee;
         }
       </style>
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-      <i class="user-icon fa fa-${userType} ${state}"></i>
+      <span class="user-icon ${state}">
+        ${this.getUserSvg(userType)}
+      </span>
     `;
 
     this.updatePosition();

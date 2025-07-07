@@ -63,10 +63,21 @@ export class CodeStatus extends HTMLElement {
         .error-color {
           color: #d54;
         }
+        
+        .warning-icon {
+          display: inline-block;
+          width: 1em;
+          height: 1em;
+          vertical-align: text-bottom;
+          margin-right: 0.3em;
+        }
       </style>
       
       <h5 class="error">
-        <i class="fa fa-warning error-color"></i> 
+        <svg class="warning-icon error-color" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 1.5 L1 14.5 h14 Z" fill="currentColor"/>
+          <path d="M8 6 v4 M8 11.5 v0.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
         There is a problem with your code: <span id="error-content"></span>
       </h5>
     `;

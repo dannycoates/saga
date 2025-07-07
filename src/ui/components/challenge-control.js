@@ -99,7 +99,6 @@ export class ChallengeControl extends HTMLElement {
     const isPaused = this.getAttribute('is-paused') === 'true';
 
     this.shadowRoot.innerHTML = `
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
       <style>
         :host {
           display: flex;
@@ -157,6 +156,15 @@ export class ChallengeControl extends HTMLElement {
           line-height: 20px;
           cursor: pointer;
           color: #555;
+          display: inline-flex;
+          align-items: center;
+        }
+        
+        .timescale_decrease svg,
+        .timescale_increase svg {
+          width: 16px;
+          height: 16px;
+          fill: currentColor;
         }
 
         .time-scale-value {
@@ -182,9 +190,20 @@ export class ChallengeControl extends HTMLElement {
       </div>
       <div class="controls-group">
         <h3 class="timescale-controls">
-          <i class="fa fa-minus-square timescale_decrease unselectable"></i>
+          <span class="timescale_decrease unselectable">
+            <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+              <rect x="1" y="1" width="14" height="14" rx="2" fill="currentColor"/>
+              <rect x="4" y="7" width="8" height="2" fill="#f1f2d8"/>
+            </svg>
+          </span>
           <span class="time-scale-value">${timeScale}</span>
-          <i class="fa fa-plus-square timescale_increase unselectable"></i>
+          <span class="timescale_increase unselectable">
+            <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+              <rect x="1" y="1" width="14" height="14" rx="2" fill="currentColor"/>
+              <rect x="4" y="7" width="8" height="2" fill="#f1f2d8"/>
+              <rect x="7" y="4" width="2" height="8" fill="#f1f2d8"/>
+            </svg>
+          </span>
         </h3>
         <button class="startstop unselectable">${isPaused ? 'Start' : 'Stop'}</button>
       </div>

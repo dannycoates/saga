@@ -106,7 +106,9 @@ export class GameFeedback extends HTMLElement {
         ${
           nextUrl
             ? `
-          <a href="${nextUrl}">Next challenge <i class="fa fa-caret-right blink"></i></a>
+          <a href="${nextUrl}">Next challenge <svg class="blink" style="width: 1em; height: 1em; vertical-align: middle; margin-left: 0.2em;" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 3 L11 8 L6 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg></a>
         `
             : ""
         }

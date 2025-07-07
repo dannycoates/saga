@@ -108,7 +108,6 @@ export class ElevatorFloor extends HTMLElement {
     this.style.top = yPosition + 'px';
 
     this.shadowRoot.innerHTML = `
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
       <style>
         :host {
           position: absolute;
@@ -140,6 +139,14 @@ export class ElevatorFloor extends HTMLElement {
           color: rgba(255, 255, 255, 0.2);
         }
 
+        .buttonindicator svg {
+          width: 22px;
+          height: 22px;
+          vertical-align: middle;
+          margin: 0 2px;
+          fill: currentColor;
+        }
+
         .buttonindicator .activated {
           color: rgba(55, 255, 55, 1);
         }
@@ -151,8 +158,14 @@ export class ElevatorFloor extends HTMLElement {
       
       <span class="floornumber">${floorNumber}</span>
       <span class="buttonindicator">
-        <i class="fa fa-arrow-circle-up up ${upActive ? 'activated' : ''} ${hideUp ? 'invisible' : ''}"></i>
-        <i class="fa fa-arrow-circle-down down ${downActive ? 'activated' : ''} ${hideDown ? 'invisible' : ''}"></i>
+        <svg class="up ${upActive ? 'activated' : ''} ${hideUp ? 'invisible' : ''}" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="8" cy="8" r="7" fill="currentColor"/>
+          <path d="M8 11 L8 5 M5 8 L8 5 L11 8" fill="none" stroke="#4e585f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <svg class="down ${downActive ? 'activated' : ''} ${hideDown ? 'invisible' : ''}" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="8" cy="8" r="7" fill="currentColor"/>
+          <path d="M8 5 L8 11 M5 8 L8 11 L11 8" fill="none" stroke="#4e585f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
       </span>
     `;
   }
