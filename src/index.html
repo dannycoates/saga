@@ -17,28 +17,7 @@
             <div class="feedbackcontainer"></div>
             <div class="innerworld"></div>
             <div class="statscontainer">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Transported</th>
-                            <th>Elapsed time</th>
-                            <th>Transported/s</th>
-                            <th>Avg waiting time</th>
-                            <th>Max waiting time</th>
-                            <th>Moves</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td class="transportedcounter">0</td>
-                            <td class="elapsedtime">0.0s</td>
-                            <td class="transportedpersec">0.0</td>
-                            <td class="avgwaittime">0.0s</td>
-                            <td class="maxwaittime">0.0s</td>
-                            <td class="movecount">0</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <!-- Stats will be populated by web component -->
             </div>
         </div>
 
@@ -65,71 +44,54 @@
         </div>
     </div>
 
-    <!-- Templates -->
-    <script type="text/template" id="user-template">
-        <i class="movable fa user fa-{u.displayType} {state}"></i>
-    </script>
-
-    <script type="text/template" id="floor-template">
-        <div class="floor" style="top: {yPosition}px">
-            <span class="floornumber">{level}</span>
-            <span class="buttonindicator">
-                <i class="fa fa-arrow-circle-up up"></i>
-                <i class="fa fa-arrow-circle-down down"></i>
-            </span>
-        </div>
-    </script>
-
-    <script type="text/template" id="elevator-template">
-        <div class="elevator movable" style="width: {e.width}px">
-            <span class="directionindicator directionindicatorup"><i class="fa fa-arrow-circle-up up activated"></i></span>
-            <span class="floorindicator"><span></span></span>
-            <span class="directionindicator directionindicatordown"><i class="fa fa-arrow-circle-down down activated"></i></span>
-            <span class="buttonindicator"></span>
-        </div>
-    </script>
-
-    <script type="text/template" id="elevatorbutton-template">
-        <span class="buttonpress">{floorNum}</span>
-    </script>
-
-    <script type="text/template" id="feedback-template">
-        <div class="feedback">
-            <h2 class="emphasis-color">{title}</h2>
-            <p class="emphasis-color">{message}</p>
-            <a href="{url}" class="emphasis-color">Next challenge <i class="fa fa-caret-right blink" style="text-decoration: blink"></i></a>
-        </div>
-    </script>
-
-    <script type="text/template" id="challenge-template">
-        <div class="left">
-            <h3>Challenge #{num}: {challenge.condition.description}</h3>
-        </div>
-        <button class="right startstop unselectable" style="width: 110px">{startButtonText}</button>
-        <h3 class="right">
-            <i class="fa fa-minus-square timescale_decrease unselectable"></i>
-            <span class="emphasis-color" style="display: inline-block; width: 22px; text-align: center">{timeScale}</span>
-            <i class="fa fa-plus-square timescale_increase unselectable"></i>
-        </h3>
-    </script>
-
-    <script type="text/template" id="codestatus-template">
-        <h5 class="error" style="display: {errorDisplay}"><i class="fa fa-warning error-color"></i> There is a problem with your code: {errorMessage}</h5>
-    </script>
+    <!-- Templates removed - now using Web Components -->
 
     <script type="text/plain" id="default-elev-implementation">
-init: function(elevators, floors) {
-    var elevator = elevators[0]; // Let's use the first elevator
+/**
+* @class Floor
+* 
+*   Accessors:
+*    @member buttons {{up: boolean, down: boolean}}
+*    @member level {number}
+*
+*
+* @class Elevator
+*
+*   Accessors:
+*    @member currentFloor {number}
+*    @member destinationFloor {number | null}
+*    @member pressedFloorButtons {number[]}
+*    @member percentFull {0..1}
+*
+*   Actions:
+*    @func goToFloor(floorNum: number)
+*/
 
-    // Whenever the elevator is idle (has no more queued destinations) ...
-    elevator.on("idle", function() {
-        // let's go to all the floors (or did we forget one?)
-        elevator.goToFloor(0);
-        elevator.goToFloor(1);
-    });
-},
-update: function(dt, elevators, floors) {
-    // We normally don't need to do anything here
+let nextFloor = 0
+/** 
+* Init gets called once at the start
+* @param {Elevator[]} elevators
+* @param {Floor[]} floors
+*/
+export function init(elevators, floors) {
+  nextFloor = elevators[0].currentFloor + 1
+}
+
+/**
+* Update gets called on a regular, fast interval (a game loop)
+* @param {number} dt - elapsed game time since last update in seconds
+* @param {Elevator[]} elevators
+* @param {Floor[]} floors
+*/
+export function update(dt, elevators, floors) {
+  const elevator = elevators[0]
+  if (elevator.destinationFloor === null) {
+    if (nextFloor === floors.length) {
+      nextFloor = 0
+    }
+    nextFloor = nextFloor + 1
+    elevator.goToFloor(nextFloor)
+  }
 }
     </script>
 

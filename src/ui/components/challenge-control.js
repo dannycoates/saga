@@ -1,0 +1,208 @@
+export class ChallengeControl extends HTMLElement {
+  static get observedAttributes() {
+    return ['challenge-num', 'challenge-description', 'time-scale', 'is-paused'];
+  }
+
+  constructor() {
+    super();
+    this.attachShadow({ mode: 'open' });
+    this._app = null;
+    this._worldController = null;
+  }
+
+  connectedCallback() {
+    this.render();
+    this.attachEventListeners();
+  }
+
+  disconnectedCallback() {
+    if (this._worldController) {
+      this._worldController.off('timescale_changed', this._timescaleHandler);
+    }
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue !== newValue) {
+      this.updateDisplay();
+    }
+  }
+
+  set app(app) {
+    this._app = app;
+  }
+
+  set worldController(controller) {
+    if (this._worldController) {
+      this._worldController.off('timescale_changed', this._timescaleHandler);
+    }
+    
+    this._worldController = controller;
+    
+    if (controller) {
+      this._timescaleHandler = () => {
+        this.setAttribute('time-scale', controller.timeScale.toFixed(0) + 'x');
+        this.setAttribute('is-paused', controller.isPaused);
+      };
+      controller.on('timescale_changed', this._timescaleHandler);
+      // Set initial values
+      this.setAttribute('time-scale', controller.timeScale.toFixed(0) + 'x');
+      this.setAttribute('is-paused', controller.isPaused);
+    }
+  }
+
+  attachEventListeners() {
+    const startStopBtn = this.shadowRoot.querySelector('.startstop');
+    const increaseBtn = this.shadowRoot.querySelector('.timescale_increase');
+    const decreaseBtn = this.shadowRoot.querySelector('.timescale_decrease');
+
+    startStopBtn?.addEventListener('click', () => {
+      if (this._app) {
+        this._app.startStopOrRestart();
+      }
+    });
+
+    increaseBtn?.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (this._worldController && this._worldController.timeScale < 40) {
+        const timeScale = Math.round(this._worldController.timeScale * 1.618);
+        this._worldController.setTimeScale(timeScale);
+      }
+    });
+
+    decreaseBtn?.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (this._worldController) {
+        const timeScale = Math.round(this._worldController.timeScale / 1.618);
+        this._worldController.setTimeScale(timeScale);
+      }
+    });
+  }
+
+  updateDisplay() {
+    const button = this.shadowRoot.querySelector('.startstop');
+    const timeDisplay = this.shadowRoot.querySelector('.time-scale-value');
+    
+    if (button) {
+      const isPaused = this.getAttribute('is-paused') === 'true';
+      button.textContent = isPaused ? 'Start' : 'Stop';
+    }
+    
+    if (timeDisplay) {
+      timeDisplay.textContent = this.getAttribute('time-scale') || '1x';
+    }
+  }
+
+  render() {
+    const challengeNum = this.getAttribute('challenge-num') || '';
+    const description = this.getAttribute('challenge-description') || '';
+    const timeScale = this.getAttribute('time-scale') || '1x';
+    const isPaused = this.getAttribute('is-paused') === 'true';
+
+    this.shadowRoot.innerHTML = `
+      <style>
+        :host {
+          display: block;
+          padding: 5px 0;
+        }
+
+        .container {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        .left {
+          float: left;
+        }
+
+        .right {
+          float: right;
+        }
+
+        h3 {
+          line-height: 30px;
+          font-size: 20px;
+          margin: 0;
+          color: #555;
+          font-weight: normal;
+        }
+
+        button {
+          height: 32px;
+          line-height: 18px;
+          font-size: 17px;
+          font-weight: bold;
+          padding-left: 12px;
+          padding-right: 12px;
+          color: #333;
+          background-color: #777;
+          text-shadow: 0 0 3px #aaa;
+          border: 1px solid #666;
+          border-radius: 5px;
+          margin-right: 5px;
+          cursor: pointer;
+          margin-left: 5px;
+          margin-right: 0;
+        }
+
+        button:hover {
+          background-color: #888;
+        }
+
+        .timescale_decrease,
+        .timescale_increase {
+          padding: 4px;
+          line-height: 20px;
+          cursor: pointer;
+          color: #555;
+        }
+
+        .timescale_increase {
+          margin-right: 10px;
+        }
+
+        .time-scale-value {
+          color: #f1f2d8;
+          text-shadow: 0 2px 0.4pt #555;
+          display: inline-block;
+          width: 22px;
+          text-align: center;
+        }
+
+        .unselectable {
+          -webkit-touch-callout: none;
+          -webkit-user-select: none;
+          -khtml-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
+        }
+
+        /* Clear floats */
+        :host::after {
+          content: "";
+          display: table;
+          clear: both;
+        }
+      </style>
+      
+      <div class="left">
+        <h3>Challenge #${challengeNum}: <span id="description"></span></h3>
+      </div>
+      <button class="right startstop unselectable" style="width: 110px">${isPaused ? 'Start' : 'Stop'}</button>
+      <h3 class="right">
+        <i class="fa fa-minus-square timescale_decrease unselectable"></i>
+        <span class="time-scale-value">${timeScale}</span>
+        <i class="fa fa-plus-square timescale_increase unselectable"></i>
+      </h3>
+    `;
+
+    // Set HTML content for description to preserve formatting
+    const descElem = this.shadowRoot.querySelector('#description');
+    if (descElem) {
+      descElem.innerHTML = description;
+    }
+  }
+}
+
+customElements.define('challenge-control', ChallengeControl);

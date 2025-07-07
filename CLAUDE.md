@@ -4,71 +4,60 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Elevator Saga is an educational programming game where players write JavaScript code to control elevators and complete transportation challenges. It runs entirely in the browser using vanilla JavaScript without a build system.
+Elevator Saga is an elevator programming game where users write JavaScript code to control elevators efficiently. The game is built with Vite, uses CodeMirror for the code editor, and runs in the browser.
 
-## Common Development Commands
+## Commands
 
-### Running the Application
-- Open `index.html` in a web browser to run the game locally
-- No build step required - this is a vanilla JavaScript application
+### Development
+- `npm run dev` - Start development server on port 3000 with hot reloading
+- `npm run build` - Build for production (outputs to `dist/`)
+- `npm run preview` - Preview production build
 
-### Running Tests
-- Open `test/index.html` in a web browser to run the Jasmine test suite
-- All tests are in `test/tests.js`
-- Performance tests available at `test/performance.html`
+### Testing
+- `npm test` - Run tests in watch mode using Vitest
+- `npm run test:run` - Run tests once
 
-## Architecture Overview
+## Architecture
 
-### Core Game Engine
-The game simulation is built around these key components:
+### Key Directories
+- `/src/core/` - Core game engine components (Elevator, Floor, User, World, etc.)
+- `/src/game/` - Game logic including challenges and fitness evaluation
+- `/src/ui/` - UI presentation layer
+- `/tests/` - Test files mirroring src structure
 
-- **World** (`world.js`): Main game loop and simulation controller
-- **Elevator** (`elevator.js`): Elevator logic, movement, and passenger handling
-- **Floor** (`floor.js`): Floor management and user spawning
-- **User** (`user.js`): Passenger behavior and pathfinding
-- **Interfaces** (`interfaces.js`): Public API exposed to player code
+### Core Components
 
-### UI and Presentation
-- **App** (`app.js`): Main application controller, handles UI state and code execution
-- **Presenters** (`presenters.js`): Visual rendering using Riot.js for reactive updates
-- Uses CodeMirror for the in-browser code editor
+1. **World System** (`src/core/World.js`)
+   - `WorldCreator` - Creates floors and elevators
+   - `WorldController` - Manages game state, user spawning, and time progression
+   - Handles the main game loop and physics
 
-### Challenge System
-- **Challenges** (`challenges.js`): Defines all game levels with objectives and constraints
-- **Fitness** (`fitness.js`, `fitnessworker.js`): Evaluates player solutions using web workers
+2. **Game Entities**
+   - `Elevator` - Elevator state and behavior (capacity, movement, queue management)
+   - `Floor` - Floor state and user queues
+   - `User` - Individual users with destinations and wait times
+   - All entities extend `Movable` for position/animation handling
 
-### Player Code Execution
-Players implement two functions that control elevator behavior:
-- `init(elevators, floors)`: Called once at start
-- `update(dt, elevators, floors)`: Called each frame
+3. **Player Code Interface** (`src/core/interfaces.js`)
+   - Players implement `init(elevators, floors)` and `update(dt, elevators, floors)`
+   - Elevator and floor objects are wrapped with safe interfaces before exposure
 
-The player's code is evaluated in a sandboxed environment with access only to the public elevator/floor APIs.
+4. **Challenge System** (`src/game/challenges.js`)
+   - Defines success criteria for each level
+   - Evaluates performance metrics (transported users, wait times, moves)
 
-## Key Development Patterns
+5. **UI Layer** (`src/app.js`, `src/ui/presenters.js`)
+   - CodeMirror integration for code editing
+   - Real-time visualization of elevator state
+   - Challenge selection and progress tracking
 
-### No Build System
-- Direct script imports in HTML files
-- Dependencies vendored in `libs/` directory
-- No transpilation or bundling
+## Testing Approach
 
-### Testing Approach
-- Browser-based Jasmine tests
-- Test by opening `test/index.html`
-- Focus on unit tests for core game logic
+The project uses Vitest with JSDOM for testing. Test files are in `/tests/` and follow the naming pattern `*.test.js`. Tests focus on core game mechanics, entity behaviors, and utility functions.
 
-### Code Style
-- Vanilla ES5/ES6 JavaScript
-- jQuery for DOM manipulation
-- Lodash for utilities
-- Object-oriented design with prototypal inheritance
+## Key Implementation Details
 
-## Important Notes
-
-- The project is not actively maintained per README
-- All game assets and libraries are self-contained (no CDN dependencies except fonts)
-- The game saves player code to localStorage for persistence
-
-## Development
-
-- use todo tools to keep track of work that needs to be done
-- use tasks tools for research
+- Game runs at 60 FPS with configurable time scaling
+- User code is evaluated in a sandboxed environment with error handling
+- State persistence via localStorage for user code
+- Observable pattern used for event handling throughout

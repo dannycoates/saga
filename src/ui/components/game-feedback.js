@@ -1,0 +1,96 @@
+export class GameFeedback extends HTMLElement {
+  static get observedAttributes() {
+    return ['title', 'message', 'next-url'];
+  }
+
+  constructor() {
+    super();
+    this.attachShadow({ mode: 'open' });
+  }
+
+  connectedCallback() {
+    this.render();
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue !== newValue) {
+      this.render();
+    }
+  }
+
+  render() {
+    const title = this.getAttribute('title') || '';
+    const message = this.getAttribute('message') || '';
+    const nextUrl = this.getAttribute('next-url') || '';
+
+    this.shadowRoot.innerHTML = `
+      <style>
+        :host {
+          display: block;
+        }
+
+        .feedback {
+          position: absolute;
+          width: 1220px;
+          height: 100%;
+          padding-top: 20px;
+          line-height: 20px;
+          text-align: center;
+          background-color: rgba(44, 44, 44, 0.6);
+          z-index: 5;
+          overflow: hidden;
+        }
+
+        h2, p {
+          color: #f1f2d8;
+          text-shadow: 0 2px 0.4pt #555;
+          margin-top: 0.4em;
+          margin-bottom: 0.3em;
+          font-weight: normal;
+        }
+
+        h2 {
+          font-size: 2em;
+        }
+
+        a {
+          color: #f1f2d8;
+          text-shadow: 0 2px 0.4pt #555;
+          font-weight: bold;
+          text-decoration: none;
+        }
+
+        a:hover {
+          text-decoration: underline;
+        }
+
+        .blink {
+          animation: blink 0.5s steps(3, start) infinite;
+          -webkit-animation: blink 0.5s steps(3, start) infinite;
+        }
+
+        @keyframes blink {
+          to {
+            visibility: hidden;
+          }
+        }
+
+        @-webkit-keyframes blink {
+          to {
+            visibility: hidden;
+          }
+        }
+      </style>
+      
+      <div class="feedback">
+        <h2>${title}</h2>
+        <p>${message}</p>
+        ${nextUrl ? `
+          <a href="${nextUrl}">Next challenge <i class="fa fa-caret-right blink"></i></a>
+        ` : ''}
+      </div>
+    `;
+  }
+}
+
+customElements.define('game-feedback', GameFeedback);

@@ -101,17 +101,6 @@ export class ElevatorApp extends Observable {
     this.challengeElem = document.querySelector('.challenge');
     this.codestatusElem = document.querySelector('.codestatus');
     
-    // Templates
-    this.templates = {
-      floor: document.getElementById('floor-template').innerHTML.trim(),
-      elevator: document.getElementById('elevator-template').innerHTML.trim(),
-      elevatorButton: document.getElementById('elevatorbutton-template').innerHTML.trim(),
-      user: document.getElementById('user-template').innerHTML.trim(),
-      challenge: document.getElementById('challenge-template').innerHTML.trim(),
-      feedback: document.getElementById('feedback-template').innerHTML.trim(),
-      codeStatus: document.getElementById('codestatus-template').innerHTML.trim()
-    };
-    
     // Setup editor
     const codeArea = document.getElementById('code');
     this.editor = new CodeEditor(codeArea, 'develevate_code');
@@ -150,11 +139,11 @@ export class ElevatorApp extends Observable {
     });
 
     this.editor.on('code_success', () => {
-      presentCodeStatus(this.codestatusElem, this.templates.codeStatus);
+      presentCodeStatus(this.codestatusElem, null);
     });
 
     this.editor.on('usercode_error', (error) => {
-      presentCodeStatus(this.codestatusElem, this.templates.codeStatus, error);
+      presentCodeStatus(this.codestatusElem, null, error);
     });
 
     // World controller error handling
@@ -209,6 +198,7 @@ export class ElevatorApp extends Observable {
       this.startChallenge(this.currentChallengeIndex, true);
     } else {
       this.worldController.setPaused(!this.worldController.isPaused);
+      // The challenge control component will update automatically via its worldController property
     }
   }
 
@@ -226,36 +216,28 @@ export class ElevatorApp extends Observable {
     clearElems.forEach(elem => elem.innerHTML = '');
     
     presentStats(this.statsElem, this.world);
-    presentChallenge(
+    this.challengePresenter = presentChallenge(
       this.challengeElem,
       challenges[challengeIndex],
       this,
       this.world,
       this.worldController,
       challengeIndex + 1,
-      this.templates.challenge
+      null
     );
     presentWorld(
       this.worldElem,
       this.world,
-      this.templates.floor,
-      this.templates.elevator,
-      this.templates.elevatorButton,
-      this.templates.user
+      null,
+      null,
+      null,
+      null
     );
     
     // Setup timescale change handler
     this.worldController.on('timescale_changed', () => {
       localStorage.setItem('elevatorTimeScale', this.worldController.timeScale);
-      presentChallenge(
-        this.challengeElem,
-        challenges[challengeIndex],
-        this,
-        this.world,
-        this.worldController,
-        challengeIndex + 1,
-        this.templates.challenge
-      );
+      // The challenge control component will update automatically via its worldController property
     });
     
     // Setup challenge completion handler
@@ -268,7 +250,7 @@ export class ElevatorApp extends Observable {
         if (challengeStatus) {
           presentFeedback(
             this.feedbackElem,
-            this.templates.feedback,
+            null,
             this.world,
             'Success!',
             'Challenge completed',
@@ -277,7 +259,7 @@ export class ElevatorApp extends Observable {
         } else {
           presentFeedback(
             this.feedbackElem,
-            this.templates.feedback,
+            null,
             this.world,
             'Challenge failed',
             'Maybe your program needs an improvement?',
