@@ -3,8 +3,6 @@ import {
   limitNumber,
   epsilonEquals,
   Observable,
-  sum,
-  sortBy,
 } from "../../src/core/utils.js";
 
 describe("Utils", () => {
@@ -56,26 +54,6 @@ describe("Utils", () => {
       obs.off("test", handler);
       obs.trigger("test");
       expect(callCount).toBe(1);
-    });
-  });
-
-  describe("Array utilities", () => {
-    it("should sum array", () => {
-      expect(sum([1, 2, 3, 4])).toBe(10);
-      expect(sum([])).toBe(0);
-    });
-
-    it("should sort by property", () => {
-      const items = [
-        { name: "c", val: 3 },
-        { name: "a", val: 1 },
-        { name: "b", val: 2 },
-      ];
-
-      const sorted = sortBy(items, "val");
-      expect(sorted[0].name).toBe("a");
-      expect(sorted[1].name).toBe("b");
-      expect(sorted[2].name).toBe("c");
     });
   });
 });

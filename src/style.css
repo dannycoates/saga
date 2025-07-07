@@ -133,8 +133,7 @@ button:hover {
     opacity: 0.4;
 }
 
-#save_message,
-#fitness_message {
+#save_message {
     color: #555;
     font-size: 12px;
     line-height: 30px;

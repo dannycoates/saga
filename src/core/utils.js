@@ -29,28 +29,6 @@ export function accelerationNeededToAchieveChangeDistance(
   return requiredAcceleration;
 }
 
-// Fake frame requester helper used for testing and fitness simulations
-export function createFrameRequester(timeStep) {
-  let currentT = 0.0;
-  let currentCb = null;
-
-  const requester = {
-    get currentT() {
-      return currentT;
-    },
-    register(cb) {
-      currentCb = cb;
-    },
-    trigger() {
-      currentT += timeStep;
-      if (currentCb !== null) {
-        currentCb(currentT);
-      }
-    },
-  };
-  return requester;
-}
-
 export async function getCodeObjFromCode(code) {
   // Use vite-ignore comment to suppress warning about dynamic import
   const obj = await import(
@@ -176,20 +154,6 @@ export function range(start, end) {
     result.push(i);
   }
   return result;
-}
-
-export function sum(array) {
-  return array.reduce((acc, val) => acc + val, 0);
-}
-
-export function sortBy(array, iteratee) {
-  return [...array].sort((a, b) => {
-    const aVal = typeof iteratee === "function" ? iteratee(a) : a[iteratee];
-    const bVal = typeof iteratee === "function" ? iteratee(b) : b[iteratee];
-    if (aVal < bVal) return -1;
-    if (aVal > bVal) return 1;
-    return 0;
-  });
 }
 
 // Throttle implementation (replacing lodash)

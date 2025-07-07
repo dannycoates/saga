@@ -2,7 +2,7 @@ import { Observable, getCodeObjFromCode, throttle } from "./core/utils.js";
 
 // Helper function to dedent multi-line strings
 function dedent(str) {
-  const lines = str.split('\n');
+  const lines = str.split("\n");
   // Find minimum indentation (ignoring empty lines)
   let minIndent = Infinity;
   for (const line of lines) {
@@ -13,13 +13,12 @@ function dedent(str) {
   }
   // Remove the common indentation
   if (minIndent < Infinity) {
-    return lines.map(line => line.slice(minIndent)).join('\n');
+    return lines.map((line) => line.slice(minIndent)).join("\n");
   }
   return str;
 }
 import { createWorldCreator, createWorldController } from "./core/World.js";
 import { challenges } from "./game/challenges.js";
-import { fitnessSuite } from "./game/fitness.js";
 import {
   presentStats,
   presentChallenge,
@@ -40,7 +39,7 @@ class CodeEditor extends Observable {
     this.storageKey = storageKey;
 
     const defaultCode = dedent(
-      document.getElementById("default-elev-implementation").textContent
+      document.getElementById("default-elev-implementation").textContent,
     ).trim();
     const existingCode = localStorage.getItem(storageKey) || defaultCode;
 
@@ -64,7 +63,7 @@ class CodeEditor extends Observable {
 
   reset() {
     const defaultCode = dedent(
-      document.getElementById("default-elev-implementation").textContent
+      document.getElementById("default-elev-implementation").textContent,
     ).trim();
     this.view.dispatch({
       changes: { from: 0, to: this.view.state.doc.length, insert: defaultCode },
@@ -103,7 +102,7 @@ class CodeEditor extends Observable {
 
   setDevTestCode() {
     const devCode = dedent(
-      document.getElementById("devtest-elev-implementation").textContent
+      document.getElementById("devtest-elev-implementation").textContent,
     ).trim();
     this.setCode(devCode);
   }
@@ -215,7 +214,7 @@ export class ElevatorApp extends Observable {
     }
 
     // Start challenge - always start paused unless explicitly specified
-    const shouldAutoStart = params.autostart === 'true';
+    const shouldAutoStart = params.autostart === "true";
     this.startChallenge(this.currentChallengeIndex, shouldAutoStart);
   }
 
