@@ -167,6 +167,11 @@ export class ElevatorApp extends Observable {
     this.worldController.on("usercode_error", (error) => {
       this.editor.trigger("usercode_error", error);
     });
+
+    // Handle browser back/forward navigation
+    window.addEventListener("hashchange", () => {
+      this.loadFromUrl();
+    });
   }
 
   loadFromUrl() {
@@ -191,12 +196,9 @@ export class ElevatorApp extends Observable {
       makeDemoFullscreen();
     }
 
-    // Start challenge
-    if (params.paused) {
-      this.startChallenge(this.currentChallengeIndex, false);
-    } else {
-      this.startChallenge(this.currentChallengeIndex, true);
-    }
+    // Start challenge - always start paused unless explicitly specified
+    const shouldAutoStart = params.autostart === 'true';
+    this.startChallenge(this.currentChallengeIndex, shouldAutoStart);
   }
 
   parseParams() {
@@ -213,10 +215,12 @@ export class ElevatorApp extends Observable {
 
   startStopOrRestart() {
     if (this.worldController.isPaused) {
+      // Start button clicked - start the challenge
       this.startChallenge(this.currentChallengeIndex, true);
     } else {
-      this.worldController.setPaused(!this.worldController.isPaused);
-      // The challenge control component will update automatically via its worldController property
+      // Stop button clicked - reset the game state
+      this.worldController.setPaused(true);
+      this.startChallenge(this.currentChallengeIndex, false);
     }
   }
 

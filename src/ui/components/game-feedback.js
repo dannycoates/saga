@@ -10,11 +10,28 @@ export class GameFeedback extends HTMLElement {
 
   connectedCallback() {
     this.render();
+    this.attachEventListeners();
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue !== newValue) {
       this.render();
+      this.attachEventListeners();
+    }
+  }
+
+  attachEventListeners() {
+    const link = this.shadowRoot.querySelector('a');
+    if (link) {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const nextUrl = this.getAttribute('next-url');
+        if (nextUrl) {
+          // Update the URL hash to trigger the app to load the next challenge
+          window.location.hash = nextUrl.replace('#', '');
+          // The hashchange event will trigger loadFromUrl() automatically
+        }
+      });
     }
   }
 

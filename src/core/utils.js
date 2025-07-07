@@ -8,17 +8,21 @@ export function epsilonEquals(a, b) {
 }
 
 export function deprecationWarning(name) {
-  console.warn("You are using a deprecated feature scheduled for removal: " + name);
+  console.warn(
+    "You are using a deprecated feature scheduled for removal: " + name,
+  );
 }
 
 export function newGuard(obj, type) {
   if (!(obj instanceof type)) {
-    throw "Incorrect instantiation, got " + typeof obj + " but expected " + type;
+    throw (
+      "Incorrect instantiation, got " + typeof obj + " but expected " + type
+    );
   }
 }
 
 export function createBoolPassthroughFunction(owner, obj, objPropertyName) {
-  return function(val) {
+  return function (val) {
     if (typeof val !== "undefined") {
       obj[objPropertyName] = val ? true : false;
       obj.trigger("change:" + objPropertyName, obj[objPropertyName]);
@@ -29,15 +33,25 @@ export function createBoolPassthroughFunction(owner, obj, objPropertyName) {
   };
 }
 
-export function distanceNeededToAchieveSpeed(currentSpeed, targetSpeed, acceleration) {
+export function distanceNeededToAchieveSpeed(
+  currentSpeed,
+  targetSpeed,
+  acceleration,
+) {
   // v² = u² + 2a * d
-  const requiredDistance = (Math.pow(targetSpeed, 2) - Math.pow(currentSpeed, 2)) / (2 * acceleration);
+  const requiredDistance =
+    (Math.pow(targetSpeed, 2) - Math.pow(currentSpeed, 2)) / (2 * acceleration);
   return requiredDistance;
 }
 
-export function accelerationNeededToAchieveChangeDistance(currentSpeed, targetSpeed, distance) {
+export function accelerationNeededToAchieveChangeDistance(
+  currentSpeed,
+  targetSpeed,
+  distance,
+) {
   // v² = u² + 2a * d
-  const requiredAcceleration = 0.5 * ((Math.pow(targetSpeed, 2) - Math.pow(currentSpeed, 2)) / distance);
+  const requiredAcceleration =
+    0.5 * ((Math.pow(targetSpeed, 2) - Math.pow(currentSpeed, 2)) / distance);
   return requiredAcceleration;
 }
 
@@ -45,9 +59,11 @@ export function accelerationNeededToAchieveChangeDistance(currentSpeed, targetSp
 export function createFrameRequester(timeStep) {
   let currentT = 0.0;
   let currentCb = null;
-  
+
   const requester = {
-    get currentT() { return currentT; },
+    get currentT() {
+      return currentT;
+    },
     register(cb) {
       currentCb = cb;
     },
@@ -56,14 +72,16 @@ export function createFrameRequester(timeStep) {
       if (currentCb !== null) {
         currentCb(currentT);
       }
-    }
+    },
   };
   return requester;
 }
 
 export async function getCodeObjFromCode(code) {
   // Use vite-ignore comment to suppress warning about dynamic import
-  const obj = await import(/* @vite-ignore */ `data:text/javascript,${encodeURIComponent(code.trim())}`);
+  const obj = await import(
+    /* @vite-ignore */ `data:text/javascript,${encodeURIComponent(code.trim())}`
+  );
   if (typeof obj.init !== "function") {
     throw "Code must contain an init function";
   }
@@ -74,24 +92,6 @@ export async function getCodeObjFromCode(code) {
 }
 
 // Observable implementation (replacement for unobservable)
-class CustomArray {
-  constructor(numPreallocated = 0) {
-    this.arr = new Array(numPreallocated);
-    this.len = 0;
-  }
-
-  push(e) {
-    this.arr[this.len++] = e;
-  }
-
-  removeAt(index) {
-    for (let j = index + 1; j < this.len; j++) {
-      this.arr[j - 1] = this.arr[j];
-    }
-    this.len--;
-  }
-}
-
 export class Observable {
   constructor() {
     this.callbacks = {};
@@ -115,7 +115,7 @@ export class Observable {
         i = i2;
       }
       if (name.length > 0) {
-        (this.callbacks[name] = this.callbacks[name] || new CustomArray()).push(fn);
+        (this.callbacks[name] = this.callbacks[name] || []).push(fn);
       }
     }
     fn.typed = count > 1;
@@ -128,12 +128,9 @@ export class Observable {
     } else if (fn) {
       const fns = this.callbacks[events];
       if (fns) {
-        for (let i = 0; i < fns.len; ++i) {
-          const cb = fns.arr[i];
-          if (cb === fn) {
-            fns.removeAt(i);
-            break;
-          }
+        const index = fns.indexOf(fn);
+        if (index !== -1) {
+          fns.splice(index, 1);
         }
       }
     } else {
@@ -168,19 +165,26 @@ export class Observable {
       return this;
     }
 
-    for (let i = 0; i < fns.len; i++) {
-      const fn = fns.arr[i];
+    // Create a copy to avoid issues with modifications during iteration
+    const fnsCopy = fns.slice();
+    for (let i = 0; i < fnsCopy.length; i++) {
+      const fn = fnsCopy[i];
+      // Check if function still exists in original array (it might have been removed)
+      if (fns.indexOf(fn) === -1) {
+        continue;
+      }
+
       if (fn.typed) {
         fn.call(this, name, arg1, arg2, arg3, arg4);
       } else {
         fn.call(this, arg1, arg2, arg3, arg4);
       }
       if (fn.one) {
-        fns.removeAt(i);
+        const index = fns.indexOf(fn);
+        if (index !== -1) {
+          fns.splice(index, 1);
+        }
         fn.one = false;
-        i--;
-      } else if (fns.arr[i] && fns.arr[i] !== fn) {
-        i--;
       }
     }
     return this;
@@ -225,8 +229,8 @@ export function sum(array) {
 
 export function sortBy(array, iteratee) {
   return [...array].sort((a, b) => {
-    const aVal = typeof iteratee === 'function' ? iteratee(a) : a[iteratee];
-    const bVal = typeof iteratee === 'function' ? iteratee(b) : b[iteratee];
+    const aVal = typeof iteratee === "function" ? iteratee(a) : a[iteratee];
+    const bVal = typeof iteratee === "function" ? iteratee(b) : b[iteratee];
     if (aVal < bVal) return -1;
     if (aVal > bVal) return 1;
     return 0;
@@ -249,7 +253,7 @@ export function each(collection, iteratee) {
   if (Array.isArray(collection)) {
     collection.forEach(iteratee);
   } else {
-    Object.keys(collection).forEach(key => iteratee(collection[key], key));
+    Object.keys(collection).forEach((key) => iteratee(collection[key], key));
   }
 }
 
@@ -257,13 +261,13 @@ export function each(collection, iteratee) {
 export function throttle(func, wait) {
   let timeout;
   let previous = 0;
-  
+
   return function throttled() {
     const now = Date.now();
     const remaining = wait - (now - previous);
     const context = this;
     const args = arguments;
-    
+
     if (remaining <= 0 || remaining > wait) {
       if (timeout) {
         clearTimeout(timeout);
