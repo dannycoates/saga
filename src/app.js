@@ -10,7 +10,7 @@ import {
 } from "./ui/presenters.js";
 import { basicSetup, EditorView } from "codemirror";
 import { javascript } from "@codemirror/lang-javascript";
-import { oneDark } from "@codemirror/theme-one-dark";
+import { gruvboxLight } from "cm6-theme-gruvbox-light";
 
 // Helper function to dedent multi-line strings
 function dedent(str) {
@@ -46,7 +46,7 @@ class CodeEditor extends EventTarget {
       extensions: [
         basicSetup,
         javascript(),
-        oneDark,
+        gruvboxLight,
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             this.autoSave();
