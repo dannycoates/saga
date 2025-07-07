@@ -37,9 +37,27 @@ Elevator Saga is an elevator programming game where users write JavaScript code 
    - `User` - Individual users with destinations and wait times
    - All entities extend `Movable` for position/animation handling
 
-3. **Player Code Interface** (`src/core/interfaces.js`)
-   - Players implement `update(dt, elevators, floors)` (init function is optional)
-   - Elevator and floor objects are wrapped with safe interfaces before exposure
+3. **Player Code Interface**
+   - Players implement `update(dt, elevators, floors)`
+   - The game API is this:
+   ```js
+   /**
+     * @class Floor
+     *   Accessors:
+     *    @member buttons {{up: boolean, down: boolean}}
+     *    @member level {number}
+     *
+     * @class Elevator
+     *   Accessors:
+     *    @member currentFloor {number}
+     *    @member destinationFloor {number | null}
+     *    @member pressedFloorButtons {number[]}
+     *    @member percentFull {0..1}
+     *
+     *   Actions:
+     *    @func goToFloor(floorNum: number)
+     */
+     ```
 
 4. **Challenge System** (`src/game/challenges.js`)
    - Defines success criteria for each level

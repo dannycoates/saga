@@ -53,8 +53,8 @@ export class Elevator extends Movable {
     const slot = this.userSlots
       .slice(randomOffset)
       .concat(this.userSlots.slice(0, randomOffset))
-      .find(slot => slot.user === null);
-    
+      .find((slot) => slot.user === null);
+
     if (slot) {
       slot.user = user;
       return slot.pos;
@@ -67,12 +67,16 @@ export class Elevator extends Movable {
     const prev = this.buttons[floorNumber];
     this.buttons[floorNumber] = true;
     if (!prev) {
-      this.dispatchEvent(new CustomEvent("floor_buttons_changed", { detail: [this.buttons, floorNumber] }));
+      this.dispatchEvent(
+        new CustomEvent("floor_buttons_changed", {
+          detail: [this.buttons, floorNumber],
+        }),
+      );
     }
   }
 
   userExiting(user) {
-    const slot = this.userSlots.find(slot => slot.user === user);
+    const slot = this.userSlots.find((slot) => slot.user === user);
     if (slot) {
       slot.user = null;
     }
@@ -158,11 +162,21 @@ export class Elevator extends Movable {
   handleDestinationArrival() {
     if (this.isOnAFloor()) {
       this.buttons[this.currentFloor] = false;
-      this.dispatchEvent(new CustomEvent("floor_buttons_changed", { detail: [this.buttons, this.currentFloor] }));
+      this.dispatchEvent(
+        new CustomEvent("floor_buttons_changed", {
+          detail: [this.buttons, this.currentFloor],
+        }),
+      );
       // Need to allow users to get off first, so that new ones
       // can enter on the same floor
-      this.dispatchEvent(new CustomEvent("exit_available", { detail: [this.currentFloor, this] }));
-      this.dispatchEvent(new CustomEvent("entrance_available", { detail: this }));
+      this.dispatchEvent(
+        new CustomEvent("exit_available", {
+          detail: [this.currentFloor, this],
+        }),
+      );
+      this.dispatchEvent(
+        new CustomEvent("entrance_available", { detail: this }),
+      );
     }
   }
 
@@ -172,15 +186,11 @@ export class Elevator extends Movable {
     this.destinationY = this.getYPosOfFloor(floor);
   }
 
-  getPressedFloors() {
-    return this.buttons
-      .map((pressed, floor) => pressed ? floor : null)
-      .filter(floor => floor !== null);
-  }
-
   // Interface properties for user code
   get pressedFloorButtons() {
-    return this.getPressedFloors();
+    return this.buttons
+      .map((pressed, floor) => (pressed ? floor : null))
+      .filter((floor) => floor !== null);
   }
 
   get destinationFloor() {
@@ -188,7 +198,10 @@ export class Elevator extends Movable {
   }
 
   get percentFull() {
-    return this.getLoadFactor();
+    const load = this.userSlots.reduce((sum, slot) => {
+      return sum + (slot.user ? slot.user.weight : 0);
+    }, 0);
+    return load / (this.maxUsers * 100);
   }
 
   isSuitableForTravelBetween(fromFloorNum, toFloorNum) {
@@ -234,15 +247,6 @@ export class Elevator extends Movable {
     );
   }
 
-  isApproachingFloor(floorNum) {
-    const floorYPos = this.getYPosOfFloor(floorNum);
-    const elevToFloor = floorYPos - this.y;
-    return (
-      this.velocityY !== 0.0 &&
-      Math.sign(this.velocityY) === Math.sign(elevToFloor)
-    );
-  }
-
   isOnAFloor() {
     return epsilonEquals(
       this.getExactCurrentFloor(),
@@ -250,19 +254,12 @@ export class Elevator extends Movable {
     );
   }
 
-  getLoadFactor() {
-    const load = this.userSlots.reduce((sum, slot) => {
-      return sum + (slot.user ? slot.user.weight : 0);
-    }, 0);
-    return load / (this.maxUsers * 100);
-  }
-
   isFull() {
-    return this.userSlots.every(slot => slot.user !== null);
+    return this.userSlots.every((slot) => slot.user !== null);
   }
 
   isEmpty() {
-    return this.userSlots.every(slot => slot.user === null);
+    return this.userSlots.every((slot) => slot.user === null);
   }
 
   handleNewState() {
@@ -271,23 +268,14 @@ export class Elevator extends Movable {
     if (currentFloor !== this.currentFloor) {
       this.moveCount++;
       this.currentFloor = currentFloor;
-      this.dispatchEvent(new CustomEvent("new_current_floor", { detail: this.currentFloor }));
+      this.dispatchEvent(
+        new CustomEvent("new_current_floor", { detail: this.currentFloor }),
+      );
     }
 
-    // Check if we are about to pass a floor
     const futureTruncFloorIfStopped = Math.trunc(
       this.getExactFutureFloorIfStopped(),
     );
-    if (futureTruncFloorIfStopped !== this.previousTruncFutureFloorIfStopped) {
-      // The following is somewhat ugly.
-      // A formally correct solution should iterate and generate events for all passed floors,
-      // because the elevator could theoretically have such a velocity that it would
-      // pass more than one floor over the course of one state change (update).
-      // But I can't currently be arsed to implement it because it's overkill.
-      const floorBeingPassed = Math.round(this.getExactFutureFloorIfStopped());
-
-      // The passing_floor event was removed as it's not used by the UI
-    }
     this.previousTruncFutureFloorIfStopped = futureTruncFloorIfStopped;
   }
 }
