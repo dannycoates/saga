@@ -1,11 +1,11 @@
 // Import web components
-import { ElevatorStats } from "./components/elevator-stats.js";
-import { ChallengeControl } from "./components/challenge-control.js";
-import { GameFeedback } from "./components/game-feedback.js";
-import { ElevatorFloor } from "./components/elevator-floor.js";
-import { ElevatorCar } from "./components/elevator-car.js";
-import { ElevatorUser } from "./components/elevator-user.js";
-import { CodeStatus } from "./components/code-status.js";
+import "./components/elevator-stats.js";
+import "./components/challenge-control.js";
+import "./components/game-feedback.js";
+import "./components/elevator-floor.js";
+import "./components/elevator-car.js";
+import "./components/elevator-user.js";
+import "./components/code-status.js";
 
 // Factory functions using web components
 export function presentStats(parentElem, world) {
