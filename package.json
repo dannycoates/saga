@@ -1,0 +1,23 @@
+{
+  "name": "elevator-saga",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "A programming game about elevator control algorithms",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:run": "vitest run"
+  },
+  "devDependencies": {
+    "jsdom": "^26.1.0",
+    "vite": "^5.0.0",
+    "vitest": "^1.0.0"
+  },
+  "dependencies": {
+    "@codemirror/lang-javascript": "^6.0.0",
+    "@codemirror/theme-one-dark": "^6.0.0",
+    "codemirror": "^6.0.0"
+  }
+}
