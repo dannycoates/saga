@@ -127,8 +127,29 @@ export class ElevatorUser extends HTMLElement {
         .user-icon.leaving {
           color: #eee;
         }
+
+        /* Font Awesome icons for users */
+        .user-icon::before {
+          font-family: FontAwesome;
+          font-weight: normal;
+          font-style: normal;
+          display: inline-block;
+          text-decoration: inherit;
+        }
+
+        .user-icon.fa-male::before {
+          content: "\\f183";
+        }
+
+        .user-icon.fa-female::before {
+          content: "\\f182";
+        }
+
+        .user-icon.fa-child::before {
+          content: "\\f1ae";
+        }
       </style>
-      
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
       <i class="user-icon fa fa-${userType} ${state}"></i>
     `;
 

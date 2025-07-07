@@ -1,12 +1,18 @@
 export class ElevatorStats extends HTMLElement {
   static get observedAttributes() {
-    return ['transported', 'elapsed-time', 'transported-per-sec', 
-            'avg-wait-time', 'max-wait-time', 'move-count'];
+    return [
+      "transported",
+      "elapsed-time",
+      "transported-per-sec",
+      "avg-wait-time",
+      "max-wait-time",
+      "move-count",
+    ];
   }
 
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
+    this.attachShadow({ mode: "open" });
     this._world = null;
   }
 
@@ -16,7 +22,7 @@ export class ElevatorStats extends HTMLElement {
 
   disconnectedCallback() {
     if (this._world) {
-      this._world.off('stats_display_changed', this._updateHandler);
+      this._world.off("stats_display_changed", this._updateHandler);
     }
   }
 
@@ -27,31 +33,34 @@ export class ElevatorStats extends HTMLElement {
   set world(world) {
     // Disconnect from previous world
     if (this._world) {
-      this._world.off('stats_display_changed', this._updateHandler);
+      this._world.off("stats_display_changed", this._updateHandler);
     }
 
     this._world = world;
-    
+
     if (world) {
       this._updateHandler = () => this.updateFromWorld(world);
-      world.on('stats_display_changed', this._updateHandler);
-      world.trigger('stats_display_changed');
+      world.on("stats_display_changed", this._updateHandler);
+      world.trigger("stats_display_changed");
     }
   }
 
   updateFromWorld(world) {
-    this.setAttribute('transported', world.transportedCounter);
-    this.setAttribute('elapsed-time', world.elapsedTime.toFixed(0) + 's');
-    this.setAttribute('transported-per-sec', world.transportedPerSec.toPrecision(3));
-    this.setAttribute('avg-wait-time', world.avgWaitTime.toFixed(1) + 's');
-    this.setAttribute('max-wait-time', world.maxWaitTime.toFixed(1) + 's');
-    this.setAttribute('move-count', world.moveCount);
+    this.setAttribute("transported", world.transportedCounter);
+    this.setAttribute("elapsed-time", world.elapsedTime.toFixed(0) + "s");
+    this.setAttribute(
+      "transported-per-sec",
+      world.transportedPerSec.toPrecision(3),
+    );
+    this.setAttribute("avg-wait-time", world.avgWaitTime.toFixed(1) + "s");
+    this.setAttribute("max-wait-time", world.maxWaitTime.toFixed(1) + "s");
+    this.setAttribute("move-count", world.moveCount);
   }
 
   updateStat(name, value) {
     const elem = this.shadowRoot.querySelector(`[data-stat="${name}"]`);
     if (elem) {
-      elem.textContent = value || '';
+      elem.textContent = value || "";
     }
   }
 
@@ -59,65 +68,59 @@ export class ElevatorStats extends HTMLElement {
     this.shadowRoot.innerHTML = `
       <style>
         :host {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
           font: 12px Consolas, Monaco, monospace;
-          line-height: 10px;
           color: #999;
-          position: absolute;
-          top: 0;
-          right: 0px;
-          width: 240px;
-          height: 200px;
-          padding: 20px;
-          z-index: 1;
-          box-sizing: content-box;
-          display: block;
+          width: 100%;
+          height: 100%;
+          box-sizing: border-box;
           pointer-events: none;
         }
 
         .stat {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
           border-bottom: 1px solid #444;
-          position: absolute;
-          display: block;
-          width: 240px;
-          height: 10px;
         }
 
         .key {
-          float: left;
+          color: #999;
         }
 
         .value {
-          float: right;
           color: #fff;
         }
       </style>
-      
-      <div class="stat" style="top: 20px">
+
+      <div class="stat">
         <span class="key">Transported</span>
-        <span class="value" data-stat="transported">${this.getAttribute('transported') || ''}</span>
+        <span class="value" data-stat="transported">${this.getAttribute("transported") || ""}</span>
       </div>
-      <div class="stat" style="top: 40px">
+      <div class="stat">
         <span class="key">Elapsed time</span>
-        <span class="value" data-stat="elapsed-time">${this.getAttribute('elapsed-time') || ''}</span>
+        <span class="value" data-stat="elapsed-time">${this.getAttribute("elapsed-time") || ""}</span>
       </div>
-      <div class="stat" style="top: 60px">
+      <div class="stat">
         <span class="key">Transported/s</span>
-        <span class="value" data-stat="transported-per-sec">${this.getAttribute('transported-per-sec') || ''}</span>
+        <span class="value" data-stat="transported-per-sec">${this.getAttribute("transported-per-sec") || ""}</span>
       </div>
-      <div class="stat" style="top: 80px">
+      <div class="stat">
         <span class="key">Avg waiting time</span>
-        <span class="value" data-stat="avg-wait-time">${this.getAttribute('avg-wait-time') || ''}</span>
+        <span class="value" data-stat="avg-wait-time">${this.getAttribute("avg-wait-time") || ""}</span>
       </div>
-      <div class="stat" style="top: 100px">
+      <div class="stat">
         <span class="key">Max waiting time</span>
-        <span class="value" data-stat="max-wait-time">${this.getAttribute('max-wait-time') || ''}</span>
+        <span class="value" data-stat="max-wait-time">${this.getAttribute("max-wait-time") || ""}</span>
       </div>
-      <div class="stat" style="top: 120px">
+      <div class="stat">
         <span class="key" title="Number of floors that have been travelled by elevators">Moves</span>
-        <span class="value" data-stat="move-count">${this.getAttribute('move-count') || ''}</span>
+        <span class="value" data-stat="move-count">${this.getAttribute("move-count") || ""}</span>
       </div>
     `;
   }
 }
 
-customElements.define('elevator-stats', ElevatorStats);
+customElements.define("elevator-stats", ElevatorStats);

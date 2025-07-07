@@ -1,111 +1,129 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-    <title>Elevator Saga - the elevator programming game</title>
-    <meta charset="UTF-8">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="/style.css" media="all">
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1 class="left">Elevator Saga <em class="emphasis-color">The elevator programming game</em></h1>
-            <a class="right" href="documentation.html" target="_blank" rel="noopener">Documentation</a>
-        </div>
+    <head>
+        <title>Elevator Saga - the elevator programming game</title>
+        <meta charset="UTF-8" />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+        />
+        <link rel="stylesheet" href="/style.css" media="all" />
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>
+                    Elevator Saga
+                    <em class="emphasis-color"
+                        >The elevator programming game</em
+                    >
+                </h1>
+            </div>
 
-        <div class="world">
-            <div class="feedbackcontainer"></div>
-            <div class="innerworld"></div>
-            <div class="statscontainer">
-                <!-- Stats will be populated by web component -->
+            <div class="challenge">
+                <h3>
+                    Challenge: <span class="emphasis-color">Loading...</span>
+                </h3>
+            </div>
+
+            <div class="world">
+                <div class="feedbackcontainer"></div>
+                <div class="innerworld"></div>
+                <div class="statscontainer">
+                    <!-- Stats will be populated by web component -->
+                </div>
+            </div>
+
+            <div class="codestatus"></div>
+            <div class="code">
+                <div id="code"></div>
+            </div>
+            <div class="controls">
+                <div>
+                    <button id="button_reset">Reset</button>
+                    <button id="button_resetundo">Undo reset</button>
+                </div>
+                <div>
+                    <span id="save_message"></span>
+                    <span id="fitness_message"></span>
+                </div>
+            </div>
+            <div class="footer">
+                <h4>
+                    Made by Magnus Wolffelt and contributors. Version
+                    <span class="emphasis-color">1.6.5</span>
+                </h4>
+                <h4>
+                    <a href="https://github.com/magwo/elevatorsaga"
+                        >Source code</a
+                    >
+                    on GitHub
+                </h4>
             </div>
         </div>
 
-        <div class="challenge">
-            <h3>Challenge: <span class="emphasis-color">Loading...</span></h3>
-        </div>
-        <div class="codestatus"></div>
-        <div class="code">
-            <div id="code"></div>
-        </div>
-        <div class="controls">
-            <div>
-                <button id="button_reset">Reset</button>
-                <button id="button_resetundo">Undo reset</button>
-            </div>
-            <div>
-                <span id="save_message"></span>
-                <span id="fitness_message"></span>
-            </div>
-        </div>
-        <div class="footer">
-            <h4>Made by Magnus Wolffelt and contributors. Version <span class="emphasis-color">1.6.5</span></h4>
-            <h4><a href="https://github.com/magwo/elevatorsaga">Source code</a> on GitHub</h4>
-        </div>
-    </div>
+        <!-- Templates removed - now using Web Components -->
 
-    <!-- Templates removed - now using Web Components -->
+        <script type="text/plain" id="default-elev-implementation">
+            /**
+            * @class Floor
+            *
+            *   Accessors:
+            *    @member buttons {{up: boolean, down: boolean}}
+            *    @member level {number}
+            *
+            *
+            * @class Elevator
+            *
+            *   Accessors:
+            *    @member currentFloor {number}
+            *    @member destinationFloor {number | null}
+            *    @member pressedFloorButtons {number[]}
+            *    @member percentFull {0..1}
+            *
+            *   Actions:
+            *    @func goToFloor(floorNum: number)
+            */
 
-    <script type="text/plain" id="default-elev-implementation">
-/**
-* @class Floor
-* 
-*   Accessors:
-*    @member buttons {{up: boolean, down: boolean}}
-*    @member level {number}
-*
-*
-* @class Elevator
-*
-*   Accessors:
-*    @member currentFloor {number}
-*    @member destinationFloor {number | null}
-*    @member pressedFloorButtons {number[]}
-*    @member percentFull {0..1}
-*
-*   Actions:
-*    @func goToFloor(floorNum: number)
-*/
+            let nextFloor = 0
+            /**
+            * Init gets called once at the start
+            * @param {Elevator[]} elevators
+            * @param {Floor[]} floors
+            */
+            export function init(elevators, floors) {
+              nextFloor = elevators[0].currentFloor + 1
+            }
 
-let nextFloor = 0
-/** 
-* Init gets called once at the start
-* @param {Elevator[]} elevators
-* @param {Floor[]} floors
-*/
-export function init(elevators, floors) {
-  nextFloor = elevators[0].currentFloor + 1
-}
+            /**
+            * Update gets called on a regular, fast interval (a game loop)
+            * @param {number} dt - elapsed game time since last update in seconds
+            * @param {Elevator[]} elevators
+            * @param {Floor[]} floors
+            */
+            export function update(dt, elevators, floors) {
+              const elevator = elevators[0]
+              if (elevator.destinationFloor === null) {
+                if (nextFloor === floors.length) {
+                  nextFloor = 0
+                }
+                nextFloor = nextFloor + 1
+                elevator.goToFloor(nextFloor)
+              }
+            }
+        </script>
 
-/**
-* Update gets called on a regular, fast interval (a game loop)
-* @param {number} dt - elapsed game time since last update in seconds
-* @param {Elevator[]} elevators
-* @param {Floor[]} floors
-*/
-export function update(dt, elevators, floors) {
-  const elevator = elevators[0]
-  if (elevator.destinationFloor === null) {
-    if (nextFloor === floors.length) {
-      nextFloor = 0
-    }
-    nextFloor = nextFloor + 1
-    elevator.goToFloor(nextFloor)
-  }
-}
-    </script>
+        <script type="text/plain" id="devtest-elev-implementation">
+            init: function(elevators, floors) {
+                // Dev test implementation...
+                console.log("Running dev test implementation");
+            },
+            update: function(dt, elevators, floors) {
+                // Dev test update
+            }
+        </script>
 
-    <script type="text/plain" id="devtest-elev-implementation">
-init: function(elevators, floors) {
-    // Dev test implementation...
-    console.log("Running dev test implementation");
-},
-update: function(dt, elevators, floors) {
-    // Dev test update
-}
-    </script>
-
-    <!-- Main application entry point -->
-    <script type="module" src="/app.js"></script>
-</body>
+        <!-- Main application entry point -->
+        <script type="module" src="/app.js"></script>
+    </body>
 </html>

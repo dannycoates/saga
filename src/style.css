@@ -108,10 +108,7 @@ button:hover {
     background-color: #888;
 }
 
-button.right {
-    margin-left: 5px;
-    margin-right: 0;
-}
+/* button.right class removed - using flexbox instead */
 
 .blink {
     animation: blink 0.5s steps(3, start) infinite;
@@ -144,15 +141,10 @@ button.right {
     margin: 0 20px;
 }
 
-.left {
-    float: left;
-}
-
-.right {
-    float: right;
-}
-
 .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     height: 50px;
 }
 
@@ -215,17 +207,17 @@ button.right {
 }
 
 .world {
-    position: relative;
+    display: flex;
     width: 1220px;
-    height: 200px;
     background-color: #333;
     padding: 0;
+    position: relative; /* Keep for feedbackcontainer */
 }
 
 .innerworld {
     position: relative;
     height: 100%;
-    width: 940px;
+    flex: 1;
     border-right: 1px solid black;
     border-left: 1px solid black;
     font-family: Arial, Helvetica, sans-serif;
@@ -238,173 +230,28 @@ button.right {
         monospace;
     line-height: 10px;
     color: #999;
-    position: absolute;
-    top: 0;
-    right: 0px;
-    width: 240px;
-    height: 200px;
-    padding: 20px;
-    z-index: 1;
-    box-sizing: content-box;
+    width: 180px;
+    height: 100%;
+    padding: 4px;
+    box-sizing: border-box;
     pointer-events: none;
+    background-color: #333;
 }
 
-.statscontainer div {
-    border-bottom: 1px solid #444;
-    position: absolute;
-    display: block;
-    width: 240px;
-    height: 10px;
-}
-
-.statscontainer .key {
-    float: left;
-}
-
-.statscontainer .value {
-    float: right;
-    color: #fff;
-}
+/* Stats styles moved to web component */
 
 .feedbackcontainer {
-}
-
-.feedback {
-    position: absolute;
-    width: 1220px;
-    height: 100%;
-    padding-top: 20px;
-    line-height: 20px;
-    text-align: center;
-    background-color: rgba(44, 44, 44, 0.6);
-    z-index: 5;
-    overflow: hidden;
-}
-
-.movable {
-    position: absolute;
-    top: 0;
-    left: 0;
-    display: block;
-}
-
-.user {
-    color: white;
-    text-shadow: 0 1px 3px black;
-    z-index: 2;
-}
-
-.user.happy {
-}
-
-.user.frustrated {
-    color: yellow;
-}
-
-.user.disappointed {
-    color: red;
-}
-
-.user.leaving {
-    color: #eee;
-}
-
-.elevator {
-    background-color: #4f8686;
-    border: 2px solid white;
-    height: 46px;
-    z-index: 1;
-}
-
-.elevator .directionindicator {
-    position: absolute;
-    font-size: 10px;
-    top: 3px;
-}
-
-.elevator .directionindicator.directionindicatorup {
-    left: 2px;
-}
-
-.elevator .directionindicator.directionindicatordown {
-    right: 2px;
-}
-
-.elevator .directionindicator .fa {
-    color: rgba(255, 255, 255, 0.2);
-}
-
-.elevator .directionindicator .fa.activated {
-    color: #33ff44;
-}
-
-.elevator .floorindicator {
-    display: inline-block;
-    position: absolute;
-    width: 100%;
-    font-size: 15px;
-    text-align: center;
-    color: rgba(255, 255, 255, 0.3);
-}
-
-.elevator .buttonindicator {
-    display: inline-block;
-    position: absolute;
-    top: 15px;
-    width: 95%;
-    text-align: center;
-    font-size: 8px;
-    line-height: 8px;
-    color: rgba(255, 255, 255, 0.3);
-}
-.elevator .buttonpress {
-    cursor: pointer;
-    margin: 0;
-    display: inline-block;
-}
-.elevator .buttonpress.activated {
-    color: #33ff44;
-}
-
-.floor {
-    position: absolute;
-    width: 100%;
-    height: 49px;
-    background-color: rgba(255, 255, 255, 0.1);
-    background: linear-gradient(
-        rgba(255, 255, 255, 0.1),
-        rgba(255, 255, 255, 0.2),
-        rgba(255, 255, 255, 0.24),
-        rgba(255, 255, 255, 0.1)
-    ); /* Standard syntax */
-    border-bottom: 1px solid #333;
-}
-
-.floor .buttonindicator {
-    cursor: pointer;
-    line-height: 50px;
-    padding-left: 50px;
-    color: rgba(255, 255, 255, 0.2);
-}
-.floor .buttonindicator .activated {
-    color: rgba(55, 255, 55, 1);
-}
-
-.floor .floornumber {
-    position: absolute;
-    color: rgba(255, 255, 255, 0.15);
-    font-size: 32px;
-    line-height: 50px;
-    padding-left: 10px;
 }
 
 .footer {
     margin-top: 10px;
     display: flex;
     justify-content: space-between;
+    align-items: center;
 }
 .footer h4 {
     font-size: 13px;
+    margin: 0;
 }
 
 .help {

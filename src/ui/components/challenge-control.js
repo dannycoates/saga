@@ -99,24 +99,23 @@ export class ChallengeControl extends HTMLElement {
     const isPaused = this.getAttribute('is-paused') === 'true';
 
     this.shadowRoot.innerHTML = `
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
       <style>
         :host {
-          display: block;
-          padding: 5px 0;
-        }
-
-        .container {
           display: flex;
           align-items: center;
           justify-content: space-between;
+          padding: 5px 0;
         }
 
-        .left {
-          float: left;
+        .challenge-info {
+          flex: 1;
         }
 
-        .right {
-          float: right;
+        .controls-group {
+          display: flex;
+          align-items: center;
+          gap: 15px;
         }
 
         h3 {
@@ -139,14 +138,17 @@ export class ChallengeControl extends HTMLElement {
           text-shadow: 0 0 3px #aaa;
           border: 1px solid #666;
           border-radius: 5px;
-          margin-right: 5px;
           cursor: pointer;
-          margin-left: 5px;
-          margin-right: 0;
+          width: 110px;
         }
 
         button:hover {
           background-color: #888;
+        }
+
+        .timescale-controls {
+          display: flex;
+          align-items: center;
         }
 
         .timescale_decrease,
@@ -155,10 +157,6 @@ export class ChallengeControl extends HTMLElement {
           line-height: 20px;
           cursor: pointer;
           color: #555;
-        }
-
-        .timescale_increase {
-          margin-right: 10px;
         }
 
         .time-scale-value {
@@ -177,24 +175,19 @@ export class ChallengeControl extends HTMLElement {
           -ms-user-select: none;
           user-select: none;
         }
-
-        /* Clear floats */
-        :host::after {
-          content: "";
-          display: table;
-          clear: both;
-        }
       </style>
       
-      <div class="left">
+      <div class="challenge-info">
         <h3>Challenge #${challengeNum}: <span id="description"></span></h3>
       </div>
-      <button class="right startstop unselectable" style="width: 110px">${isPaused ? 'Start' : 'Stop'}</button>
-      <h3 class="right">
-        <i class="fa fa-minus-square timescale_decrease unselectable"></i>
-        <span class="time-scale-value">${timeScale}</span>
-        <i class="fa fa-plus-square timescale_increase unselectable"></i>
-      </h3>
+      <div class="controls-group">
+        <h3 class="timescale-controls">
+          <i class="fa fa-minus-square timescale_decrease unselectable"></i>
+          <span class="time-scale-value">${timeScale}</span>
+          <i class="fa fa-plus-square timescale_increase unselectable"></i>
+        </h3>
+        <button class="startstop unselectable">${isPaused ? 'Start' : 'Stop'}</button>
+      </div>
     `;
 
     // Set HTML content for description to preserve formatting

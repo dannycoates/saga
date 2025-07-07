@@ -1,11 +1,11 @@
 export class GameFeedback extends HTMLElement {
   static get observedAttributes() {
-    return ['title', 'message', 'next-url'];
+    return ["title", "message", "next-url"];
   }
 
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
+    this.attachShadow({ mode: "open" });
   }
 
   connectedCallback() {
@@ -19,9 +19,9 @@ export class GameFeedback extends HTMLElement {
   }
 
   render() {
-    const title = this.getAttribute('title') || '';
-    const message = this.getAttribute('message') || '';
-    const nextUrl = this.getAttribute('next-url') || '';
+    const title = this.getAttribute("title") || "";
+    const message = this.getAttribute("message") || "";
+    const nextUrl = this.getAttribute("next-url") || "";
 
     this.shadowRoot.innerHTML = `
       <style>
@@ -39,6 +39,7 @@ export class GameFeedback extends HTMLElement {
           background-color: rgba(44, 44, 44, 0.6);
           z-index: 5;
           overflow: hidden;
+          box-sizing: border-box;
         }
 
         h2, p {
@@ -81,16 +82,20 @@ export class GameFeedback extends HTMLElement {
           }
         }
       </style>
-      
+
       <div class="feedback">
         <h2>${title}</h2>
         <p>${message}</p>
-        ${nextUrl ? `
+        ${
+          nextUrl
+            ? `
           <a href="${nextUrl}">Next challenge <i class="fa fa-caret-right blink"></i></a>
-        ` : ''}
+        `
+            : ""
+        }
       </div>
     `;
   }
 }
 
-customElements.define('game-feedback', GameFeedback);
+customElements.define("game-feedback", GameFeedback);
