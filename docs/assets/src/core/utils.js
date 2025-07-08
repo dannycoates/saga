@@ -1,10 +1,10 @@
 const scriptRel = /* @__PURE__ */ (function detectScriptRel() {
 	const relList = typeof document !== "undefined" && document.createElement("link").relList;
 	return relList && relList.supports && relList.supports("modulepreload") ? "modulepreload" : "preload";
-})();const assetsURL = function(dep) { return "/"+dep };const seen = {};const __vitePreload = function preload(baseModule, deps, importerUrl) {
+})();const assetsURL = function(dep, importerUrl) { return new URL(dep, importerUrl).href };const seen = {};const __vitePreload = function preload(baseModule, deps, importerUrl) {
 	let promise = Promise.resolve();
 	if (true               && deps && deps.length > 0) {
-		document.getElementsByTagName("link");
+		const links = document.getElementsByTagName("link");
 		const cspNonceMeta = document.querySelector("meta[property=csp-nonce]");
 		const cspNonce = cspNonceMeta?.nonce || cspNonceMeta?.getAttribute("nonce");
 		function allSettled(promises$2) {
@@ -17,12 +17,17 @@ const scriptRel = /* @__PURE__ */ (function detectScriptRel() {
 			}))));
 		}
 		promise = allSettled(deps.map((dep) => {
-			dep = assetsURL(dep);
+			dep = assetsURL(dep, importerUrl);
 			if (dep in seen) return;
 			seen[dep] = true;
 			const isCss = dep.endsWith(".css");
 			const cssSelector = isCss ? "[rel=\"stylesheet\"]" : "";
-			if (document.querySelector(`link[href="${dep}"]${cssSelector}`)) return;
+			const isBaseRelative = !!importerUrl;
+			if (isBaseRelative) for (let i$1 = links.length - 1; i$1 >= 0; i$1--) {
+				const link$1 = links[i$1];
+				if (link$1.href === dep && (!isCss || link$1.rel === "stylesheet")) return;
+			}
+			else if (document.querySelector(`link[href="${dep}"]${cssSelector}`)) return;
 			const link = document.createElement("link");
 			link.rel = isCss ? "stylesheet" : scriptRel;
 			if (!isCss) link.as = "script";
@@ -85,7 +90,7 @@ async function getCodeObjFromCode(code) {
   // Use vite-ignore comment to suppress warning about dynamic import
   const obj = await __vitePreload(() => import(
     /* @vite-ignore */ `data:text/javascript,${encodeURIComponent(code.trim())}`
-  ),true              ?[]:void 0);
+  ),true              ?[]:void 0,import.meta.url);
   if (typeof obj.update !== "function") {
     throw "Code must contain an update function";
   }
