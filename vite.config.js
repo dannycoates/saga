@@ -59,6 +59,7 @@ const selectiveSourcemapPlugin = () => {
 };
 
 export default defineConfig({
+  base: "./",
   root: ".",
   build: {
     target: "esnext",
