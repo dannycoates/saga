@@ -1,21 +1,14 @@
 import { BaseRuntime } from "./base.js";
 
-// Register native methods that Java can call
-async function Java_Elevator_jsGoToFloor(lib, elevatorId, floor) {
-  // Find the corresponding JavaScript elevator
-  const jsElevator = window.elevators[elevatorId];
-  if (jsElevator) {
-    jsElevator.goToFloor(floor);
-  }
-}
-
 export class JavaRuntime extends BaseRuntime {
   constructor() {
     super();
     this.cheerpjReady = false;
-    this.compiledClass = null;
-    this.lib = null;
+    this.compiledClasses = null;
     this.loadedCode = null;
+    this.worker = null;
+    this.workerReady = false;
+    this.elevators = null;
   }
 
   async load() {
@@ -40,12 +33,9 @@ export class JavaRuntime extends BaseRuntime {
         throw new Error("cheerpjInit is not defined after script load");
       }
 
-      // Initialize CheerpJ with minimal configuration
+      // Initialize CheerpJ with minimal configuration (no natives in main thread)
       await window.cheerpjInit({
         status: "none",
-        natives: {
-          Java_Elevator_jsGoToFloor,
-        },
       });
       this.cheerpjReady = true;
 
@@ -91,16 +81,26 @@ export class JavaRuntime extends BaseRuntime {
         throw new Error("Java compilation failed");
       }
 
-      // Store the compiled class name
-      this.compiledClass = "ElevatorController";
+      // Get the compiled class files as blobs
+      const classFiles = {};
+      classFiles["Elevator.class"] = await window.cjFileBlob(
+        "/files/Elevator.class",
+      );
+      classFiles["Floor.class"] = await window.cjFileBlob("/files/Floor.class");
+      classFiles["Floor$Buttons.class"] = await window.cjFileBlob(
+        "/files/Floor$Buttons.class",
+      );
+      classFiles["ElevatorController.class"] = await window.cjFileBlob(
+        "/files/ElevatorController.class",
+      );
+
+      this.compiledClasses = classFiles;
       this.loadedCode = code;
-      this.lib = await window.cheerpjRunLibrary("/files/");
-      this.Elevator = await this.lib.Elevator;
-      this.Floor = await this.lib.Floor;
-      this.Buttons = await this.lib.Floor$Buttons;
-      this.ElevatorController = await this.lib.ElevatorController;
-      console.log("loaded classes");
+
+      // Initialize worker with the compiled classes
+      await this.initializeWorker();
     } catch (error) {
+      console.error(error);
       throw new Error(`Failed to compile Java code: ${error.message}`);
     }
   }
@@ -142,50 +142,108 @@ class Floor {
 ${userCode}`;
   }
 
+  async initializeWorker() {
+    // Dispose of existing worker if any
+    if (this.worker) {
+      this.worker.terminate();
+    }
+
+    // Create new worker (classic worker, not module)
+    this.worker = new Worker(new URL("./java-worker.js", import.meta.url));
+    this.workerReady = false;
+
+    // Set up message handling
+    this.worker.addEventListener("message", (event) => {
+      const { type, elevatorId, floor, error } = event.data;
+      switch (type) {
+        case "initialized":
+          this.workerReady = true;
+          if (this.workerInitResolve) {
+            this.workerInitResolve();
+          }
+          break;
+
+        case "goToFloor":
+          // Handle elevator commands from Java
+          if (this.elevators && this.elevators[elevatorId]) {
+            this.elevators[elevatorId].goToFloor(floor);
+          }
+          break;
+
+        case "executed":
+          if (this.executeResolve) {
+            this.executeResolve();
+          }
+          break;
+
+        case "error":
+          console.error("Worker error:", error);
+          if (this.executeReject) {
+            this.executeReject(new Error(error));
+          }
+          break;
+      }
+    });
+
+    // Initialize worker with compiled jar
+    const initPromise = new Promise((resolve, reject) => {
+      this.workerInitResolve = resolve;
+      this.workerInitReject = reject;
+    });
+
+    this.worker.postMessage({
+      type: "init",
+      data: { classFiles: this.compiledClasses },
+    });
+
+    await initPromise;
+    this.workerInitResolve = null;
+    this.workerInitReject = null;
+  }
+
   async execute(elevators, floors) {
     if (!this.loaded) {
       throw new Error("Java runtime not loaded");
     }
 
-    if (!this.compiledClass) {
+    if (!this.compiledClasses || !this.workerReady) {
       throw new Error("No code loaded. Call loadCode() first.");
     }
-    window.elevators = elevators;
 
-    // Create Java wrapper objects for elevators and floors
-    const javaElevators = [];
-    let index = 0;
-    for (const elevator of elevators) {
-      const javaElevator = await new this.Elevator();
-      javaElevator.id = index++;
-      javaElevator.currentFloor = elevator.currentFloor;
-      javaElevator.destinationFloor = elevator.destinationFloor;
-      javaElevator.pressedFloorButtons = elevator.pressedFloorButtons || [];
-      javaElevator.percentFull = elevator.percentFull;
+    // Store elevators reference for command handling
+    this.elevators = elevators;
 
-      // Store reference for callback
-      // elevator._javaRef = javaElevator;
-      javaElevators.push(javaElevator);
-    }
+    // Create simplified objects to send to worker
+    const elevatorsData = elevators.map((elevator, index) => ({
+      id: index,
+      currentFloor: elevator.currentFloor,
+      destinationFloor: elevator.destinationFloor,
+      pressedFloorButtons: elevator.pressedFloorButtons || [],
+      percentFull: elevator.percentFull,
+    }));
 
-    const javaFloors = [];
-    for (const floor of floors) {
-      const javaFloor = await new this.Floor();
-      javaFloor.level = floor.level;
+    const floorsData = floors.map((floor) => ({
+      level: floor.level,
+      buttons: {
+        up: floor.buttons.up,
+        down: floor.buttons.down,
+      },
+    }));
 
-      const buttons = await new this.Buttons();
-      buttons.up = floor.buttons.up;
-      buttons.down = floor.buttons.down;
-      javaFloor.buttons = buttons;
-      javaFloors.push(javaFloor);
-    }
+    // Execute in worker
+    const executePromise = new Promise((resolve, reject) => {
+      this.executeResolve = resolve;
+      this.executeReject = reject;
+    });
 
-    // Create the controller and call update
-    const controller = await new this.ElevatorController();
-    await controller.update(javaElevators, javaFloors);
+    this.worker.postMessage({
+      type: "execute",
+      data: { elevators: elevatorsData, floors: floorsData },
+    });
 
-    // Clean up references
-    // elevators.forEach((e) => delete e._javaRef);
+    await executePromise;
+    this.executeResolve = null;
+    this.executeReject = null;
   }
 
   validateCode(code) {
@@ -226,10 +284,15 @@ ${userCode}`;
   }
 
   dispose() {
-    this.compiledClass = null;
+    if (this.worker) {
+      this.worker.terminate();
+      this.worker = null;
+    }
+    this.compiledClasses = null;
     this.loaded = false;
     this.loadedCode = null;
-    this.lib = null;
+    this.workerReady = false;
     this.cheerpjReady = false;
+    this.elevators = null;
   }
 }
