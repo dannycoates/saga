@@ -277,7 +277,10 @@ export class WorldController extends EventTarget {
         scaledDt = Math.min(scaledDt, this.dtMax * 3 * this.timeScale); // Limit to prevent unhealthy substepping
 
         try {
-          codeObj.update(world.elevators, world.floors);
+          codeObj.update(
+            world.elevators.map((el) => el.toAPI()),
+            world.floors.map((fl) => fl.toAPI()),
+          );
         } catch (e) {
           this.handleUserCodeError(e);
         }
