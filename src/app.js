@@ -1,4 +1,4 @@
-import { getCodeObjFromCode, throttle } from "./core/utils.js";
+import { throttle } from "./core/utils.js";
 import { createWorldCreator, createWorldController } from "./core/World.js";
 import { challenges } from "./game/challenges.js";
 import {
@@ -10,9 +10,12 @@ import {
 } from "./ui/presenters.js";
 import { basicSetup, EditorView } from "codemirror";
 import { javascript } from "@codemirror/lang-javascript";
+import { python } from "@codemirror/lang-python";
 import { gruvboxLight } from "cm6-theme-gruvbox-light";
 import { keymap } from "@codemirror/view";
 import { indentWithTab } from "@codemirror/commands";
+import { Compartment } from "@codemirror/state";
+import { RuntimeManager } from "./runtimes/manager.js";
 
 // Helper function to dedent multi-line strings
 function dedent(str) {
@@ -34,45 +37,87 @@ function dedent(str) {
 
 // CodeMirror editor wrapper
 class CodeEditor extends EventTarget {
-  constructor(element, storageKey) {
+  constructor(element, storageKey, runtimeManager) {
     super();
     this.storageKey = storageKey;
+    this.runtimeManager = runtimeManager;
+    this.currentLanguage = localStorage.getItem(`${storageKey}_language`) || 'javascript';
+    
+    // Create a compartment for the language extension
+    this.languageCompartment = new Compartment();
 
-    const defaultCode = dedent(
+    // Get the appropriate default code based on language
+    const jsDefaultCode = dedent(
       document.getElementById("default-elev-implementation").textContent,
     ).trim();
-    const existingCode = localStorage.getItem(storageKey) || defaultCode;
+    
+    const defaultCode = this.currentLanguage === 'javascript' 
+      ? jsDefaultCode 
+      : this.runtimeManager.runtimes[this.currentLanguage].getDefaultTemplate();
+    
+    const existingCode = localStorage.getItem(`${storageKey}_${this.currentLanguage}`) || defaultCode;
 
     this.view = new EditorView({
       doc: existingCode,
-      extensions: [
-        basicSetup,
-        javascript(),
-        gruvboxLight,
-        keymap.of([indentWithTab]),
-        EditorView.updateListener.of((update) => {
-          if (update.docChanged) {
-            this.autoSave();
-          }
-        }),
-      ],
+      extensions: this.getExtensions(),
       parent: element,
     });
 
     this.autoSave = throttle(() => this.saveCode(), 1000);
   }
 
+  getExtensions() {
+    const langExtension = this.currentLanguage === 'javascript' ? javascript() : python();
+    
+    return [
+      basicSetup,
+      this.languageCompartment.of(langExtension),
+      gruvboxLight,
+      keymap.of([indentWithTab]),
+      EditorView.updateListener.of((update) => {
+        if (update.docChanged) {
+          this.autoSave();
+        }
+      }),
+    ];
+  }
+
+  setLanguage(language) {
+    if (language === this.currentLanguage) return;
+    
+    // Save current code
+    this.saveCode();
+    
+    // Update language
+    this.currentLanguage = language;
+    localStorage.setItem(`${this.storageKey}_language`, language);
+    
+    // Load code for new language
+    const defaultCode = this.runtimeManager.runtimes[language].getDefaultTemplate();
+    const existingCode = localStorage.getItem(`${this.storageKey}_${language}`) || defaultCode;
+    
+    // Reconfigure editor with new language extension
+    const langExtension = language === 'javascript' ? javascript() : python();
+    this.view.dispatch({
+      effects: this.languageCompartment.reconfigure(langExtension)
+    });
+    
+    // Set the code
+    this.setCode(existingCode);
+  }
+
   reset() {
-    const defaultCode = dedent(
-      document.getElementById("default-elev-implementation").textContent,
-    ).trim();
+    const defaultCode = this.currentLanguage === 'javascript'
+      ? dedent(document.getElementById("default-elev-implementation").textContent).trim()
+      : this.runtimeManager.runtimes[this.currentLanguage].getDefaultTemplate();
+      
     this.view.dispatch({
       changes: { from: 0, to: this.view.state.doc.length, insert: defaultCode },
     });
   }
 
   saveCode() {
-    localStorage.setItem(this.storageKey, this.getCode());
+    localStorage.setItem(`${this.storageKey}_${this.currentLanguage}`, this.getCode());
     document.getElementById("save_message").textContent =
       "Code saved " + new Date().toTimeString();
     this.dispatchEvent(new CustomEvent("change"));
@@ -92,9 +137,18 @@ class CodeEditor extends EventTarget {
     console.log("Getting code...");
     const code = this.getCode();
     try {
-      const obj = await getCodeObjFromCode(code);
+      // Select the language and load the code
+      await this.runtimeManager.selectLanguage(this.currentLanguage);
+      await this.runtimeManager.loadCode(code);
+      
       this.dispatchEvent(new CustomEvent("code_success"));
-      return obj;
+      
+      // Return a wrapper object that calls the runtime manager
+      return {
+        update: async (elevators, floors) => {
+          return await this.runtimeManager.execute(elevators, floors);
+        }
+      };
     } catch (e) {
       this.dispatchEvent(new CustomEvent("usercode_error", { detail: e }));
       return null;
@@ -116,6 +170,7 @@ export class ElevatorApp extends EventTarget {
 
     this.worldController = createWorldController(1.0 / 60.0);
     this.worldCreator = createWorldCreator();
+    this.runtimeManager = new RuntimeManager();
     this.world = null;
     this.currentChallengeIndex = 0;
 
@@ -128,7 +183,7 @@ export class ElevatorApp extends EventTarget {
 
     // Setup editor
     const codeArea = document.getElementById("code");
-    this.editor = new CodeEditor(codeArea, "develevate_code");
+    this.editor = new CodeEditor(codeArea, "develevate_code", this.runtimeManager);
 
     // Event handlers storage
     this.timescaleChangedHandler = null;
@@ -145,7 +200,11 @@ export class ElevatorApp extends EventTarget {
       if (
         confirm("Do you really want to reset to the default implementation?")
       ) {
-        localStorage.setItem("develevateBackupCode", this.editor.getCode());
+        // Save current code as backup for current language
+        localStorage.setItem(
+          `develevateBackupCode_${this.editor.currentLanguage}`, 
+          this.editor.getCode()
+        );
         this.editor.reset();
       }
       this.editor.view.focus();
@@ -159,9 +218,15 @@ export class ElevatorApp extends EventTarget {
             "Do you want to bring back the code as before the last reset?",
           )
         ) {
-          this.editor.setCode(
-            localStorage.getItem("develevateBackupCode") || "",
+          // Load backup for current language
+          const backupCode = localStorage.getItem(
+            `develevateBackupCode_${this.editor.currentLanguage}`
           );
+          if (backupCode) {
+            this.editor.setCode(backupCode);
+          } else {
+            alert("No backup found for current language");
+          }
         }
         this.editor.view.focus();
       });
@@ -196,6 +261,30 @@ export class ElevatorApp extends EventTarget {
     // Handle browser back/forward navigation
     window.addEventListener("hashchange", () => {
       this.loadFromUrl();
+    });
+    
+    // Language selector
+    const languageSelect = document.getElementById("language-select");
+    languageSelect.value = this.editor.currentLanguage;
+    languageSelect.addEventListener("change", async (e) => {
+      const newLanguage = e.target.value;
+      try {
+        // Show loading message
+        presentCodeStatus(this.codestatusElem, { message: `Loading ${newLanguage} runtime...` });
+        
+        // Select the language in runtime manager
+        await this.runtimeManager.selectLanguage(newLanguage);
+        
+        // Update editor language
+        this.editor.setLanguage(newLanguage);
+        
+        // Clear status
+        presentCodeStatus(this.codestatusElem);
+      } catch (error) {
+        presentCodeStatus(this.codestatusElem, error);
+        // Revert language selector
+        languageSelect.value = this.editor.currentLanguage;
+      }
     });
   }
 

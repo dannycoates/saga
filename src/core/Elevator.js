@@ -181,6 +181,7 @@ export class Elevator extends Movable {
   }
 
   goToFloor(floor) {
+    floor = limitNumber(floor, 0, this.floorCount - 1);
     this.makeSureNotBusy();
     this.isMoving = true;
     this.destinationY = this.getYPosOfFloor(floor);

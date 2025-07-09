@@ -184,6 +184,25 @@ button:hover {
     border: 2px solid #f2e5bc;
 }
 
+.language-selector {
+    background-color: #ebdbb2;
+    padding: 8px;
+    border-bottom: 2px solid #d5c4a1;
+}
+
+.language-selector label {
+    margin-right: 8px;
+    font-weight: bold;
+}
+
+.language-selector select {
+    background-color: #f2e5bc;
+    border: 1px solid #d5c4a1;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 14px;
+}
+
 /* CodeMirror 6 editor styles */
 .code .cm-editor {
     font-size: 14px;
