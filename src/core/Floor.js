@@ -50,4 +50,11 @@ export class Floor extends EventTarget {
   floorNum() {
     return this.level;
   }
+
+  toAPI() {
+    return {
+      buttons: this.buttons,
+      level: this.level,
+    };
+  }
 }

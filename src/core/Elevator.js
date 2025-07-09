@@ -278,4 +278,14 @@ export class Elevator extends Movable {
     );
     this.previousTruncFutureFloorIfStopped = futureTruncFloorIfStopped;
   }
+
+  toAPI() {
+    return {
+      currentFloor: this.currentFloor,
+      destinationFloor: this.destinationFloor,
+      pressedFloorButtons: this.pressedFloorButtons,
+      percentFull: this.percentFull,
+      goToFloor: this.goToFloor.bind(this),
+    };
+  }
 }
