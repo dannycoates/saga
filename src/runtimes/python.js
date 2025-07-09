@@ -2,11 +2,11 @@ import { BaseRuntime } from "./base.js";
 
 export class PythonRuntime extends BaseRuntime {
   constructor() {
-    super();
+    super("python");
     this.pyodide = null;
   }
 
-  async load() {
+  async loadRuntime() {
     if (this.loading || this.loaded) return;
 
     this.loading = true;
@@ -123,8 +123,6 @@ def _execute_update(js_elevators, js_floors):
       throw new Error("Python runtime not loaded");
     }
 
-    this.validateCode(code);
-
     // Set the user's code in the Python environment
     await this.pyodide.runPythonAsync(code);
 
@@ -166,28 +164,39 @@ _execute_update(js_elevators, js_floors)
     return result;
   }
 
-  validateCode(code) {
-    if (!code || code.trim().length === 0) {
-      throw new Error("Code cannot be empty");
-    }
-
-    if (!code.includes("def update")) {
-      throw new Error("Code must define an update function");
-    }
-  }
-
   getDefaultTemplate() {
-    return `def update(elevators, floors):
+    return `"""
+Floor class:
+  Attributes:
+    buttons.up: bool - True if up button is pressed
+    buttons.down: bool - True if down button is pressed
+    level: int - Floor number (0-indexed)
+
+Elevator class:
+  Attributes:
+    current_floor: int - Current floor number
+    destination_floor: int | None - Destination floor or None if idle
+    pressed_floor_buttons: list[int] - List of pressed floor buttons
+    percent_full: float - Load percentage (0.0 to 1.0)
+
+  Methods:
+    go_to_floor(floor_num: int) - Command elevator to go to floor
+"""
+
+def update(elevators, floors):
+  """
+  Update gets called on a regular, fast interval (a game loop)
+
+  Args:
+    elevators: list[Elevator] - List of all elevators
+    floors: list[Floor] - List of all floors
+  """
   elevator = elevators[0]
   if elevator.destination_floor is None:
     if elevator.current_floor == len(floors) - 1:
       elevator.go_to_floor(0)
     else:
       elevator.go_to_floor(elevator.current_floor + 1)`;
-  }
-
-  getLanguage() {
-    return "python";
   }
 
   dispose() {

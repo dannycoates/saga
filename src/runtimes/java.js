@@ -2,7 +2,7 @@ import { BaseRuntime } from "./base.js";
 
 export class JavaRuntime extends BaseRuntime {
   constructor() {
-    super();
+    super("java");
     this.cheerpjReady = false;
     this.compiledClasses = null;
     this.loadedCode = null;
@@ -11,7 +11,7 @@ export class JavaRuntime extends BaseRuntime {
     this.elevators = null;
   }
 
-  async load() {
+  async loadRuntime() {
     if (this.loading || this.loaded) return;
 
     this.loading = true;
@@ -55,8 +55,6 @@ export class JavaRuntime extends BaseRuntime {
     if (this.loadedCode === code) {
       return;
     }
-
-    this.validateCode(code);
 
     try {
       // Create the full Java source with imports and wrapper
@@ -246,25 +244,32 @@ ${userCode}`;
     this.executeReject = null;
   }
 
-  validateCode(code) {
-    if (!code || code.trim().length === 0) {
-      throw new Error("Code cannot be empty");
-    }
-
-    // Check for the required class and update method
-    if (!code.includes("class") || !code.includes("ElevatorController")) {
-      throw new Error("Code must define a ElevatorController class");
-    }
-
-    if (!code.includes("void update")) {
-      throw new Error("ElevatorController must have an update method");
-    }
-  }
-
   getDefaultTemplate() {
-    return `public class ElevatorController {
+    return `/**
+ * Floor class:
+ *   Accessors:
+ *     buttons.up - boolean: true if up button is pressed
+ *     buttons.down - boolean: true if down button is pressed
+ *     level - int: floor number (0-indexed)
+ *
+ * Elevator class:
+ *   Accessors:
+ *     currentFloor - int: current floor number
+ *     destinationFloor - Integer: destination floor or null if idle
+ *     pressedFloorButtons - int[]: array of pressed floor buttons
+ *     percentFull - double: load percentage (0.0 to 1.0)
+ *
+ *   Methods:
+ *     goToFloor(int floorNum) - command elevator to go to floor
+ */
+class ElevatorController {
     private int nextFloor = 1;
 
+    /**
+     * Update gets called on a regular, fast interval (a game loop)
+     * @param elevators Array of all elevators
+     * @param floors Array of all floors
+     */
     public void update(Elevator[] elevators, Floor[] floors) {
         Elevator elevator = elevators[0];
 
@@ -277,10 +282,6 @@ ${userCode}`;
         }
     }
 }`;
-  }
-
-  getLanguage() {
-    return "java";
   }
 
   dispose() {

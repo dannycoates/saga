@@ -6,6 +6,7 @@ let Elevator = null;
 let Floor = null;
 let Buttons = null;
 let cheerpjLoaded = false;
+let controller = null;
 
 // Register native methods that Java can call
 async function Java_Elevator_jsGoToFloor(lib, elevatorId, floor) {
@@ -44,14 +45,13 @@ self.addEventListener("message", async (event) => {
           self.cheerpOSAddStringFile(`/str/${fileName}`, uint8Array);
         }
 
-        // Load the library from the compiled classes
         lib = await self.cheerpjRunLibrary("/str/");
 
-        // Get class references
         Elevator = await lib.Elevator;
         Floor = await lib.Floor;
         Buttons = await lib.Floor$Buttons;
         ElevatorController = await lib.ElevatorController;
+        controller = await new ElevatorController();
 
         self.postMessage({ type: "initialized" });
         break;
@@ -63,7 +63,6 @@ self.addEventListener("message", async (event) => {
 
         const { elevators, floors } = data;
 
-        // Create Java wrapper objects for elevators
         const javaElevators = [];
         for (let i = 0; i < elevators.length; i++) {
           const elevator = elevators[i];
@@ -76,7 +75,6 @@ self.addEventListener("message", async (event) => {
           javaElevators.push(javaElevator);
         }
 
-        // Create Java wrapper objects for floors
         const javaFloors = [];
         for (const floor of floors) {
           const javaFloor = await new Floor();
@@ -89,8 +87,6 @@ self.addEventListener("message", async (event) => {
           javaFloors.push(javaFloor);
         }
 
-        // Create the controller and call update
-        const controller = await new ElevatorController();
         await controller.update(javaElevators, javaFloors);
 
         self.postMessage({ type: "executed" });
