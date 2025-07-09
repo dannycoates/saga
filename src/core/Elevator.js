@@ -171,7 +171,7 @@ export class Elevator extends Movable {
       // can enter on the same floor
       this.dispatchEvent(
         new CustomEvent("exit_available", {
-          detail: [this.currentFloor, this],
+          detail: this,
         }),
       );
       this.dispatchEvent(
