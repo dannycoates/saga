@@ -147,10 +147,24 @@ class CodeEditor extends EventTarget {
   async getCodeObj() {
     console.log("Getting code...");
     const code = this.getCode();
+    const app = window.app; // Get reference to the app instance
+    
     try {
+      // Show loading for language selection if needed
+      const currentRuntime = this.runtimeManager.getCurrentRuntime();
+      if (!currentRuntime || !currentRuntime.loaded) {
+        app?.showRuntimeLoading(true, `Loading ${this.currentLanguage} runtime...`);
+      }
+      
       // Select the language and load the code
       await this.runtimeManager.selectLanguage(this.currentLanguage);
+      
+      // Show loading for code compilation/loading
+      app?.showRuntimeLoading(true, `Compiling ${this.currentLanguage} code...`);
       await this.runtimeManager.loadCode(code);
+      
+      // Hide loading
+      app?.showRuntimeLoading(false);
 
       this.dispatchEvent(new CustomEvent("code_success"));
 
@@ -161,6 +175,7 @@ class CodeEditor extends EventTarget {
         },
       };
     } catch (e) {
+      app?.showRuntimeLoading(false);
       this.dispatchEvent(new CustomEvent("usercode_error", { detail: e }));
       return null;
     }
@@ -284,7 +299,7 @@ export class ElevatorApp extends EventTarget {
 
       try {
         // Show loading state
-        this.showRuntimeLoading(true);
+        this.showRuntimeLoading(true, `Loading ${newLanguage} runtime...`);
 
         // Select the language in runtime manager
         await this.runtimeManager.selectLanguage(newLanguage);
@@ -336,12 +351,17 @@ export class ElevatorApp extends EventTarget {
     return params;
   }
 
-  showRuntimeLoading(show) {
+  showRuntimeLoading(show, message = "Loading runtime...") {
     const loadingIndicator = document.getElementById("runtime-loading");
     const languageSelect = document.getElementById("language-select");
 
     if (show) {
       loadingIndicator.style.display = "inline-flex";
+      // Update the loading text
+      const loadingText = loadingIndicator.querySelector('.loading-text');
+      if (loadingText) {
+        loadingText.textContent = message;
+      }
       languageSelect.disabled = true;
       this.setStartButtonEnabled(false);
     } else {
@@ -355,7 +375,7 @@ export class ElevatorApp extends EventTarget {
     const runtime = this.runtimeManager.getCurrentRuntime();
     if (!runtime.loaded) {
       // Show loading state
-      this.showRuntimeLoading(true);
+      this.showRuntimeLoading(true, `Loading ${this.editor.currentLanguage} runtime...`);
 
       try {
         // Pre-load the runtime
