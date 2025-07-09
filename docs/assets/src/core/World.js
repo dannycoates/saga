@@ -1,4 +1,4 @@
-import { range, randomInt, limitNumber } from './utils.js';
+import { range, randomInt } from './utils.js';
 import { Floor } from './Floor.js';
 import { Elevator } from './Elevator.js';
 import { User } from './User.js';
@@ -115,26 +115,9 @@ class World extends EventTarget {
       options.elevatorCapacities,
     );
 
-    // Wrap elevators with error handling for user code
-    this.elevatorInterfaces = this.elevators.map((elevator) => {
-      // Store original goToFloor method
-      const originalGoToFloor = elevator.goToFloor.bind(elevator);
-
-      // Override goToFloor with error handling and validation
-      elevator.goToFloor = (floorNum) => {
-        floorNum = limitNumber(Number(floorNum), 0, options.floorCount - 1);
-        try {
-          originalGoToFloor(floorNum);
-        } catch (e) {
-          this.handleUserCodeError(e);
-        }
-      };
-
-      return elevator;
-    });
-
     this.users = [];
-
+    this.userEventHandlers = new WeakMap();
+    this.handleElevAvailability = this.handleElevAvailability.bind(this);
     this.setupEventHandlers();
   }
 
@@ -158,7 +141,7 @@ class World extends EventTarget {
     user.spawnTimestamp = this.elapsedTime;
     this.dispatchEvent(new CustomEvent("new_user", { detail: user }));
 
-    user.addEventListener("exited_elevator", () => {
+    const exitedElevatorHandler = () => {
       this.transportedCounter++;
       this.maxWaitTime = Math.max(
         this.maxWaitTime,
@@ -169,15 +152,20 @@ class World extends EventTarget {
           (this.elapsedTime - user.spawnTimestamp)) /
         this.transportedCounter;
       this.recalculateStats();
-    });
+    };
+
+    user.addEventListener("exited_elevator", exitedElevatorHandler);
+    this.userEventHandlers.set(user, { exitedElevator: exitedElevatorHandler });
+
     user.updateDisplayPosition(true);
   }
 
-  handleElevAvailability(elevator) {
+  handleElevAvailability(event) {
+    const elevator = event.detail;
     // Notify floors first because overflowing users
     // will press buttons again.
     this.floors
-      .filter((floor, i) => elevator.currentFloor === i)
+      .filter((_, i) => elevator.currentFloor === i)
       .forEach((floor) => floor.elevatorAvailable(elevator));
 
     this.users
@@ -187,48 +175,12 @@ class World extends EventTarget {
       );
   }
 
-  handleButtonRepressing(eventName, floor) {
-    // Need randomize iteration order or we'll tend to fill up first elevator
-    const offset = randomInt(0, this.elevators.length - 1);
-    const shuffledElevators = [
-      ...this.elevators.slice(offset),
-      ...this.elevators.slice(0, offset),
-    ];
-
-    const suitableElevator = shuffledElevators.find((elevator) => {
-      const directionMatch =
-        (eventName === "up_button_pressed" && elevator.goingUpIndicator) ||
-        (eventName === "down_button_pressed" && elevator.goingDownIndicator);
-
-      return (
-        directionMatch &&
-        elevator.currentFloor === floor.level &&
-        elevator.isOnAFloor() &&
-        !elevator.isMoving &&
-        !elevator.isFull()
-      );
-    });
-
-    if (suitableElevator) {
-      suitableElevator.goToFloor(floor.level);
-    }
-  }
-
   setupEventHandlers() {
     // Bind elevators to handle availability
     this.elevators.forEach((elevator) => {
-      elevator.addEventListener("entrance_available", (e) =>
-        this.handleElevAvailability(e.detail),
-      );
-    });
-
-    // Handle button repressing
-    this.floors.forEach((floor) => {
-      floor.addEventListener("up_button_pressed", (e) =>
-        this.handleButtonRepressing("up_button_pressed", e.detail),
-      );
-      floor.addEventListener("down_button_pressed", (e) =>
-        this.handleButtonRepressing("down_button_pressed", e.detail),
+      elevator.addEventListener(
+        "entrance_available",
+        this.handleElevAvailability,
       );
     });
   }
@@ -277,22 +229,28 @@ class World extends EventTarget {
 
   unWind() {
     console.log("Unwinding", this);
-    [
-      ...this.elevators,
-      ...this.elevatorInterfaces,
-      ...this.users,
-      ...this.floors,
-      this,
-    ];
-    this.challengeEnded = true;
-    this.elevators = [];
-    this.elevatorInterfaces = [];
-    this.users = [];
-    this.floors = [];
-  }
 
-  init() {
-    // No initialization needed for simplified interface
+    // Clean up user event listeners
+    this.users.forEach((user) => {
+      const handlers = this.userEventHandlers.get(user);
+      if (handlers) {
+        if (handlers.exitedElevator) {
+          user.removeEventListener("exited_elevator", handlers.exitedElevator);
+        }
+        this.userEventHandlers.delete(user);
+      }
+    });
+    this.elevators.forEach((elevator) => {
+      elevator.removeEventListener(
+        "entrance_available",
+        this.handleElevAvailability,
+      );
+    });
+    // Mark as ended and clear arrays to help with garbage collection
+    this.challengeEnded = true;
+    this.users = [];
+    this.elevators = [];
+    this.floors = [];
   }
 }
 
@@ -307,7 +265,6 @@ class WorldController extends EventTarget {
   start(world, codeObj, animationFrameRequester, autoStart) {
     this.isPaused = true;
     let lastT = null;
-    let firstUpdate = true;
 
     world.addEventListener("usercode_error", (e) =>
       this.handleUserCodeError(e.detail),
@@ -315,18 +272,15 @@ class WorldController extends EventTarget {
 
     const updater = (t) => {
       if (!this.isPaused && !world.challengeEnded && lastT !== null) {
-        if (firstUpdate) {
-          firstUpdate = false;
-          // This logic prevents infinite loops in usercode from breaking the page permanently - don't evaluate user code until game is unpaused.
-          world.init();
-        }
-
         const dt = t - lastT;
         let scaledDt = dt * 0.001 * this.timeScale;
         scaledDt = Math.min(scaledDt, this.dtMax * 3 * this.timeScale); // Limit to prevent unhealthy substepping
 
         try {
-          codeObj.update(scaledDt, world.elevatorInterfaces, world.floors);
+          codeObj.update(
+            world.elevators.map((el) => el.toAPI()),
+            world.floors.map((fl) => fl.toAPI()),
+          );
         } catch (e) {
           this.handleUserCodeError(e);
         }

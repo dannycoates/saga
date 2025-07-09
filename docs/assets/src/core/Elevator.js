@@ -165,7 +165,7 @@ class Elevator extends Movable {
       // can enter on the same floor
       this.dispatchEvent(
         new CustomEvent("exit_available", {
-          detail: [this.currentFloor, this],
+          detail: this,
         }),
       );
       this.dispatchEvent(
@@ -175,6 +175,7 @@ class Elevator extends Movable {
   }
 
   goToFloor(floor) {
+    floor = limitNumber(floor, 0, this.floorCount - 1);
     this.makeSureNotBusy();
     this.isMoving = true;
     this.destinationY = this.getYPosOfFloor(floor);
@@ -271,6 +272,16 @@ class Elevator extends Movable {
       this.getExactFutureFloorIfStopped(),
     );
     this.previousTruncFutureFloorIfStopped = futureTruncFloorIfStopped;
+  }
+
+  toAPI() {
+    return {
+      currentFloor: this.currentFloor,
+      destinationFloor: this.destinationFloor,
+      pressedFloorButtons: this.pressedFloorButtons,
+      percentFull: this.percentFull,
+      goToFloor: this.goToFloor.bind(this),
+    };
   }
 }
 

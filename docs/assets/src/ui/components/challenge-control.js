@@ -153,8 +153,13 @@ class ChallengeControl extends HTMLElement {
           transition: background-color 0.2s ease;
         }
 
-        button:hover {
+        button:hover:not(:disabled) {
           background-color: #076678; /* Gruvbox dark blue */
+        }
+        
+        button:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
         }
 
         .timescale-controls {

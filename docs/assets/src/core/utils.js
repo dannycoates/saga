@@ -86,34 +86,17 @@ function accelerationNeededToAchieveChangeDistance(
   return requiredAcceleration;
 }
 
-async function getCodeObjFromCode(code) {
-  // Use vite-ignore comment to suppress warning about dynamic import
-  const obj = await __vitePreload(() => import(
-    /* @vite-ignore */ `data:text/javascript,${encodeURIComponent(code.trim())}`
-  ),true              ?[]:void 0,import.meta.url);
-  if (typeof obj.update !== "function") {
-    throw "Code must contain an update function";
-  }
-  return obj;
-}
-
-
 // Random number utilities (replacing lodash)
 function randomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-// Array utilities (replacing lodash)
 function range(start, end) {
   if (arguments.length === 1) {
     end = start;
     start = 0;
   }
-  const result = [];
-  for (let i = start; i < end; i++) {
-    result.push(i);
-  }
-  return result;
+  return Array.from({ length: end - start }, (_, i) => start + i);
 }
 
 // Throttle implementation (replacing lodash)
@@ -144,4 +127,4 @@ function throttle(func, wait) {
   };
 }
 
-export { accelerationNeededToAchieveChangeDistance, distanceNeededToAchieveSpeed, epsilonEquals, getCodeObjFromCode, limitNumber, randomInt, range, throttle };
+export { __vitePreload, accelerationNeededToAchieveChangeDistance, distanceNeededToAchieveSpeed, epsilonEquals, limitNumber, randomInt, range, throttle };
