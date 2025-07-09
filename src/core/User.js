@@ -33,14 +33,16 @@ export class User extends Movable {
     }
   }
 
-  handleExit(floorNum, elevator) {
+  handleExit(elevator) {
     if (elevator.currentFloor === this.destinationFloor) {
       elevator.userExiting(this);
       this.currentFloor = elevator.currentFloor;
       this.setParent(null);
       const destination = this.x + 100;
       this.done = true;
-      this.dispatchEvent(new CustomEvent("exited_elevator", { detail: elevator }));
+      this.dispatchEvent(
+        new CustomEvent("exited_elevator", { detail: elevator }),
+      );
       this.dispatchEvent(new CustomEvent("new_state"));
       this.dispatchEvent(new CustomEvent("new_display_state"));
       const self = this;
@@ -79,13 +81,11 @@ export class User extends Movable {
     if (pos) {
       // Success
       this.setParent(elevator);
-      const self = this;
-      this.moveToOverTime(pos[0], pos[1], 1, undefined, function () {
-        elevator.pressFloorButton(self.destinationFloor);
+      this.moveToOverTime(pos[0], pos[1], 1, undefined, () => {
+        elevator.pressFloorButton(this.destinationFloor);
       });
-      this.exitAvailableHandler = function (event) {
-        const [floorNum, elevator] = event.detail;
-        self.handleExit(elevator.currentFloor, elevator);
+      this.exitAvailableHandler = (event) => {
+        this.handleExit(event.detail);
       };
       elevator.addEventListener("exit_available", this.exitAvailableHandler);
     } else {

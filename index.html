@@ -75,11 +75,10 @@
 
               /**
               * Update gets called on a regular, fast interval (a game loop)
-              * @param {number} dt - elapsed game time since last update in seconds
               * @param {Elevator[]} elevators
               * @param {Floor[]} floors
               */
-              export function update(dt, elevators, floors) {
+              export function update(elevators, floors) {
                 const elevator = elevators[0]
 
                 if (elevator.destinationFloor === null) {

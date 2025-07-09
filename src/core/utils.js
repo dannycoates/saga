@@ -40,23 +40,17 @@ export async function getCodeObjFromCode(code) {
   return obj;
 }
 
-
 // Random number utilities (replacing lodash)
 export function randomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-// Array utilities (replacing lodash)
 export function range(start, end) {
   if (arguments.length === 1) {
     end = start;
     start = 0;
   }
-  const result = [];
-  for (let i = start; i < end; i++) {
-    result.push(i);
-  }
-  return result;
+  return Array.from({ length: end - start }, (_, i) => start + i);
 }
 
 // Throttle implementation (replacing lodash)
