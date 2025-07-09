@@ -11,6 +11,7 @@ import {
 import { basicSetup, EditorView } from "codemirror";
 import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
+import { java } from "@codemirror/lang-java";
 import { gruvboxLight } from "cm6-theme-gruvbox-light";
 import { keymap } from "@codemirror/view";
 import { indentWithTab } from "@codemirror/commands";
@@ -47,8 +48,20 @@ class CodeEditor extends EventTarget {
   }
 
   getExtensions() {
-    const langExtension =
-      this.currentLanguage === "javascript" ? javascript() : python();
+    let langExtension;
+    switch (this.currentLanguage) {
+      case "javascript":
+        langExtension = javascript();
+        break;
+      case "python":
+        langExtension = python();
+        break;
+      case "java":
+        langExtension = java();
+        break;
+      default:
+        langExtension = javascript();
+    }
 
     return [
       basicSetup,
@@ -80,7 +93,20 @@ class CodeEditor extends EventTarget {
       localStorage.getItem(`${this.storageKey}_${language}`) || defaultCode;
 
     // Reconfigure editor with new language extension
-    const langExtension = language === "javascript" ? javascript() : python();
+    let langExtension;
+    switch (language) {
+      case "javascript":
+        langExtension = javascript();
+        break;
+      case "python":
+        langExtension = python();
+        break;
+      case "java":
+        langExtension = java();
+        break;
+      default:
+        langExtension = javascript();
+    }
     this.view.dispatch({
       effects: this.languageCompartment.reconfigure(langExtension),
     });
