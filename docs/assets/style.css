@@ -184,6 +184,53 @@ button:hover {
     border: 2px solid #f2e5bc;
 }
 
+.language-selector {
+    background-color: #ebdbb2;
+    padding: 8px;
+    border-bottom: 2px solid #d5c4a1;
+}
+
+.language-selector label {
+    margin-right: 8px;
+    font-weight: bold;
+}
+
+.language-selector select {
+    background-color: #f2e5bc;
+    border: 1px solid #d5c4a1;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 14px;
+}
+
+/* Loading indicator styles */
+.loading-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 12px;
+}
+
+.loading-indicator .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #d5c4a1;
+    border-top-color: #458588;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.loading-indicator .loading-text {
+    font-size: 14px;
+    color: #458588;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 /* CodeMirror 6 editor styles */
 .code .cm-editor {
     font-size: 14px;

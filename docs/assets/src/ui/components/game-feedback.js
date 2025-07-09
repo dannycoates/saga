@@ -6,11 +6,16 @@ class GameFeedback extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
+    this.linkClickHandler = null;
   }
 
   connectedCallback() {
     this.render();
     this.attachEventListeners();
+  }
+
+  disconnectedCallback() {
+    this.removeEventListeners();
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -20,10 +25,20 @@ class GameFeedback extends HTMLElement {
     }
   }
 
+  removeEventListeners() {
+    const link = this.shadowRoot.querySelector('a');
+    if (link && this.linkClickHandler) {
+      link.removeEventListener('click', this.linkClickHandler);
+      this.linkClickHandler = null;
+    }
+  }
+
   attachEventListeners() {
+    this.removeEventListeners(); // Remove any existing listeners first
+    
     const link = this.shadowRoot.querySelector('a');
     if (link) {
-      link.addEventListener('click', (e) => {
+      this.linkClickHandler = (e) => {
         e.preventDefault();
         const nextUrl = this.getAttribute('next-url');
         if (nextUrl) {
@@ -31,7 +46,8 @@ class GameFeedback extends HTMLElement {
           window.location.hash = nextUrl.replace('#', '');
           // The hashchange event will trigger loadFromUrl() automatically
         }
-      });
+      };
+      link.addEventListener('click', this.linkClickHandler);
     }
   }
 

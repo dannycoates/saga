@@ -92,14 +92,22 @@ function presentWorld(worldElem, world) {
   });
 
   // Setup user creation
-  world.addEventListener("new_user", (event) => {
+  const newUserHandler = (event) => {
     const user = event.detail;
     const userComponent = document.createElement("elevator-user");
     userComponent.user = user;
     worldElem.appendChild(userComponent);
-  });
+  };
+  world.addEventListener("new_user", newUserHandler);
 
-  return { worldElem, world };
+  // Return cleanup function
+  return {
+    worldElem,
+    world,
+    cleanup: () => {
+      world.removeEventListener("new_user", newUserHandler);
+    }
+  };
 }
 
 function presentCodeStatus(parentElem, error) {
