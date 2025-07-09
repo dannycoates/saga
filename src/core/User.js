@@ -45,15 +45,14 @@ export class User extends Movable {
       );
       this.dispatchEvent(new CustomEvent("new_state"));
       this.dispatchEvent(new CustomEvent("new_display_state"));
-      const self = this;
       this.moveToOverTime(
         destination,
         null,
         1 + Math.random() * 0.5,
         linearInterpolate,
-        function lastMove() {
-          self.removeMe = true;
-          self.dispatchEvent(new CustomEvent("removed"));
+        () => {
+          this.removeMe = true;
+          this.dispatchEvent(new CustomEvent("removed"));
           // Note: EventTarget doesn't have a built-in way to remove all listeners
         },
       );

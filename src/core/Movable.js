@@ -69,11 +69,10 @@ export class Movable extends EventTarget {
   wait(millis, cb) {
     this.makeSureNotBusy();
     let timeSpent = 0.0;
-    const self = this;
-    self.currentTask = function waitTask(dt) {
+    this.currentTask = (dt) => {
       timeSpent += dt;
       if (timeSpent > millis) {
-        self.currentTask = null;
+        this.currentTask = null;
         if (cb) {
           cb();
         }
@@ -96,18 +95,17 @@ export class Movable extends EventTarget {
     const origX = this.x;
     const origY = this.y;
     let timeSpent = 0.0;
-    const self = this;
-    self.currentTask = function moveToOverTimeTask(dt) {
+    this.currentTask = (dt) => {
       timeSpent = Math.min(timeToSpend, timeSpent + dt);
       if (timeSpent === timeToSpend) {
-        self.moveToFast(newX, newY);
-        self.currentTask = null;
+        this.moveToFast(newX, newY);
+        this.currentTask = null;
         if (cb) {
           cb();
         }
       } else {
         const factor = timeSpent / timeToSpend;
-        self.moveToFast(
+        this.moveToFast(
           interpolator(origX, newX, factor),
           interpolator(origY, newY, factor),
         );
