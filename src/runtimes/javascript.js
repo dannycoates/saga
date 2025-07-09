@@ -2,19 +2,17 @@ import { BaseRuntime } from "./base.js";
 
 export class JavaScriptRuntime extends BaseRuntime {
   constructor() {
-    super();
+    super("javascript");
     this.loaded = true; // JavaScript is always available
     this.loadedModule = null;
   }
 
-  async load() {
+  async loadRuntime() {
     // No loading required for native JavaScript
     return;
   }
 
   async loadCode(code) {
-    this.validateCode(code);
-
     // Import the user's code as an ES module
     this.loadedModule = await import(
       /* @vite-ignore */ `data:text/javascript,${encodeURIComponent(code.trim())}`
@@ -36,17 +34,6 @@ export class JavaScriptRuntime extends BaseRuntime {
     return this.loadedModule.update(elevators, floors);
   }
 
-  validateCode(code) {
-    // Basic validation
-    if (!code || code.trim().length === 0) {
-      throw new Error("Code cannot be empty");
-    }
-
-    if (!code.includes("export") || !code.includes("update")) {
-      throw new Error("Code must export an update function");
-    }
-  }
-
   getDefaultTemplate() {
     return `/**
   * @class Floor
@@ -57,7 +44,7 @@ export class JavaScriptRuntime extends BaseRuntime {
   * @class Elevator
   *   Accessors:
   *    @member currentFloor {number}
-  *    @member destinationFloor {number | null}
+  *    @member destinationFloor {number | null} (null if idle)
   *    @member pressedFloorButtons {number[]}
   *    @member percentFull {0..1}
   *
@@ -82,10 +69,6 @@ export function update(elevators, floors) {
     elevator.goToFloor(nextFloor)
   }
 }`;
-  }
-
-  getLanguage() {
-    return "javascript";
   }
 
   dispose() {
