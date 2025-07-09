@@ -10,7 +10,7 @@ Elevator Saga is an elevator programming game where users write JavaScript code 
 
 ### Development
 - `npm run dev` - Start development server on port 3000 with hot reloading
-- `npm run build` - Build for production (outputs to `dist/`)
+- `npm run build` - Build for production (outputs to `docs/`)
 - `npm run preview` - Preview production build
 
 ### Testing
@@ -39,25 +39,20 @@ Elevator Saga is an elevator programming game where users write JavaScript code 
 
 3. **Player Code Interface**
    - Players implement `update(dt, elevators, floors)`
-   - The game API is this:
+   - The game API is:
    ```js
-   /**
-     * @class Floor
-     *   Accessors:
-     *    @member buttons {{up: boolean, down: boolean}}
-     *    @member level {number}
-     *
-     * @class Elevator
-     *   Accessors:
-     *    @member currentFloor {number}
-     *    @member destinationFloor {number | null}
-     *    @member pressedFloorButtons {number[]}
-     *    @member percentFull {0..1}
-     *
-     *   Actions:
-     *    @func goToFloor(floorNum: number)
-     */
-     ```
+   // Elevator API
+   elevator.currentFloor        // Current floor number
+   elevator.destinationFloor    // Destination or null
+   elevator.pressedFloorButtons // Array of pressed floor numbers
+   elevator.percentFull         // Load percentage (0-1)
+   elevator.goToFloor(floorNum) // Command to move
+
+   // Floor API
+   floor.buttons.up   // Boolean - up button pressed
+   floor.buttons.down // Boolean - down button pressed
+   floor.level        // Floor number
+   ```
 
 4. **Challenge System** (`src/game/challenges.js`)
    - Defines success criteria for each level

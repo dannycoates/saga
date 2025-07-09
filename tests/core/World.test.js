@@ -44,7 +44,7 @@ describe("World controller", () => {
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       challengeEnded: false,
-      elevatorInterfaces: [],
+      elevators: [],
       floors: [],
     };
 
