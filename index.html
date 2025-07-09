@@ -38,7 +38,11 @@
                         <option value="javascript">JavaScript</option>
                         <option value="python">Python</option>
                     </select>
-                    <div class="loading-indicator" id="runtime-loading" style="display: none;">
+                    <div
+                        class="loading-indicator"
+                        id="runtime-loading"
+                        style="display: none"
+                    >
                         <span class="spinner"></span>
                         <span class="loading-text">Loading runtime...</span>
                     </div>
@@ -63,53 +67,6 @@
                 </h4>
             </div>
         </div>
-
-        <script type="text/plain" id="default-elev-implementation">
-            /**
-              * @class Floor
-              *   Accessors:
-              *    @member buttons {{up: boolean, down: boolean}}
-              *    @member level {number}
-              *
-              * @class Elevator
-              *   Accessors:
-              *    @member currentFloor {number}
-              *    @member destinationFloor {number | null}
-              *    @member pressedFloorButtons {number[]}
-              *    @member percentFull {0..1}
-              *
-              *   Actions:
-              *    @func goToFloor(floorNum: number)
-              */
-
-              let nextFloor = 1
-
-              /**
-              * Update gets called on a regular, fast interval (a game loop)
-              * @param {Elevator[]} elevators
-              * @param {Floor[]} floors
-              */
-              export function update(elevators, floors) {
-                const elevator = elevators[0]
-
-                if (elevator.destinationFloor === null) {
-                  if (nextFloor === floors.length) {
-                    nextFloor = 0
-                  }
-                  nextFloor = nextFloor + 1
-                  elevator.goToFloor(nextFloor)
-                }
-              }
-        </script>
-
-        <script type="text/plain" id="devtest-elev-implementation">
-            export function update(dt, elevators, floors) {
-                // Dev test update
-                console.log("Running dev test implementation", dt);
-            }
-        </script>
-
-        <!-- Main application entry point -->
         <script type="module" src="./src/app.js"></script>
     </body>
 </html>

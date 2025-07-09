@@ -17,24 +17,6 @@ import { indentWithTab } from "@codemirror/commands";
 import { Compartment } from "@codemirror/state";
 import { RuntimeManager } from "./runtimes/manager.js";
 
-// Helper function to dedent multi-line strings
-function dedent(str) {
-  const lines = str.split("\n");
-  // Find minimum indentation (ignoring empty lines)
-  let minIndent = Infinity;
-  for (const line of lines) {
-    if (line.trim()) {
-      const indent = line.match(/^(\s*)/)[1].length;
-      minIndent = Math.min(minIndent, indent);
-    }
-  }
-  // Remove the common indentation
-  if (minIndent < Infinity) {
-    return lines.map((line) => line.slice(minIndent)).join("\n");
-  }
-  return str;
-}
-
 // CodeMirror editor wrapper
 class CodeEditor extends EventTarget {
   constructor(element, storageKey, runtimeManager) {
@@ -48,16 +30,8 @@ class CodeEditor extends EventTarget {
     this.languageCompartment = new Compartment();
 
     // Get the appropriate default code based on language
-    const jsDefaultCode = dedent(
-      document.getElementById("default-elev-implementation").textContent,
-    ).trim();
-
     const defaultCode =
-      this.currentLanguage === "javascript"
-        ? jsDefaultCode
-        : this.runtimeManager.runtimes[
-            this.currentLanguage
-          ].getDefaultTemplate();
+      this.runtimeManager.runtimes[this.currentLanguage].getDefaultTemplate();
 
     const existingCode =
       localStorage.getItem(`${storageKey}_${this.currentLanguage}`) ||
@@ -117,13 +91,7 @@ class CodeEditor extends EventTarget {
 
   reset() {
     const defaultCode =
-      this.currentLanguage === "javascript"
-        ? dedent(
-            document.getElementById("default-elev-implementation").textContent,
-          ).trim()
-        : this.runtimeManager.runtimes[
-            this.currentLanguage
-          ].getDefaultTemplate();
+      this.runtimeManager.runtimes[this.currentLanguage].getDefaultTemplate();
 
     this.view.dispatch({
       changes: { from: 0, to: this.view.state.doc.length, insert: defaultCode },
@@ -171,13 +139,6 @@ class CodeEditor extends EventTarget {
       return null;
     }
   }
-
-  setDevTestCode() {
-    const devCode = dedent(
-      document.getElementById("devtest-elev-implementation").textContent,
-    ).trim();
-    this.setCode(devCode);
-  }
 }
 
 // Main Application class
@@ -215,7 +176,7 @@ export class ElevatorApp extends EventTarget {
 
     // Set the runtime manager to the editor's current language and check if it needs loading
     this.runtimeManager.currentLanguage = this.editor.currentLanguage;
-    
+
     // Wait for initial runtime to load before starting the challenge
     this.initializeWithRuntime();
   }
@@ -332,11 +293,6 @@ export class ElevatorApp extends EventTarget {
       2.0;
     this.worldController.setTimeScale(timeScale);
 
-    // Check for special modes
-    if (params.devtest) {
-      this.editor.setDevTestCode();
-    }
-
     // Start challenge - always start paused unless explicitly specified
     const shouldAutoStart = params.autostart === "true";
     this.startChallenge(this.currentChallengeIndex, shouldAutoStart);
@@ -384,7 +340,7 @@ export class ElevatorApp extends EventTarget {
         this.showRuntimeLoading(false);
       }
     }
-    
+
     // Now that runtime is loaded, proceed with loading from URL
     this.loadFromUrl();
   }
