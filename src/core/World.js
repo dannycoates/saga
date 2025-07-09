@@ -270,14 +270,14 @@ export class WorldController extends EventTarget {
       this.handleUserCodeError(e.detail),
     );
 
-    const updater = (t) => {
+    const updater = async (t) => {
       if (!this.isPaused && !world.challengeEnded && lastT !== null) {
         const dt = t - lastT;
         let scaledDt = dt * 0.001 * this.timeScale;
         scaledDt = Math.min(scaledDt, this.dtMax * 3 * this.timeScale); // Limit to prevent unhealthy substepping
 
         try {
-          codeObj.update(
+          await codeObj.update(
             world.elevators.map((el) => el.toAPI()),
             world.floors.map((fl) => fl.toAPI()),
           );
