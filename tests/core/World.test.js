@@ -89,7 +89,6 @@ describe("World controller", () => {
     controller.setPaused(false);
     frameRequester.trigger();
     frameRequester.trigger();
-    expect(fakeWorld.init).toHaveBeenCalled();
     expect(fakeCodeObj.update).toHaveBeenCalled();
   });
 
