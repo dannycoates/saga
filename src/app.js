@@ -41,8 +41,9 @@ class CodeEditor extends EventTarget {
     super();
     this.storageKey = storageKey;
     this.runtimeManager = runtimeManager;
-    this.currentLanguage = localStorage.getItem(`${storageKey}_language`) || 'javascript';
-    
+    this.currentLanguage =
+      localStorage.getItem(`${storageKey}_language`) || "javascript";
+
     // Create a compartment for the language extension
     this.languageCompartment = new Compartment();
 
@@ -50,12 +51,17 @@ class CodeEditor extends EventTarget {
     const jsDefaultCode = dedent(
       document.getElementById("default-elev-implementation").textContent,
     ).trim();
-    
-    const defaultCode = this.currentLanguage === 'javascript' 
-      ? jsDefaultCode 
-      : this.runtimeManager.runtimes[this.currentLanguage].getDefaultTemplate();
-    
-    const existingCode = localStorage.getItem(`${storageKey}_${this.currentLanguage}`) || defaultCode;
+
+    const defaultCode =
+      this.currentLanguage === "javascript"
+        ? jsDefaultCode
+        : this.runtimeManager.runtimes[
+            this.currentLanguage
+          ].getDefaultTemplate();
+
+    const existingCode =
+      localStorage.getItem(`${storageKey}_${this.currentLanguage}`) ||
+      defaultCode;
 
     this.view = new EditorView({
       doc: existingCode,
@@ -67,8 +73,9 @@ class CodeEditor extends EventTarget {
   }
 
   getExtensions() {
-    const langExtension = this.currentLanguage === 'javascript' ? javascript() : python();
-    
+    const langExtension =
+      this.currentLanguage === "javascript" ? javascript() : python();
+
     return [
       basicSetup,
       this.languageCompartment.of(langExtension),
@@ -84,40 +91,50 @@ class CodeEditor extends EventTarget {
 
   setLanguage(language) {
     if (language === this.currentLanguage) return;
-    
+
     // Save current code
     this.saveCode();
-    
+
     // Update language
     this.currentLanguage = language;
     localStorage.setItem(`${this.storageKey}_language`, language);
-    
+
     // Load code for new language
-    const defaultCode = this.runtimeManager.runtimes[language].getDefaultTemplate();
-    const existingCode = localStorage.getItem(`${this.storageKey}_${language}`) || defaultCode;
-    
+    const defaultCode =
+      this.runtimeManager.runtimes[language].getDefaultTemplate();
+    const existingCode =
+      localStorage.getItem(`${this.storageKey}_${language}`) || defaultCode;
+
     // Reconfigure editor with new language extension
-    const langExtension = language === 'javascript' ? javascript() : python();
+    const langExtension = language === "javascript" ? javascript() : python();
     this.view.dispatch({
-      effects: this.languageCompartment.reconfigure(langExtension)
+      effects: this.languageCompartment.reconfigure(langExtension),
     });
-    
+
     // Set the code
     this.setCode(existingCode);
   }
 
   reset() {
-    const defaultCode = this.currentLanguage === 'javascript'
-      ? dedent(document.getElementById("default-elev-implementation").textContent).trim()
-      : this.runtimeManager.runtimes[this.currentLanguage].getDefaultTemplate();
-      
+    const defaultCode =
+      this.currentLanguage === "javascript"
+        ? dedent(
+            document.getElementById("default-elev-implementation").textContent,
+          ).trim()
+        : this.runtimeManager.runtimes[
+            this.currentLanguage
+          ].getDefaultTemplate();
+
     this.view.dispatch({
       changes: { from: 0, to: this.view.state.doc.length, insert: defaultCode },
     });
   }
 
   saveCode() {
-    localStorage.setItem(`${this.storageKey}_${this.currentLanguage}`, this.getCode());
+    localStorage.setItem(
+      `${this.storageKey}_${this.currentLanguage}`,
+      this.getCode(),
+    );
     document.getElementById("save_message").textContent =
       "Code saved " + new Date().toTimeString();
     this.dispatchEvent(new CustomEvent("change"));
@@ -140,14 +157,14 @@ class CodeEditor extends EventTarget {
       // Select the language and load the code
       await this.runtimeManager.selectLanguage(this.currentLanguage);
       await this.runtimeManager.loadCode(code);
-      
+
       this.dispatchEvent(new CustomEvent("code_success"));
-      
+
       // Return a wrapper object that calls the runtime manager
       return {
         update: async (elevators, floors) => {
           return await this.runtimeManager.execute(elevators, floors);
-        }
+        },
       };
     } catch (e) {
       this.dispatchEvent(new CustomEvent("usercode_error", { detail: e }));
@@ -183,7 +200,11 @@ export class ElevatorApp extends EventTarget {
 
     // Setup editor
     const codeArea = document.getElementById("code");
-    this.editor = new CodeEditor(codeArea, "develevate_code", this.runtimeManager);
+    this.editor = new CodeEditor(
+      codeArea,
+      "develevate_code",
+      this.runtimeManager,
+    );
 
     // Event handlers storage
     this.timescaleChangedHandler = null;
@@ -191,7 +212,12 @@ export class ElevatorApp extends EventTarget {
     this.worldPresenter = null;
 
     this.setupEventHandlers();
-    this.loadFromUrl();
+
+    // Set the runtime manager to the editor's current language and check if it needs loading
+    this.runtimeManager.currentLanguage = this.editor.currentLanguage;
+    
+    // Wait for initial runtime to load before starting the challenge
+    this.initializeWithRuntime();
   }
 
   setupEventHandlers() {
@@ -202,8 +228,8 @@ export class ElevatorApp extends EventTarget {
       ) {
         // Save current code as backup for current language
         localStorage.setItem(
-          `develevateBackupCode_${this.editor.currentLanguage}`, 
-          this.editor.getCode()
+          `develevateBackupCode_${this.editor.currentLanguage}`,
+          this.editor.getCode(),
         );
         this.editor.reset();
       }
@@ -220,7 +246,7 @@ export class ElevatorApp extends EventTarget {
         ) {
           // Load backup for current language
           const backupCode = localStorage.getItem(
-            `develevateBackupCode_${this.editor.currentLanguage}`
+            `develevateBackupCode_${this.editor.currentLanguage}`,
           );
           if (backupCode) {
             this.editor.setCode(backupCode);
@@ -262,28 +288,32 @@ export class ElevatorApp extends EventTarget {
     window.addEventListener("hashchange", () => {
       this.loadFromUrl();
     });
-    
+
     // Language selector
     const languageSelect = document.getElementById("language-select");
     languageSelect.value = this.editor.currentLanguage;
     languageSelect.addEventListener("change", async (e) => {
       const newLanguage = e.target.value;
+
       try {
-        // Show loading message
-        presentCodeStatus(this.codestatusElem, { message: `Loading ${newLanguage} runtime...` });
-        
+        // Show loading state
+        this.showRuntimeLoading(true);
+
         // Select the language in runtime manager
         await this.runtimeManager.selectLanguage(newLanguage);
-        
+
         // Update editor language
         this.editor.setLanguage(newLanguage);
-        
+
         // Clear status
         presentCodeStatus(this.codestatusElem);
       } catch (error) {
         presentCodeStatus(this.codestatusElem, error);
         // Revert language selector
         languageSelect.value = this.editor.currentLanguage;
+      } finally {
+        // Hide loading state
+        this.showRuntimeLoading(false);
       }
     });
   }
@@ -324,6 +354,54 @@ export class ElevatorApp extends EventTarget {
     return params;
   }
 
+  showRuntimeLoading(show) {
+    const loadingIndicator = document.getElementById("runtime-loading");
+    const languageSelect = document.getElementById("language-select");
+
+    if (show) {
+      loadingIndicator.style.display = "inline-flex";
+      languageSelect.disabled = true;
+      this.setStartButtonEnabled(false);
+    } else {
+      loadingIndicator.style.display = "none";
+      languageSelect.disabled = false;
+      this.setStartButtonEnabled(true);
+    }
+  }
+
+  async initializeWithRuntime() {
+    const runtime = this.runtimeManager.getCurrentRuntime();
+    if (!runtime.loaded) {
+      // Show loading state
+      this.showRuntimeLoading(true);
+
+      try {
+        // Pre-load the runtime
+        await this.runtimeManager.selectLanguage(this.editor.currentLanguage);
+        this.showRuntimeLoading(false);
+      } catch (error) {
+        console.error("Failed to load initial runtime:", error);
+        this.showRuntimeLoading(false);
+      }
+    }
+    
+    // Now that runtime is loaded, proceed with loading from URL
+    this.loadFromUrl();
+  }
+
+  setStartButtonEnabled(enabled) {
+    // Find all challenge-control elements and update their start buttons
+    const challengeControls = document.querySelectorAll("challenge-control");
+    challengeControls.forEach((control) => {
+      const button = control.shadowRoot?.querySelector(".startstop");
+      if (button) {
+        button.disabled = !enabled;
+        button.style.opacity = enabled ? "1" : "0.6";
+        button.style.cursor = enabled ? "pointer" : "not-allowed";
+      }
+    });
+  }
+
   startStopOrRestart() {
     if (this.worldController.isPaused) {
       // Start button clicked - start the challenge
@@ -336,9 +414,18 @@ export class ElevatorApp extends EventTarget {
   }
 
   async startChallenge(challengeIndex, autoStart) {
+    // Check if runtime is still loading
+    const loadingIndicator = document.getElementById("runtime-loading");
+    if (loadingIndicator && loadingIndicator.style.display !== "none") {
+      console.log("Runtime is still loading, please wait...");
+      return;
+    }
     // Clean up previous event listeners
     if (this.timescaleChangedHandler) {
-      this.worldController.removeEventListener("timescale_changed", this.timescaleChangedHandler);
+      this.worldController.removeEventListener(
+        "timescale_changed",
+        this.timescaleChangedHandler,
+      );
       this.timescaleChangedHandler = null;
     }
     if (this.statsChangedHandler && this.world) {
@@ -379,7 +466,10 @@ export class ElevatorApp extends EventTarget {
       localStorage.setItem("elevatorTimeScale", this.worldController.timeScale);
       // The challenge control component will update automatically via its worldController property
     };
-    this.worldController.addEventListener("timescale_changed", this.timescaleChangedHandler);
+    this.worldController.addEventListener(
+      "timescale_changed",
+      this.timescaleChangedHandler,
+    );
 
     // Setup challenge completion handler
     this.statsChangedHandler = () => {
