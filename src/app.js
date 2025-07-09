@@ -130,6 +130,11 @@ export class ElevatorApp extends EventTarget {
     const codeArea = document.getElementById("code");
     this.editor = new CodeEditor(codeArea, "develevate_code");
 
+    // Event handlers storage
+    this.timescaleChangedHandler = null;
+    this.statsChangedHandler = null;
+    this.worldPresenter = null;
+
     this.setupEventHandlers();
     this.loadFromUrl();
   }
@@ -242,6 +247,20 @@ export class ElevatorApp extends EventTarget {
   }
 
   async startChallenge(challengeIndex, autoStart) {
+    // Clean up previous event listeners
+    if (this.timescaleChangedHandler) {
+      this.worldController.removeEventListener("timescale_changed", this.timescaleChangedHandler);
+      this.timescaleChangedHandler = null;
+    }
+    if (this.statsChangedHandler && this.world) {
+      this.world.removeEventListener("stats_changed", this.statsChangedHandler);
+      this.statsChangedHandler = null;
+    }
+    if (this.worldPresenter && this.worldPresenter.cleanup) {
+      this.worldPresenter.cleanup();
+      this.worldPresenter = null;
+    }
+
     if (this.world) {
       this.world.unWind();
     }
@@ -264,16 +283,17 @@ export class ElevatorApp extends EventTarget {
       this.worldController,
       challengeIndex + 1,
     );
-    presentWorld(this.worldElem, this.world);
+    this.worldPresenter = presentWorld(this.worldElem, this.world);
 
     // Setup timescale change handler
-    this.worldController.addEventListener("timescale_changed", () => {
+    this.timescaleChangedHandler = () => {
       localStorage.setItem("elevatorTimeScale", this.worldController.timeScale);
       // The challenge control component will update automatically via its worldController property
-    });
+    };
+    this.worldController.addEventListener("timescale_changed", this.timescaleChangedHandler);
 
     // Setup challenge completion handler
-    this.world.addEventListener("stats_changed", () => {
+    this.statsChangedHandler = () => {
       const challengeStatus = challenges[challengeIndex].condition.evaluate(
         this.world,
       );
@@ -297,7 +317,8 @@ export class ElevatorApp extends EventTarget {
           );
         }
       }
-    });
+    };
+    this.world.addEventListener("stats_changed", this.statsChangedHandler);
 
     const codeObj = await this.editor.getCodeObj();
     if (codeObj) {
