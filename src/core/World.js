@@ -116,7 +116,8 @@ export class World extends EventTarget {
     );
 
     this.users = [];
-
+    this.userEventHandlers = new WeakMap();
+    this.handleElevAvailability = this.handleElevAvailability.bind(this);
     this.setupEventHandlers();
   }
 
@@ -140,7 +141,7 @@ export class World extends EventTarget {
     user.spawnTimestamp = this.elapsedTime;
     this.dispatchEvent(new CustomEvent("new_user", { detail: user }));
 
-    user.addEventListener("exited_elevator", () => {
+    const exitedElevatorHandler = () => {
       this.transportedCounter++;
       this.maxWaitTime = Math.max(
         this.maxWaitTime,
@@ -151,15 +152,20 @@ export class World extends EventTarget {
           (this.elapsedTime - user.spawnTimestamp)) /
         this.transportedCounter;
       this.recalculateStats();
-    });
+    };
+
+    user.addEventListener("exited_elevator", exitedElevatorHandler);
+    this.userEventHandlers.set(user, { exitedElevator: exitedElevatorHandler });
+
     user.updateDisplayPosition(true);
   }
 
-  handleElevAvailability(elevator) {
+  handleElevAvailability(event) {
+    const elevator = event.detail;
     // Notify floors first because overflowing users
     // will press buttons again.
     this.floors
-      .filter((floor, i) => elevator.currentFloor === i)
+      .filter((_, i) => elevator.currentFloor === i)
       .forEach((floor) => floor.elevatorAvailable(elevator));
 
     this.users
@@ -172,8 +178,9 @@ export class World extends EventTarget {
   setupEventHandlers() {
     // Bind elevators to handle availability
     this.elevators.forEach((elevator) => {
-      elevator.addEventListener("entrance_available", (e) =>
-        this.handleElevAvailability(e.detail),
+      elevator.addEventListener(
+        "entrance_available",
+        this.handleElevAvailability,
       );
     });
   }
@@ -222,14 +229,27 @@ export class World extends EventTarget {
 
   unWind() {
     console.log("Unwinding", this);
-    const allObjects = [...this.elevators, ...this.users, ...this.floors, this];
-    allObjects.forEach((obj) => {
-      // Remove all event listeners by cloning the node (if it's a DOM element)
-      // For non-DOM EventTargets, we'd need to track listeners manually
+
+    // Clean up user event listeners
+    this.users.forEach((user) => {
+      const handlers = this.userEventHandlers.get(user);
+      if (handlers) {
+        if (handlers.exitedElevator) {
+          user.removeEventListener("exited_elevator", handlers.exitedElevator);
+        }
+        this.userEventHandlers.delete(user);
+      }
     });
+    this.elevators.forEach((elevator) => {
+      elevator.removeEventListener(
+        "entrance_available",
+        this.handleElevAvailability,
+      );
+    });
+    // Mark as ended and clear arrays to help with garbage collection
     this.challengeEnded = true;
-    this.elevators = [];
     this.users = [];
+    this.elevators = [];
     this.floors = [];
   }
 }
