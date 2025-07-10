@@ -19,7 +19,7 @@ export class JavaRuntime extends BaseRuntime {
     try {
       // Load CheerpJ script
       const script = document.createElement("script");
-      script.src = "https://cjrtnc.leaningtech.com/4.1/loader.js";
+      script.src = "https://cjrtnc.leaningtech.com/4.2/loader.js";
 
       await new Promise((resolve, reject) => {
         script.onload = resolve;
