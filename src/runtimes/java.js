@@ -1,14 +1,64 @@
 import { BaseRuntime } from "./base.js";
 
+const ELEVATOR_SOURCE = `import java.util.*;
+/**
+ * Elevator class representing an elevator in the simulation
+ */
+public class Elevator {
+    public int id;
+    public int currentFloor;
+    public Integer destinationFloor;
+    public int[] pressedFloorButtons;
+    public double percentFull;
+
+    // Native method to call JavaScript
+    public static native void jsGoToFloor(int elevator, int floor);
+
+    /**
+     * Command the elevator to go to a specific floor
+     * @param floor The target floor number
+     */
+    public void goToFloor(int floor) {
+        // This will be handled by JavaScript
+        Elevator.jsGoToFloor(this.id, floor);
+    }
+}`;
+
+const FLOOR_SOURCE = `/**
+ * Floor class representing a floor in the building
+ */
+public class Floor {
+    public int level;
+    public Buttons buttons;
+
+    /**
+     * Inner class representing the up/down buttons on a floor
+     */
+    public static class Buttons {
+        public boolean up;
+        public boolean down;
+    }
+}`;
+
+async function Java_Elevator_jsGoToFloor(lib, elevatorId, floor) {
+  // Find the corresponding JavaScript elevator
+  const jsElevator = window.elevators[elevatorId];
+  if (jsElevator) {
+    jsElevator.goToFloor(floor);
+  }
+}
+
 export class JavaRuntime extends BaseRuntime {
   constructor() {
     super("java");
-    this.cheerpjReady = false;
-    this.compiledClasses = null;
     this.loadedCode = null;
-    this.worker = null;
-    this.workerReady = false;
-    this.elevators = null;
+    this.iteration = 0;
+    this.lib = null;
+    this.Elevator = null;
+    this.Floor = null;
+    this.Buttons = null;
+    this.ElevatorController = null;
+    this.controller = null;
   }
 
   async loadRuntime() {
@@ -36,37 +86,63 @@ export class JavaRuntime extends BaseRuntime {
       // Initialize CheerpJ with minimal configuration (no natives in main thread)
       await window.cheerpjInit({
         status: "none",
+        natives: {
+          Java_Elevator_jsGoToFloor,
+        },
         overrideDocumentBase: __BASE_URL__ ?? "/",
         preloadResources: {
-          "/lt/8/jre/lib/meta-index": [0, 131072],
+          "/lt/8/jre/lib/cheerpj-awt.jar": [0, 131072],
           "/lt/8/jre/lib/rt.jar": [
             0, 131072, 10223616, 10878976, 11403264, 11665408, 11927552,
             12189696, 12320768, 12582912, 14942208, 15073280, 15204352,
-            15335424, 15466496, 15597568, 17694720, 17825792, 18350080,
+            15335424, 15466496, 15597568, 17694720, 17956864, 18350080,
             18612224, 19005440, 19136512, 20840448, 21102592, 21233664,
             21757952, 22020096, 22806528, 23068672, 23592960, 23724032,
             26869760,
           ],
-          "/lt/8/lib/ext/zipfs.jar": [0, 131072],
-          "/lt/8/lib/ext/sunjce_provider.jar": [0, 262144],
-          "/lt/8/lib/ext/sunec.jar": [0, 131072],
-          "/lt/8/jre/lib/javaws.jar": [0, 131072, 1441792, 1703936],
-          "/lt/8/jre/lib/resources.jar": [0, 131072, 917504, 1179648],
-          "/lt/8/jre/lib/charsets.jar": [0, 131072, 1703936, 1835008],
-          "/lt/8/jre/lib/jce.jar": [0, 131072],
-          "/lt/8/jre/lib/jsse.jar": [0, 131072, 786432, 917504],
-          "/lt/etc/users": [0, 131072],
-          "/lt/etc/localtime": [],
-          "/lt/8/lib/ext/localedata.jar": [0, 131072, 1048576, 1179648],
           "/lt/8/lib/ext/meta-index": [0, 131072],
-          "/lt/8/jre/lib/cheerpj-awt.jar": [0, 131072],
+          "/lt/8/lib/ext/localedata.jar": [0, 131072, 1048576, 1179648],
+          "/lt/etc/users": [0, 131072],
+          "/lt/8/jre/lib/jsse.jar": [0, 131072, 786432, 917504],
+          "/lt/8/jre/lib/jce.jar": [0, 131072],
+          "/lt/8/jre/lib/charsets.jar": [0, 131072, 1703936, 1835008],
+          "/lt/8/jre/lib/resources.jar": [0, 131072, 917504, 1179648],
+          "/lt/8/jre/lib/javaws.jar": [0, 131072, 1441792, 1703936],
+          "/lt/etc/localtime": [],
+          "/lt/8/lib/ext/sunec.jar": [0, 131072],
+          "/lt/8/lib/ext/sunjce_provider.jar": [0, 262144],
+          "/lt/8/lib/ext/zipfs.jar": [0, 131072],
           "/lt/8/lib/ext": [],
           "/lt/8/lib/ext/index.list": [],
+          "/lt/8/jre/lib/meta-index": [0, 131072],
           "/lt/8/jre/lib": [],
           "/lt/8/lib/ct.sym": [],
         },
       });
-      this.cheerpjReady = true;
+      // Precompile base code
+      const elevatorFile = "/str/Elevator.java";
+      const floorFile = "/str/Floor.java";
+      window.cheerpOSAddStringFile(elevatorFile, ELEVATOR_SOURCE);
+      window.cheerpOSAddStringFile(floorFile, FLOOR_SOURCE);
+
+      const classPath = `/app${__BASE_URL__}tools.jar:/files/`;
+      const compileResult = await window.cheerpjRunMain(
+        "com.sun.tools.javac.Main",
+        classPath,
+        elevatorFile,
+        floorFile,
+        "-d",
+        "/files/",
+        "-Xlint:none"
+      );
+
+      if (compileResult !== 0) {
+        throw new Error("Java compilation failed");
+      }
+      this.lib = await window.cheerpjRunLibrary("/files/");
+      this.Elevator = await this.lib.Elevator;
+      this.Floor = await this.lib.Floor;
+      this.Buttons = await this.lib.Floor$Buttons;
 
       this.loaded = true;
     } catch (error) {
@@ -86,195 +162,96 @@ export class JavaRuntime extends BaseRuntime {
     }
 
     try {
-      // Create the full Java source with imports and wrapper
-      const fullJavaCode = this.createFullJavaSource(code);
+      const iteration = this.iteration++;
 
-      // Write the Java source to the virtual filesystem using cheerpOSAddStringFile
-      const sourceFile = "/str/ElevatorController.java";
-      window.cheerpOSAddStringFile(sourceFile, fullJavaCode);
+      // Find all class definitions in the code
+      const classRegex = /class\s+(\w+)/g;
+      const classNames = [];
+      let match;
 
-      // In a real implementation:
+      while ((match = classRegex.exec(code)) !== null) {
+        const className = match[1];
+        if (!classNames.includes(className)) {
+          classNames.push(className);
+        }
+      }
+
+      // Replace all instances of found class names with versioned names
+      let processedCode = code;
+      for (const className of classNames) {
+        const versionedName = `${className}${iteration}`;
+        // Use word boundaries to ensure we only replace complete class names
+        const regex = new RegExp(`\\b${className}\\b`, "g");
+        processedCode = processedCode.replace(regex, versionedName);
+      }
+
+      // Always use ElevatorController as the main class name
+      const mainClassName = `ElevatorController${iteration}`;
+      const controllerFile = `/str/${mainClassName}.java`;
+
+      window.cheerpOSAddStringFile(controllerFile, processedCode);
+
       const classPath = `/app${__BASE_URL__}tools.jar:/files/`;
+
       const compileResult = await window.cheerpjRunMain(
         "com.sun.tools.javac.Main",
         classPath,
-        sourceFile,
+        controllerFile,
         "-d",
         "/files/",
-        "-Xlint:none",
+        "-Xlint:none"
       );
 
       if (compileResult !== 0) {
         throw new Error("Java compilation failed");
       }
 
-      // Get the compiled class files as blobs
-      const classFiles = {};
-      classFiles["Elevator.class"] = await window.cjFileBlob(
-        "/files/Elevator.class",
-      );
-      classFiles["Floor.class"] = await window.cjFileBlob("/files/Floor.class");
-      classFiles["Floor$Buttons.class"] = await window.cjFileBlob(
-        "/files/Floor$Buttons.class",
-      );
-      classFiles["ElevatorController.class"] = await window.cjFileBlob(
-        "/files/ElevatorController.class",
-      );
+      this.ElevatorController = await this.lib[mainClassName];
+      this.controller = await new this.ElevatorController();
 
-      this.compiledClasses = classFiles;
       this.loadedCode = code;
-
-      // Initialize worker with the compiled classes
-      await this.initializeWorker();
     } catch (error) {
       console.error(error);
       throw new Error(`Failed to compile Java code: ${error.message}`);
     }
   }
 
-  createFullJavaSource(userCode) {
-    // Create a complete Java source file with the necessary imports and wrapper
-    return `
-import java.util.*;
-
-// Elevator class wrapper
-class Elevator {
-    public int id;
-    public int currentFloor;
-    public Integer destinationFloor;
-    public int[] pressedFloorButtons;
-    public double percentFull;
-
-    // Native method to call JavaScript
-    public static native void jsGoToFloor(int elevator, int floor);
-
-    public void goToFloor(int floor) {
-        // This will be handled by JavaScript
-        Elevator.jsGoToFloor(this.id, floor);
-    }
-}
-
-// Floor class wrapper
-class Floor {
-    public int level;
-    public Buttons buttons;
-
-    public static class Buttons {
-        public boolean up;
-        public boolean down;
-    }
-}
-
-// Main controller class
-${userCode}`;
-  }
-
-  async initializeWorker() {
-    // Dispose of existing worker if any
-    if (this.worker) {
-      this.worker.terminate();
-    }
-
-    // Create new worker (classic worker, not module)
-    this.worker = new Worker(new URL("./java-worker.js", import.meta.url));
-    this.workerReady = false;
-
-    // Set up message handling
-    this.worker.addEventListener("message", (event) => {
-      const { type, elevatorId, floor, error } = event.data;
-      switch (type) {
-        case "initialized":
-          this.workerReady = true;
-          if (this.workerInitResolve) {
-            this.workerInitResolve();
-          }
-          break;
-
-        case "goToFloor":
-          // Handle elevator commands from Java
-          if (this.elevators && this.elevators[elevatorId]) {
-            this.elevators[elevatorId].goToFloor(floor);
-          }
-          break;
-
-        case "executed":
-          if (this.executeResolve) {
-            this.executeResolve();
-          }
-          break;
-
-        case "error":
-          console.error("Worker error:", error);
-          if (this.executeReject) {
-            this.executeReject(new Error(error));
-          }
-          break;
-      }
-    });
-
-    // Initialize worker with compiled jar
-    const initPromise = new Promise((resolve, reject) => {
-      this.workerInitResolve = resolve;
-      this.workerInitReject = reject;
-    });
-
-    this.worker.postMessage({
-      type: "init",
-      data: { classFiles: this.compiledClasses },
-    });
-
-    await initPromise;
-    this.workerInitResolve = null;
-    this.workerInitReject = null;
-  }
-
   async execute(elevators, floors) {
     if (!this.loaded) {
       throw new Error("Java runtime not loaded");
     }
+    window.elevators = elevators;
 
-    if (!this.compiledClasses || !this.workerReady) {
-      throw new Error("No code loaded. Call loadCode() first.");
+    // Create Java wrapper objects for elevators and floors
+    const javaElevators = [];
+    let index = 0;
+    for (const elevator of elevators) {
+      const javaElevator = await new this.Elevator();
+      javaElevator.id = index++;
+      javaElevator.currentFloor = elevator.currentFloor;
+      javaElevator.destinationFloor = elevator.destinationFloor;
+      javaElevator.pressedFloorButtons = elevator.pressedFloorButtons || [];
+      javaElevator.percentFull = elevator.percentFull;
+      javaElevators.push(javaElevator);
     }
 
-    // Store elevators reference for command handling
-    this.elevators = elevators;
+    const javaFloors = [];
+    for (const floor of floors) {
+      const javaFloor = await new this.Floor();
+      javaFloor.level = floor.level;
+      const buttons = await new this.Buttons();
+      buttons.up = floor.buttons.up;
+      buttons.down = floor.buttons.down;
+      javaFloor.buttons = buttons;
+      javaFloors.push(javaFloor);
+    }
 
-    // Create simplified objects to send to worker
-    const elevatorsData = elevators.map((elevator, index) => ({
-      id: index,
-      currentFloor: elevator.currentFloor,
-      destinationFloor: elevator.destinationFloor,
-      pressedFloorButtons: elevator.pressedFloorButtons || [],
-      percentFull: elevator.percentFull,
-    }));
-
-    const floorsData = floors.map((floor) => ({
-      level: floor.level,
-      buttons: {
-        up: floor.buttons.up,
-        down: floor.buttons.down,
-      },
-    }));
-
-    // Execute in worker
-    const executePromise = new Promise((resolve, reject) => {
-      this.executeResolve = resolve;
-      this.executeReject = reject;
-    });
-
-    this.worker.postMessage({
-      type: "execute",
-      data: { elevators: elevatorsData, floors: floorsData },
-    });
-
-    await executePromise;
-    this.executeResolve = null;
-    this.executeReject = null;
+    await this.controller.update(javaElevators, javaFloors);
   }
 
   getDefaultTemplate() {
-    return `/**
+    return `import java.util.*;
+/**
  * Floor class:
  *   Accessors:
  *     buttons.up - boolean: true if up button is pressed
@@ -314,15 +291,13 @@ class ElevatorController {
   }
 
   dispose() {
-    if (this.worker) {
-      this.worker.terminate();
-      this.worker = null;
-    }
-    this.compiledClasses = null;
     this.loaded = false;
     this.loadedCode = null;
-    this.workerReady = false;
-    this.cheerpjReady = false;
-    this.elevators = null;
+    this.lib = null;
+    this.Elevator = null;
+    this.Floor = null;
+    this.Buttons = null;
+    this.ElevatorController = null;
+    this.controller = null;
   }
 }
