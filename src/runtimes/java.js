@@ -37,6 +37,34 @@ export class JavaRuntime extends BaseRuntime {
       await window.cheerpjInit({
         status: "none",
         overrideDocumentBase: __BASE_URL__ ?? "/",
+        preloadResources: {
+          "/lt/8/jre/lib/meta-index": [0, 131072],
+          "/lt/8/jre/lib/rt.jar": [
+            0, 131072, 10223616, 10878976, 11403264, 11665408, 11927552,
+            12189696, 12320768, 12582912, 14942208, 15073280, 15204352,
+            15335424, 15466496, 15597568, 17694720, 17825792, 18350080,
+            18612224, 19005440, 19136512, 20840448, 21102592, 21233664,
+            21757952, 22020096, 22806528, 23068672, 23592960, 23724032,
+            26869760,
+          ],
+          "/lt/8/lib/ext/zipfs.jar": [0, 131072],
+          "/lt/8/lib/ext/sunjce_provider.jar": [0, 262144],
+          "/lt/8/lib/ext/sunec.jar": [0, 131072],
+          "/lt/8/jre/lib/javaws.jar": [0, 131072, 1441792, 1703936],
+          "/lt/8/jre/lib/resources.jar": [0, 131072, 917504, 1179648],
+          "/lt/8/jre/lib/charsets.jar": [0, 131072, 1703936, 1835008],
+          "/lt/8/jre/lib/jce.jar": [0, 131072],
+          "/lt/8/jre/lib/jsse.jar": [0, 131072, 786432, 917504],
+          "/lt/etc/users": [0, 131072],
+          "/lt/etc/localtime": [],
+          "/lt/8/lib/ext/localedata.jar": [0, 131072, 1048576, 1179648],
+          "/lt/8/lib/ext/meta-index": [0, 131072],
+          "/lt/8/jre/lib/cheerpj-awt.jar": [0, 131072],
+          "/lt/8/lib/ext": [],
+          "/lt/8/lib/ext/index.list": [],
+          "/lt/8/jre/lib": [],
+          "/lt/8/lib/ct.sym": [],
+        },
       });
       this.cheerpjReady = true;
 
