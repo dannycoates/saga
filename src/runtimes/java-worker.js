@@ -35,6 +35,29 @@ self.addEventListener("message", async (event) => {
           natives: {
             Java_Elevator_jsGoToFloor,
           },
+          preloadResources: {
+            "/lt/8/jre/lib/rt.jar": [
+              0, 131072, 10354688, 10747904, 15204352, 15335424, 15466496,
+              15597568, 17694720, 17956864, 18350080, 18612224, 21364736,
+              21495808, 21626880, 21757952, 22020096, 22282240, 22544384,
+              22806528, 23199744, 23330816, 23724032, 26869760,
+            ],
+            "/lt/etc/users": [0, 131072],
+            "/lt/etc/localtime": [],
+            "/lt/8/jre/lib/cheerpj-awt.jar": [0, 131072],
+            "/lt/8/lib/ext/meta-index": [0, 131072],
+            "/lt/8/lib/ext": [],
+            "/lt/8/lib/ext/index.list": [],
+            "/lt/8/lib/ext/localedata.jar": [],
+            "/lt/8/jre/lib/jsse.jar": [0, 131072, 786432, 917504],
+            "/lt/8/jre/lib/jce.jar": [0, 131072],
+            "/lt/8/jre/lib/charsets.jar": [0, 131072, 1703936, 1835008],
+            "/lt/8/jre/lib/resources.jar": [0, 131072, 917504, 1179648],
+            "/lt/8/jre/lib/javaws.jar": [0, 131072, 1441792, 1703936],
+            "/lt/8/lib/ext/sunec.jar": [],
+            "/lt/8/lib/ext/sunjce_provider.jar": [],
+            "/lt/8/lib/ext/zipfs.jar": [],
+          },
         });
 
         // Write class files to virtual filesystem
