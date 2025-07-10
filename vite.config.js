@@ -63,7 +63,7 @@ export default defineConfig({
   root: ".",
   build: {
     target: "esnext",
-    outDir: "./docs",
+    outDir: "./dist",
     rollupOptions: {
       input: {
         main: "./index.html",
