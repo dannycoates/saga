@@ -10,7 +10,7 @@ Elevator Saga is an elevator programming game where users write JavaScript code 
 
 ### Development
 - `npm run dev` - Start development server on port 3000 with hot reloading
-- `npm run build` - Build for production (outputs to `docs/`)
+- `npm run build` - Build for production (outputs to `dist/`)
 - `npm run preview` - Preview production build
 
 ### Testing
