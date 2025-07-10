@@ -36,6 +36,7 @@ export class JavaRuntime extends BaseRuntime {
       // Initialize CheerpJ with minimal configuration (no natives in main thread)
       await window.cheerpjInit({
         status: "none",
+        overrideDocumentBase: __BASE_URL__ ?? "/",
       });
       this.cheerpjReady = true;
 
@@ -65,7 +66,7 @@ export class JavaRuntime extends BaseRuntime {
       window.cheerpOSAddStringFile(sourceFile, fullJavaCode);
 
       // In a real implementation:
-      const classPath = "/app/tools.jar:/files/";
+      const classPath = `/app${__BASE_URL__}tools.jar:/files/`;
       const compileResult = await window.cheerpjRunMain(
         "com.sun.tools.javac.Main",
         classPath,
