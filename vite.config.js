@@ -58,9 +58,12 @@ const selectiveSourcemapPlugin = () => {
   };
 };
 
-export default defineConfig({
-  base: "./",
+export default defineConfig(({ mode }) => ({
+  base: mode === "production" ? "/saga/" : "/",
   root: ".",
+  define: {
+    __BASE_URL__: JSON.stringify(mode === "production" ? "/saga/" : "/"),
+  },
   build: {
     target: "esnext",
     outDir: "./dist",
@@ -126,4 +129,4 @@ export default defineConfig({
     root: "./",
     include: ["tests/**/*.test.js"],
   },
-});
+}));
