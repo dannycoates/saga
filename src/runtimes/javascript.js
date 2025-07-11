@@ -18,8 +18,8 @@ export class JavaScriptRuntime extends BaseRuntime {
       /* @vite-ignore */ `data:text/javascript,${encodeURIComponent(code.trim())}`
     );
 
-    if (typeof this.loadedModule.update !== "function") {
-      throw new Error("Code must export an update function");
+    if (typeof this.loadedModule.tick !== "function") {
+      throw new Error("Code must export a tick function");
     }
 
     this.loadedCode = code;
@@ -30,8 +30,8 @@ export class JavaScriptRuntime extends BaseRuntime {
       throw new Error("No code loaded. Call loadCode() first.");
     }
 
-    // Call the user's update function
-    return this.loadedModule.update(elevators, floors);
+    // Call the user's tick function
+    return this.loadedModule.tick(elevators, floors);
   }
 
   getDefaultTemplate() {
@@ -44,7 +44,7 @@ export class JavaScriptRuntime extends BaseRuntime {
   * @class Elevator
   *   Accessors:
   *    @member currentFloor {number}
-  *    @member destinationFloor {number | null} (null if idle)
+  *    @member destinationFloor {number | null} (null == idle)
   *    @member pressedFloorButtons {number[]}
   *    @member percentFull {0..1}
   *
@@ -54,11 +54,11 @@ export class JavaScriptRuntime extends BaseRuntime {
 let nextFloor = 1
 
 /**
- * Update gets called on a regular, fast interval (a game loop)
+ * Tick gets called on a regular, fast interval (a game loop)
  * @param {Elevator[]} elevators
  * @param {Floor[]} floors
  */
-export function update(elevators, floors) {
+export function tick(elevators, floors) {
     const elevator = elevators[0]
 
     if (elevator.destinationFloor === null) {

@@ -50,8 +50,8 @@ class FloorAPI:
     def level(self):
         return self._js_floor.level
 
-# Global variable to store the update function
-_update_function = None
+# Global variable to store the tick function
+_tick_function = None
 
 def _wrap_elevators(js_elevators):
     return [ElevatorAPI(elevator) for elevator in js_elevators]
@@ -59,14 +59,14 @@ def _wrap_elevators(js_elevators):
 def _wrap_floors(js_floors):
     return [FloorAPI(floor) for floor in js_floors]
 
-def _execute_update(js_elevators, js_floors):
-    if _update_function is None:
-        raise Exception("No update function defined")
+def _execute_tick(js_elevators, js_floors):
+    if _tick_function is None:
+        raise Exception("No tick function defined")
 
     elevators = _wrap_elevators(js_elevators)
     floors = _wrap_floors(js_floors)
 
-    return _update_function(elevators, floors)
+    return _tick_function(elevators, floors)
 
 `;
 
@@ -119,15 +119,15 @@ export class PythonRuntime extends BaseRuntime {
     // Set the user's code in the Python environment
     await this.pyodide.runPythonAsync(code);
 
-    // Check if update function exists
-    const hasUpdate = await this.pyodide.runPythonAsync(`\n'update' in globals()\n`);
+    // Check if tick function exists
+    const hasTick = await this.pyodide.runPythonAsync(`\n'tick' in globals()\n`);
 
-    if (!hasUpdate) {
-      throw new Error("Code must define an update function");
+    if (!hasTick) {
+      throw new Error("Code must define a tick function");
     }
 
-    // Store the update function
-    await this.pyodide.runPythonAsync(`\n_update_function = update\n`);
+    // Store the tick function
+    await this.pyodide.runPythonAsync(`\n_tick_function = tick\n`);
 
     this.loadedCode = code;
   }
@@ -145,8 +145,8 @@ export class PythonRuntime extends BaseRuntime {
     this.pyodide.globals.set("js_elevators", elevators);
     this.pyodide.globals.set("js_floors", floors);
 
-    // Execute the update function with wrapped objects
-    await this.pyodide.runPythonAsync(`\n_execute_update(js_elevators, js_floors)\n`);
+    // Execute the tick function with wrapped objects
+    await this.pyodide.runPythonAsync(`\n_execute_tick(js_elevators, js_floors)\n`);
   }
 
   getDefaultTemplate() {
@@ -169,9 +169,9 @@ Elevator class:
 """
 _next_floor = 1
 
-def update(elevators, floors):
+def tick(elevators, floors):
     """
-    Update gets called on a regular, fast interval (a game loop)
+    Tick gets called on a regular, fast interval (a game loop)
 
     Args:
       elevators: list[Elevator] - List of all elevators
@@ -189,8 +189,8 @@ def update(elevators, floors):
   dispose() {
     if (this.pyodide) {
       try {
-        // Clear the update function in Python
-        this.pyodide.runPython("_update_function = None");
+        // Clear the tick function in Python
+        this.pyodide.runPython("_tick_function = None");
       } catch (e) {
         // Ignore errors during cleanup
       }

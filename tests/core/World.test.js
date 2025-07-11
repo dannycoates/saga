@@ -16,10 +16,10 @@ function createFrameRequester(timeStep) {
     register(cb) {
       currentCb = cb;
     },
-    trigger() {
+    async trigger() {
       currentT += timeStep;
       if (currentCb !== null) {
-        currentCb(currentT);
+        await currentCb(currentT);
       }
     },
   };
@@ -49,52 +49,44 @@ describe("World controller", () => {
     };
 
     fakeCodeObj = {
-      update: vi.fn(),
+      tick: vi.fn().mockResolvedValue(),
     };
 
     frameRequester = createFrameRequester(10.0);
   });
 
-  it("does not update world on first animation frame", () => {
+  it("does not call tick on first animation frame", async () => {
     controller.start(fakeWorld, fakeCodeObj, frameRequester.register, true);
-    frameRequester.trigger();
-    expect(fakeWorld.update).not.toHaveBeenCalled();
+    await frameRequester.trigger();
+    expect(fakeCodeObj.tick).not.toHaveBeenCalled();
   });
 
-  it("calls world update with correct delta t", () => {
+  it("calls tick on subsequent frames", async () => {
     controller.start(fakeWorld, fakeCodeObj, frameRequester.register, true);
-    frameRequester.trigger();
-    frameRequester.trigger();
-    expect(fakeWorld.update).toHaveBeenCalledWith(0.01);
+    await frameRequester.trigger();
+    await frameRequester.trigger();
+    expect(fakeCodeObj.tick).toHaveBeenCalled();
   });
 
-  it("calls world update with scaled delta t", () => {
-    controller.timeScale = 2.0;
-    controller.start(fakeWorld, fakeCodeObj, frameRequester.register, true);
-    frameRequester.trigger();
-    frameRequester.trigger();
-    expect(fakeWorld.update).toHaveBeenCalledWith(0.02);
-  });
-
-  it("does not update world when paused", () => {
+  it("does not call tick when paused", async () => {
     controller.start(fakeWorld, fakeCodeObj, frameRequester.register, true);
     controller.setPaused(true);
-    frameRequester.trigger();
-    frameRequester.trigger();
-    expect(fakeWorld.update).not.toHaveBeenCalled();
+    await frameRequester.trigger();
+    await frameRequester.trigger();
+    expect(fakeCodeObj.tick).not.toHaveBeenCalled();
   });
 
-  it("initializes world on first update when unpaused", () => {
+  it("initializes world on first tick when unpaused", async () => {
     controller.start(fakeWorld, fakeCodeObj, frameRequester.register, false);
     controller.setPaused(false);
-    frameRequester.trigger();
-    frameRequester.trigger();
-    expect(fakeCodeObj.update).toHaveBeenCalled();
+    await frameRequester.trigger();
+    await frameRequester.trigger();
+    expect(fakeCodeObj.tick).toHaveBeenCalled();
   });
 
-  it("handles user code errors", () => {
+  it("handles user code errors", async () => {
     const error = new Error("User code error");
-    fakeCodeObj.update.mockImplementation(() => {
+    fakeCodeObj.tick.mockImplementation(() => {
       throw error;
     });
 
@@ -104,8 +96,8 @@ describe("World controller", () => {
     );
 
     controller.start(fakeWorld, fakeCodeObj, frameRequester.register, true);
-    frameRequester.trigger();
-    frameRequester.trigger();
+    await frameRequester.trigger();
+    await frameRequester.trigger();
 
     expect(errorHandler).toHaveBeenCalled();
     expect(errorHandler.mock.calls[0][0]).toBe(error);

@@ -270,7 +270,7 @@ class CodeEditor extends EventTarget {
 
       // Return a wrapper object that calls the runtime manager
       return {
-        update: async (elevators, floors) => {
+        tick: async (elevators, floors) => {
           return await this.runtimeManager.execute(elevators, floors);
         },
       };

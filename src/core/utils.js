@@ -31,13 +31,9 @@ export function accelerationNeededToAchieveChangeDistance(
 
 export async function getCodeObjFromCode(code) {
   // Use vite-ignore comment to suppress warning about dynamic import
-  const obj = await import(
+  return import(
     /* @vite-ignore */ `data:text/javascript,${encodeURIComponent(code.trim())}`
   );
-  if (typeof obj.update !== "function") {
-    throw "Code must contain an update function";
-  }
-  return obj;
 }
 
 // Random number utilities (replacing lodash)
