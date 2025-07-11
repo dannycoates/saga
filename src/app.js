@@ -164,8 +164,6 @@ class CodeEditor extends EventTarget {
       // Hide loading
       app?.showRuntimeLoading(false);
 
-      this.dispatchEvent(new CustomEvent("code_success"));
-
       // Return a wrapper object that calls the runtime manager
       return {
         update: async (elevators, floors) => {
@@ -267,10 +265,6 @@ export class ElevatorApp extends EventTarget {
     // Editor events
     this.editor.addEventListener("apply_code", () => {
       this.startChallenge(this.currentChallengeIndex, true);
-    });
-
-    this.editor.addEventListener("code_success", () => {
-      presentCodeStatus(this.codestatusElem);
     });
 
     this.editor.addEventListener("usercode_error", (e) => {
