@@ -1,52 +1,6 @@
 import { BaseRuntime } from "./base.js";
 
-export class PythonRuntime extends BaseRuntime {
-  constructor() {
-    super("python");
-    this.pyodide = null;
-  }
-
-  async loadRuntime() {
-    if (this.loading || this.loaded) return;
-
-    this.loading = true;
-
-    try {
-      // Load Pyodide script
-      const script = document.createElement("script");
-      script.src = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js";
-
-      await new Promise((resolve, reject) => {
-        script.onload = resolve;
-        script.onerror = () =>
-          reject(new Error("Failed to load Pyodide script"));
-        document.head.appendChild(script);
-      });
-
-      // Now loadPyodide should be available globally
-      if (typeof loadPyodide === "undefined") {
-        throw new Error("loadPyodide is not defined after script load");
-      }
-
-      this.pyodide = await loadPyodide({
-        indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/",
-      });
-
-      // Initialize the Python environment with our API wrapper
-      await this.initializePythonEnvironment();
-
-      this.loaded = true;
-    } catch (error) {
-      this.loading = false;
-      throw new Error(`Failed to load Python runtime: ${error.message}`);
-    } finally {
-      this.loading = false;
-    }
-  }
-
-  async initializePythonEnvironment() {
-    // Create Python wrapper classes for the game API
-    const wrapperCode = `
+const BASE_PYTHON_CODE = `
 import js
 
 class ElevatorAPI:
@@ -113,9 +67,48 @@ def _execute_update(js_elevators, js_floors):
     floors = _wrap_floors(js_floors)
 
     return _update_function(elevators, floors)
+
 `;
 
-    await this.pyodide.runPythonAsync(wrapperCode);
+export class PythonRuntime extends BaseRuntime {
+  constructor() {
+    super("python");
+    this.pyodide = null;
+  }
+
+  async loadRuntime() {
+    if (this.loading || this.loaded) return;
+    this.loading = true;
+    try {
+      // Load Pyodide script
+      const script = document.createElement("script");
+      script.src = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js";
+
+      await new Promise((resolve, reject) => {
+        script.onload = resolve;
+        script.onerror = () =>
+          reject(new Error("Failed to load Pyodide script"));
+        document.head.appendChild(script);
+      });
+
+      // Now loadPyodide should be available globally
+      if (typeof loadPyodide === "undefined") {
+        throw new Error("loadPyodide is not defined after script load");
+      }
+
+      this.pyodide = await loadPyodide({
+        indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/",
+      });
+
+      // Initialize the Python environment with our API wrapper
+      await this.pyodide.runPythonAsync(BASE_PYTHON_CODE);
+
+      this.loaded = true;
+    } catch (error) {
+      throw new Error(`Failed to load Python runtime: ${error.message}`);
+    } finally {
+      this.loading = false;
+    }
   }
 
   async loadCode(code) {
@@ -127,18 +120,14 @@ def _execute_update(js_elevators, js_floors):
     await this.pyodide.runPythonAsync(code);
 
     // Check if update function exists
-    const hasUpdate = await this.pyodide.runPythonAsync(`
-'update' in globals()
-`);
+    const hasUpdate = await this.pyodide.runPythonAsync(`\n'update' in globals()\n`);
 
     if (!hasUpdate) {
       throw new Error("Code must define an update function");
     }
 
     // Store the update function
-    await this.pyodide.runPythonAsync(`
-_update_function = update
-`);
+    await this.pyodide.runPythonAsync(`\n_update_function = update\n`);
 
     this.loadedCode = code;
   }
@@ -157,11 +146,7 @@ _update_function = update
     this.pyodide.globals.set("js_floors", floors);
 
     // Execute the update function with wrapped objects
-    const result = await this.pyodide.runPythonAsync(`
-_execute_update(js_elevators, js_floors)
-`);
-
-    return result;
+    await this.pyodide.runPythonAsync(`\n_execute_update(js_elevators, js_floors)\n`);
   }
 
   getDefaultTemplate() {
@@ -182,6 +167,7 @@ Elevator class:
   Methods:
     go_to_floor(floor_num: int) - Command elevator to go to floor
 """
+_next_floor = 1
 
 def update(elevators, floors):
   """
@@ -191,12 +177,13 @@ def update(elevators, floors):
     elevators: list[Elevator] - List of all elevators
     floors: list[Floor] - List of all floors
   """
+  global _next_floor
   elevator = elevators[0]
   if elevator.destination_floor is None:
     if elevator.current_floor == len(floors) - 1:
-      elevator.go_to_floor(0)
-    else:
-      elevator.go_to_floor(elevator.current_floor + 1)`;
+      _next_floor = 0
+    _next_floor += 1
+    elevator.go_to_floor(_next_floor)`;
   }
 
   dispose() {

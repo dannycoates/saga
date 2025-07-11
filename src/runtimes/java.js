@@ -83,7 +83,6 @@ export class JavaRuntime extends BaseRuntime {
         throw new Error("cheerpjInit is not defined after script load");
       }
 
-      // Initialize CheerpJ with minimal configuration (no natives in main thread)
       await window.cheerpjInit({
         status: "none",
         natives: {
