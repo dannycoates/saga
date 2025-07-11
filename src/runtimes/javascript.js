@@ -59,15 +59,15 @@ let nextFloor = 1
  * @param {Floor[]} floors
  */
 export function update(elevators, floors) {
-  const elevator = elevators[0]
+    const elevator = elevators[0]
 
-  if (elevator.destinationFloor === null) {
-    if (nextFloor === floors.length) {
-      nextFloor = 0
+    if (elevator.destinationFloor === null) {
+        if (nextFloor === floors.length) {
+            nextFloor = 0
+        }
+        nextFloor = nextFloor + 1
+        elevator.goToFloor(nextFloor)
     }
-    nextFloor = nextFloor + 1
-    elevator.goToFloor(nextFloor)
-  }
 }`;
   }
 
