@@ -17,7 +17,93 @@ import { keymap } from "@codemirror/view";
 import { indentWithTab } from "@codemirror/commands";
 import { Compartment } from "@codemirror/state";
 import { indentUnit } from "@codemirror/language";
+import { linter, lintGutter } from "@codemirror/lint";
+import * as eslint from "eslint-linter-browserify";
 import { RuntimeManager } from "./runtimes/manager.js";
+
+// Enhanced JavaScript linter using ESLint
+function createJavaScriptLinter() {
+  try {
+    const eslintLinter = new eslint.Linter();
+    
+    return linter((view) => {
+      const diagnostics = [];
+      const code = view.state.doc.toString();
+      
+      try {
+        const messages = eslintLinter.verify(code, {
+          // ESLint flat config format
+          languageOptions: {
+            ecmaVersion: 2022,
+            sourceType: "module",
+            globals: {
+              // Browser globals
+              window: "readonly",
+              document: "readonly",
+              console: "readonly",
+            }
+          },
+          rules: {
+            // Error-level rules
+            "no-undef": "error",
+            "no-redeclare": "error",
+            "no-unreachable": "error", 
+            "no-dupe-keys": "error",
+            "no-dupe-args": "error",
+            "valid-typeof": "error",
+            "use-isnan": "error",
+            "no-unexpected-multiline": "error",
+            
+            // Warning-level rules
+            "no-unused-vars": "warn",
+            "no-empty": "warn",
+            "no-extra-semi": "warn"
+          }
+        }, { filename: "elevator.js" });
+
+        // Convert ESLint messages to CodeMirror diagnostics
+        messages.forEach(message => {
+          const doc = view.state.doc;
+          const line = Math.max(1, Math.min(message.line || 1, doc.lines));
+          const lineObj = doc.line(line);
+          const column = Math.max(0, Math.min(message.column || 1, lineObj.length)) - 1;
+          
+          const from = lineObj.from + column;
+          const to = Math.min(from + 5, lineObj.to); // Highlight a few characters
+          
+          diagnostics.push({
+            from,
+            to,
+            severity: message.severity === 2 ? "error" : "warning",
+            message: message.message,
+          });
+        });
+        
+      } catch (eslintError) {
+        console.warn("ESLint error:", eslintError);
+        // Fall back to basic syntax checking
+        try {
+          new Function(code);
+        } catch (syntaxError) {
+          const doc = view.state.doc;
+          diagnostics.push({
+            from: 0,
+            to: Math.min(10, doc.length),
+            severity: "error",
+            message: syntaxError.message,
+          });
+        }
+      }
+      
+      return diagnostics;
+    });
+  } catch (error) {
+    console.warn("Failed to create ESLint linter, linting disabled:", error);
+    return null;
+  }
+}
+
+
 
 // CodeMirror editor wrapper
 class CodeEditor extends EventTarget {
@@ -30,6 +116,8 @@ class CodeEditor extends EventTarget {
 
     // Create a compartment for the language extension
     this.languageCompartment = new Compartment();
+    // Create a compartment for the linter extension
+    this.linterCompartment = new Compartment();
 
     // Get the appropriate default code based on language
     const defaultCode =
@@ -50,9 +138,12 @@ class CodeEditor extends EventTarget {
 
   getExtensions() {
     let langExtension;
+    let lintExtension = null;
+    
     switch (this.currentLanguage) {
       case "javascript":
         langExtension = javascript();
+        lintExtension = createJavaScriptLinter();
         break;
       case "python":
         langExtension = python();
@@ -64,11 +155,13 @@ class CodeEditor extends EventTarget {
         langExtension = javascript();
     }
 
-    return [
+    const extensions = [
       basicSetup,
       this.languageCompartment.of(langExtension),
       gruvboxLight,
       indentUnit.of("    "), // 4 spaces for indentation
+      lintGutter(), // Add lint gutter for error indicators
+      this.linterCompartment.of(lintExtension || []), // Use compartment for linter
       keymap.of([indentWithTab]),
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
@@ -76,6 +169,8 @@ class CodeEditor extends EventTarget {
         }
       }),
     ];
+
+    return extensions;
   }
 
   setLanguage(language) {
@@ -94,27 +189,34 @@ class CodeEditor extends EventTarget {
     const existingCode =
       localStorage.getItem(`${this.storageKey}_${language}`) || defaultCode;
 
-    // Reconfigure editor with new language extension
-    let langExtension;
-    switch (language) {
-      case "javascript":
-        langExtension = javascript();
-        break;
-      case "python":
-        langExtension = python();
-        break;
-      case "java":
-        langExtension = java();
-        break;
-      default:
-        langExtension = javascript();
+    // Reconfigure both language and linter compartments
+    let lintExtension = null;
+    if (language === "javascript") {
+      lintExtension = createJavaScriptLinter();
     }
+
     this.view.dispatch({
-      effects: this.languageCompartment.reconfigure(langExtension),
+      effects: [
+        this.languageCompartment.reconfigure(this.getLanguageExtension(language)),
+        this.linterCompartment.reconfigure(lintExtension || [])
+      ]
     });
 
     // Set the code
     this.setCode(existingCode);
+  }
+
+  getLanguageExtension(language) {
+    switch (language) {
+      case "javascript":
+        return javascript();
+      case "python":
+        return python();
+      case "java":
+        return java();
+      default:
+        return javascript();
+    }
   }
 
   reset() {
