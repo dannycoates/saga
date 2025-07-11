@@ -16,6 +16,7 @@ import { gruvboxLight } from "cm6-theme-gruvbox-light";
 import { keymap } from "@codemirror/view";
 import { indentWithTab } from "@codemirror/commands";
 import { Compartment } from "@codemirror/state";
+import { indentUnit } from "@codemirror/language";
 import { RuntimeManager } from "./runtimes/manager.js";
 
 // CodeMirror editor wrapper
@@ -67,6 +68,7 @@ class CodeEditor extends EventTarget {
       basicSetup,
       this.languageCompartment.of(langExtension),
       gruvboxLight,
+      indentUnit.of("    "), // 4 spaces for indentation
       keymap.of([indentWithTab]),
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {

@@ -170,20 +170,20 @@ Elevator class:
 _next_floor = 1
 
 def update(elevators, floors):
-  """
-  Update gets called on a regular, fast interval (a game loop)
+    """
+    Update gets called on a regular, fast interval (a game loop)
 
-  Args:
-    elevators: list[Elevator] - List of all elevators
-    floors: list[Floor] - List of all floors
-  """
-  global _next_floor
-  elevator = elevators[0]
-  if elevator.destination_floor is None:
-    if elevator.current_floor == len(floors) - 1:
-      _next_floor = 0
-    _next_floor += 1
-    elevator.go_to_floor(_next_floor)`;
+    Args:
+      elevators: list[Elevator] - List of all elevators
+      floors: list[Floor] - List of all floors
+    """
+    global _next_floor
+    elevator = elevators[0]
+    if elevator.destination_floor is None:
+        if elevator.current_floor == len(floors) - 1:
+            _next_floor = 0
+        _next_floor += 1
+        elevator.go_to_floor(_next_floor)`;
   }
 
   dispose() {
