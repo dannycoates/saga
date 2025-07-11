@@ -144,23 +144,21 @@ class CodeEditor extends EventTarget {
     });
   }
 
-  async getCodeObj() {
-    console.log("Getting code...");
+  async getCodeObj(app) {
     const code = this.getCode();
-    const app = window.app; // Get reference to the app instance
     
     try {
       // Show loading for language selection if needed
       const currentRuntime = this.runtimeManager.getCurrentRuntime();
       if (!currentRuntime || !currentRuntime.loaded) {
-        app?.showRuntimeLoading(true, `Loading ${this.currentLanguage} runtime...`);
+        app.showRuntimeLoading(true, `Loading ${this.currentLanguage} runtime...`);
       }
       
       // Select the language and load the code
       await this.runtimeManager.selectLanguage(this.currentLanguage);
       
       // Show loading for code compilation/loading
-      app?.showRuntimeLoading(true, `Compiling ${this.currentLanguage} code...`);
+      app.showRuntimeLoading(true, `Compiling ${this.currentLanguage} code...`);
       await this.runtimeManager.loadCode(code);
       
       // Hide loading
@@ -175,7 +173,7 @@ class CodeEditor extends EventTarget {
         },
       };
     } catch (e) {
-      app?.showRuntimeLoading(false);
+      app.showRuntimeLoading(false);
       this.dispatchEvent(new CustomEvent("usercode_error", { detail: e }));
       return null;
     }
@@ -447,7 +445,6 @@ export class ElevatorApp extends EventTarget {
     this.world = this.worldCreator.createWorld(
       challenges[challengeIndex].options,
     );
-    window.world = this.world; // For debugging
 
     // Clear and setup UI
     const clearElems = [this.worldElem, this.feedbackElem];
@@ -501,9 +498,8 @@ export class ElevatorApp extends EventTarget {
     };
     this.world.addEventListener("stats_changed", this.statsChangedHandler);
 
-    const codeObj = await this.editor.getCodeObj();
+    const codeObj = await this.editor.getCodeObj(this);
     if (codeObj) {
-      console.log("Starting...");
       this.worldController.start(
         this.world,
         codeObj,
