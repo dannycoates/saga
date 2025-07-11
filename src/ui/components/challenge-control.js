@@ -132,7 +132,7 @@ export class ChallengeControl extends HTMLElement {
           line-height: 30px;
           font-size: 20px;
           margin: 0;
-          color: #3c3836; /* Gruvbox dark fg */
+          color: var(--text-primary, #3c3836);
           font-weight: normal;
         }
 
@@ -143,10 +143,10 @@ export class ChallengeControl extends HTMLElement {
           font-weight: bold;
           padding-left: 12px;
           padding-right: 12px;
-          color: #fbf1c7; /* Gruvbox light0 */
-          background-color: #458588; /* Gruvbox blue */
+          color: var(--button-text, #fbf1c7);
+          background-color: var(--accent-secondary, #458588);
           text-shadow: none;
-          border: 1px solid #076678; /* Gruvbox dark blue */
+          border: 1px solid var(--accent-tertiary, #076678);
           border-radius: 5px;
           cursor: pointer;
           width: 110px;
@@ -154,7 +154,7 @@ export class ChallengeControl extends HTMLElement {
         }
 
         button:hover:not(:disabled) {
-          background-color: #076678; /* Gruvbox dark blue */
+          background-color: var(--accent-tertiary, #076678);
         }
         
         button:disabled {
@@ -172,7 +172,7 @@ export class ChallengeControl extends HTMLElement {
           padding: 4px 8px;
           line-height: 20px;
           cursor: pointer;
-          color: #3c3836; /* Gruvbox dark fg */
+          color: var(--text-primary, #3c3836);
           display: inline-flex;
           align-items: center;
           border-radius: 3px;
@@ -181,7 +181,7 @@ export class ChallengeControl extends HTMLElement {
 
         .timescale_decrease:hover,
         .timescale_increase:hover {
-          background-color: #bdae93; /* Gruvbox light3 */
+          background-color: var(--bg-tertiary, #bdae93);
         }
 
         .timescale_decrease svg,
@@ -192,7 +192,7 @@ export class ChallengeControl extends HTMLElement {
         }
 
         .time-scale-value {
-          color: #3c3836; /* Gruvbox dark fg */
+          color: var(--text-primary, #3c3836);
           text-shadow: none;
           display: inline-block;
           width: 22px;

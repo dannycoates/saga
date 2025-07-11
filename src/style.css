@@ -1,7 +1,44 @@
+/* CSS Custom Properties for Light/Dark Theme */
+:root {
+    /* Light theme colors (Gruvbox Light) */
+    --bg-primary: #f2e5bc;
+    --bg-secondary: #ebdbb2;
+    --bg-tertiary: #d5c4a1;
+    --text-primary: #3c3836;
+    --text-secondary: #504945;
+    --text-tertiary: #928374;
+    --accent-primary: #d79921;
+    --accent-secondary: #458588;
+    --accent-tertiary: #076678;
+    --error-color: #cc241d;
+    --success-color: #98971a;
+    --world-bg: #404040;
+    --stats-text: #999;
+    --button-text: #fbf1c7;
+}
+
+[data-theme="dark"] {
+    /* Dark theme colors (Gruvbox Dark) */
+    --bg-primary: #32302f;
+    --bg-secondary: #3c3836;
+    --bg-tertiary: #504945;
+    --text-primary: #ebdbb2;
+    --text-secondary: #d5c4a1;
+    --text-tertiary: #bdae93;
+    --accent-primary: #fabd2f;
+    --accent-secondary: #83a598;
+    --accent-tertiary: #8ec07c;
+    --error-color: #fb4934;
+    --success-color: #b8bb26;
+    --world-bg: #1d2021;
+    --stats-text: #bdae93;
+    --button-text: #282828;
+}
+
 html,
 body {
-    background-color: #f2e5bc;
-    color: #3c3836; /* Gruvbox dark fg */
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
     margin: 0;
     padding: 0;
 }
@@ -28,26 +65,26 @@ h3,
 h4,
 h5,
 p {
-    color: #3c3836; /* Gruvbox dark fg */
+    color: var(--text-primary);
 }
 
 .emphasis-color {
-    color: #d79921; /* Gruvbox yellow */
-    text-shadow: 0 2px 0.4pt #928374;
+    color: var(--accent-primary);
+    text-shadow: 0 2px 0.4pt var(--text-tertiary);
 }
 
 .error-color {
-    color: #cc241d; /* Gruvbox red */
+    color: var(--error-color);
 }
 
 a {
-    color: #458588; /* Gruvbox blue */
+    color: var(--accent-secondary);
     font-weight: bold;
     text-decoration: none;
 }
 a:hover {
     text-decoration: underline;
-    color: #076678; /* Gruvbox dark blue */
+    color: var(--accent-tertiary);
 }
 
 h2,
@@ -58,7 +95,7 @@ h5 {
 }
 
 dl {
-    color: #504945; /* Gruvbox gray */
+    color: var(--text-secondary);
 }
 dl dd {
     font:
@@ -95,10 +132,10 @@ button {
     font-weight: bold;
     padding-left: 12px;
     padding-right: 12px;
-    color: #fbf1c7; /* Gruvbox light0 */
-    background-color: #458588; /* Gruvbox blue */
+    color: var(--button-text);
+    background-color: var(--accent-secondary);
     text-shadow: none;
-    border: 1px solid #076678; /* Gruvbox dark blue */
+    border: 1px solid var(--accent-tertiary);
     border-radius: 5px;
     margin-right: 5px;
     cursor: pointer;
@@ -106,7 +143,7 @@ button {
 }
 
 button:hover {
-    background-color: #076678; /* Gruvbox dark blue */
+    background-color: var(--accent-tertiary);
 }
 
 .blink {
@@ -133,7 +170,7 @@ button:hover {
 }
 
 #save_message {
-    color: #928374; /* Gruvbox gray */
+    color: var(--text-tertiary);
     font-size: 12px;
     line-height: 30px;
     margin: 0 20px;
@@ -144,7 +181,7 @@ button:hover {
     justify-content: space-between;
     align-items: center;
     height: 50px;
-    background-color: #f2e5bc; /* Gruvbox light0_soft */
+    background-color: var(--bg-primary);
     padding: 0 12px;
     border-radius: 4px;
     margin-bottom: 4px;
@@ -167,7 +204,7 @@ button:hover {
 
 .challenge {
     padding: 0.5rem 1.5rem;
-    background-color: #d5c4a1;
+    background-color: var(--bg-tertiary);
     border-radius: 4px;
     margin: 1rem 0;
 }
@@ -176,18 +213,18 @@ button:hover {
     line-height: 30px;
     font-size: 20px;
     margin: 0;
-    color: #3c3836; /* Gruvbox dark fg */
+    color: var(--text-primary);
 }
 
 .code {
     flex: 1;
-    border: 2px solid #f2e5bc;
+    border: 2px solid var(--bg-primary);
 }
 
 .language-selector {
-    background-color: #ebdbb2;
+    background-color: var(--bg-secondary);
     padding: 8px;
-    border-bottom: 2px solid #d5c4a1;
+    border-bottom: 2px solid var(--bg-tertiary);
 }
 
 .language-selector label {
@@ -196,8 +233,9 @@ button:hover {
 }
 
 .language-selector select {
-    background-color: #f2e5bc;
-    border: 1px solid #d5c4a1;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--bg-tertiary);
+    color: var(--text-primary);
     padding: 4px 8px;
     border-radius: 3px;
     font-size: 14px;
@@ -214,15 +252,15 @@ button:hover {
 .loading-indicator .spinner {
     width: 16px;
     height: 16px;
-    border: 2px solid #d5c4a1;
-    border-top-color: #458588;
+    border: 2px solid var(--bg-tertiary);
+    border-top-color: var(--accent-secondary);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
 }
 
 .loading-indicator .loading-text {
     font-size: 14px;
-    color: #458588;
+    color: var(--accent-secondary);
 }
 
 @keyframes spin {
@@ -243,13 +281,13 @@ button:hover {
 
 .codestatus {
     padding-top: 10px;
-    color: #cc241d; /* Gruvbox red for errors */
+    color: var(--error-color);
 }
 
 .controls {
     display: flex;
     justify-content: space-between;
-    background-color: #f2e5bc; /* Gruvbox light0_soft */
+    background-color: var(--bg-primary);
     padding: 8px;
     border-radius: 4px;
     margin-top: 4px;
@@ -258,7 +296,7 @@ button:hover {
 .world {
     display: flex;
     width: 1220px;
-    background-color: #333;
+    background-color: var(--world-bg);
     padding: 0;
     position: relative; /* Keep for feedbackcontainer */
 }
@@ -278,16 +316,17 @@ button:hover {
         Monaco,
         monospace;
     line-height: 10px;
-    color: #999;
+    color: var(--stats-text);
     width: 180px;
     height: 100%;
     padding: 4px;
     box-sizing: border-box;
     pointer-events: none;
-    background-color: #333;
+    background-color: var(--world-bg);
 }
 
 .feedbackcontainer {
+    /* Container for game feedback messages */
 }
 
 .footer {
@@ -295,18 +334,60 @@ button:hover {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #f2e5bc; /* Gruvbox light0_soft */
+    background-color: var(--bg-primary);
     padding: 8px 12px;
     border-radius: 4px;
 }
 .footer h4 {
     font-size: 13px;
     margin: 0;
-    color: #504945; /* Gruvbox gray */
+    color: var(--text-secondary);
 }
 
 .help {
     margin-top: 20px;
     margin-bottom: 30px;
     font-size: 1.25rem;
+}
+
+/* Theme Switcher Styles */
+.theme-switcher {
+    display: flex;
+    align-items: center;
+}
+
+.theme-toggle-btn {
+    background: transparent;
+    border: 1px solid var(--text-tertiary);
+    border-radius: 6px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+    margin: 0;
+    padding: 0;
+}
+
+.theme-toggle-btn:hover {
+    background-color: var(--bg-secondary);
+    border-color: var(--accent-secondary);
+    color: var(--accent-secondary);
+}
+
+.theme-toggle-btn:focus {
+    outline: 2px solid var(--accent-secondary);
+    outline-offset: 2px;
+}
+
+.theme-icon {
+    transition: all 0.2s ease;
+}
+
+/* Smooth theme transitions for themed elements */
+html, body, .header, .challenge, .controls, .footer, .language-selector {
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }

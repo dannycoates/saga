@@ -92,8 +92,8 @@ export class CodeStatus extends HTMLElement {
         }
 
         .modal-content {
-          background-color: #f2e5bc; /* Gruvbox light bg */
-          border: 2px solid #cc241d; /* Gruvbox red */
+          background-color: var(--bg-primary, #f2e5bc);
+          border: 2px solid var(--error-color, #cc241d);
           border-radius: 8px;
           padding: 20px;
           position: relative;
@@ -105,14 +105,14 @@ export class CodeStatus extends HTMLElement {
           justify-content: space-between;
           margin-bottom: 16px;
           padding-bottom: 12px;
-          border-bottom: 1px solid #cc241d;
+          border-bottom: 1px solid var(--error-color, #cc241d);
         }
 
         .modal-title {
           display: flex;
           align-items: center;
           margin: 0;
-          color: #cc241d; /* Gruvbox red */
+          color: var(--error-color, #cc241d);
           font-size: 1.2em;
           font-weight: bold;
         }
@@ -130,7 +130,7 @@ export class CodeStatus extends HTMLElement {
           border: none;
           font-size: 24px;
           font-weight: bold;
-          color: #cc241d;
+          color: var(--error-color, #cc241d);
           cursor: pointer;
           padding: 4px 8px;
           border-radius: 4px;
@@ -143,7 +143,7 @@ export class CodeStatus extends HTMLElement {
         }
 
         .error-content {
-          color: #3c3836; /* Gruvbox dark fg */
+          color: var(--text-primary, #3c3836);
           line-height: 1.4;
           font-family: monospace;
           font-size: 0.9em;
@@ -151,15 +151,15 @@ export class CodeStatus extends HTMLElement {
           word-break: break-word;
           max-height: 400px;
           overflow-y: auto;
-          background-color: rgba(60, 56, 54, 0.05);
+          background-color: var(--bg-secondary, rgba(60, 56, 54, 0.05));
           padding: 12px;
           border-radius: 4px;
-          border: 1px solid rgba(60, 56, 54, 0.2);
+          border: 1px solid var(--text-tertiary, rgba(60, 56, 54, 0.2));
         }
 
         .console-note {
           font-size: 0.8em;
-          color: #7c6f64; /* Gruvbox light3 */
+          color: var(--text-secondary, #7c6f64);
           margin-top: 8px;
         }
 
@@ -174,17 +174,17 @@ export class CodeStatus extends HTMLElement {
           font-size: 14px;
           font-weight: bold;
           padding: 6px 16px;
-          color: #fbf1c7; /* Gruvbox light0 */
-          background-color: #cc241d; /* Gruvbox red */
+          color: var(--button-text, #fbf1c7);
+          background-color: var(--error-color, #cc241d);
           text-shadow: none;
-          border: 1px solid #9d0006; /* Gruvbox dark red */
+          border: 1px solid var(--error-color, #9d0006);
           border-radius: 5px;
           cursor: pointer;
           transition: background-color 0.2s ease;
         }
 
         .dismiss-button:hover {
-          background-color: #9d0006; /* Gruvbox dark red */
+          background-color: var(--error-color, #9d0006);
         }
       </style>
       

@@ -13,6 +13,7 @@ import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
 import { java } from "@codemirror/lang-java";
 import { gruvboxLight } from "cm6-theme-gruvbox-light";
+import { gruvboxDark } from "cm6-theme-gruvbox-dark";
 import { keymap } from "@codemirror/view";
 import { indentWithTab } from "@codemirror/commands";
 import { Compartment } from "@codemirror/state";
@@ -20,6 +21,8 @@ import { indentUnit } from "@codemirror/language";
 import { linter, lintGutter } from "@codemirror/lint";
 import * as eslint from "eslint-linter-browserify";
 import { RuntimeManager } from "./runtimes/manager.js";
+import { themeManager } from "./ui/theme-manager.js";
+import { ThemeSwitcher } from "./ui/components/theme-switcher.js";
 
 // Enhanced JavaScript linter using ESLint
 function createJavaScriptLinter() {
@@ -114,10 +117,10 @@ class CodeEditor extends EventTarget {
     this.currentLanguage =
       localStorage.getItem(`${storageKey}_language`) || "javascript";
 
-    // Create a compartment for the language extension
+    // Create compartments for extensions
     this.languageCompartment = new Compartment();
-    // Create a compartment for the linter extension
     this.linterCompartment = new Compartment();
+    this.themeCompartment = new Compartment();
 
     // Get the appropriate default code based on language
     const defaultCode =
@@ -134,6 +137,11 @@ class CodeEditor extends EventTarget {
     });
 
     this.autoSave = throttle(() => this.saveCode(), 1000);
+
+    // Listen for theme changes
+    themeManager.onThemeChange((theme) => {
+      this.updateTheme(theme);
+    });
   }
 
   getExtensions() {
@@ -155,10 +163,13 @@ class CodeEditor extends EventTarget {
         langExtension = javascript();
     }
 
+    const currentTheme = themeManager.getCurrentTheme();
+    const themeExtension = currentTheme === 'dark' ? gruvboxDark : gruvboxLight;
+
     const extensions = [
       basicSetup,
       this.languageCompartment.of(langExtension),
-      gruvboxLight,
+      this.themeCompartment.of(themeExtension),
       indentUnit.of("    "), // 4 spaces for indentation
       lintGutter(), // Add lint gutter for error indicators
       this.linterCompartment.of(lintExtension || []), // Use compartment for linter
@@ -171,6 +182,13 @@ class CodeEditor extends EventTarget {
     ];
 
     return extensions;
+  }
+
+  updateTheme(theme) {
+    const themeExtension = theme === 'dark' ? gruvboxDark : gruvboxLight;
+    this.view.dispatch({
+      effects: this.themeCompartment.reconfigure(themeExtension)
+    });
   }
 
   setLanguage(language) {
@@ -315,6 +333,9 @@ export class ElevatorApp extends EventTarget {
 
     this.setupEventHandlers();
 
+    // Initialize theme switcher
+    this.initializeThemeSwitcher();
+
     // Set the runtime manager to the editor's current language and check if it needs loading
     this.runtimeManager.currentLanguage = this.editor.currentLanguage;
 
@@ -445,6 +466,18 @@ export class ElevatorApp extends EventTarget {
     });
 
     return params;
+  }
+
+  initializeThemeSwitcher() {
+    // Initialize theme manager
+    themeManager.watchSystemTheme();
+    
+    // Create and add theme switcher to header
+    const themeSwitcher = new ThemeSwitcher(themeManager);
+    const header = document.querySelector('.header');
+    if (header) {
+      header.appendChild(themeSwitcher.getElement());
+    }
   }
 
   showRuntimeLoading(show, message = "Loading runtime...") {

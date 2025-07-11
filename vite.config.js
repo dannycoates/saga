@@ -10,7 +10,7 @@ const selectiveBundlePlugin = () => {
       const sourceModules = new Set();
 
       // Categorize modules
-      for (const [fileName, chunk] of Object.entries(bundle)) {
+      for (const chunk of Object.values(bundle)) {
         if (chunk.type === "chunk") {
           for (const moduleId of Object.keys(chunk.modules || {})) {
             if (moduleId.includes("node_modules")) {
@@ -35,7 +35,7 @@ const selectiveSourcemapPlugin = () => {
     name: "selective-sourcemap",
     generateBundle(options, bundle) {
       // Remove sourcemaps for non-vendor chunks
-      for (const [fileName, asset] of Object.entries(bundle)) {
+      for (const fileName of Object.keys(bundle)) {
         if (fileName.endsWith(".js.map")) {
           // Check if this is a sourcemap for a source file (not vendor)
           const jsFileName = fileName.replace(".map", "");
@@ -79,7 +79,7 @@ export default defineConfig(({ mode }) => ({
         preserveModules: false,
         minifyInternalExports: false,
         // Split code into chunks more aggressively
-        manualChunks: (id, { getModuleInfo }) => {
+        manualChunks: (id) => {
           // Bundle all node_modules
           if (id.includes("node_modules")) {
             return "vendor";
