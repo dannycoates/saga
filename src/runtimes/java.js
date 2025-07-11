@@ -61,12 +61,50 @@ export class JavaRuntime extends BaseRuntime {
     this.Buttons = null;
     this.ElevatorController = null;
     this.controller = null;
+    this.logBuffer = [];
+    this.originalConsoleLog = null;
+  }
+
+  captureConsoleLog() {
+    if (this.originalConsoleLog) return; // Already capturing
+
+    this.originalConsoleLog = console.log;
+    const self = this;
+
+    console.log = function(...args) {
+      // Check if the log message originates from cheerpOS.js
+      const stack = new Error().stack;
+      if (stack && stack.includes('cheerpOS.js')) {
+        self.logBuffer.push(args.join(' '));
+      }
+      
+      // Call the original console.log
+      self.originalConsoleLog.apply(console, args);
+    };
+  }
+
+  restoreConsoleLog() {
+    if (this.originalConsoleLog) {
+      console.log = this.originalConsoleLog;
+      this.originalConsoleLog = null;
+    }
+  }
+
+  resetLogBuffer() {
+    this.logBuffer = [];
+  }
+
+  getLogBufferString() {
+    if (this.logBuffer.length === 0) return '';
+    return '\n\nCheerpJ logs:\n' + this.logBuffer.join('\n');
   }
 
   async loadRuntime() {
     if (this.loading || this.loaded) return;
 
     this.loading = true;
+    this.resetLogBuffer();
+    this.captureConsoleLog();
 
     try {
       // Load CheerpJ script
@@ -148,7 +186,7 @@ export class JavaRuntime extends BaseRuntime {
       this.loaded = true;
     } catch (error) {
       this.loading = false;
-      throw new Error(`Failed to load Java runtime: ${error.message}`);
+      throw new Error(`Failed to load Java runtime: ${error.message}${this.getLogBufferString()}`);
     } finally {
       this.loading = false;
     }
@@ -161,6 +199,8 @@ export class JavaRuntime extends BaseRuntime {
     if (this.loadedCode === code) {
       return;
     }
+
+    this.resetLogBuffer();
 
     try {
       const iteration = this.iteration++;
@@ -213,7 +253,7 @@ export class JavaRuntime extends BaseRuntime {
       this.loadedCode = code;
     } catch (error) {
       console.error(error);
-      throw new Error(`Failed to compile Java code: ${error.message}`);
+      throw new Error(`Failed to compile Java code: ${error.message}${this.getLogBufferString()}`);
     }
   }
 
@@ -223,31 +263,35 @@ export class JavaRuntime extends BaseRuntime {
     }
     ELEVATORS = elevators;
 
-    // Create Java wrapper objects for elevators and floors
-    const javaElevators = [];
-    let index = 0;
-    for (const elevator of elevators) {
-      const javaElevator = await new this.Elevator();
-      javaElevator.id = index++;
-      javaElevator.currentFloor = elevator.currentFloor;
-      javaElevator.destinationFloor = elevator.destinationFloor;
-      javaElevator.pressedFloorButtons = elevator.pressedFloorButtons || [];
-      javaElevator.percentFull = elevator.percentFull;
-      javaElevators.push(javaElevator);
-    }
+    try {
+      // Create Java wrapper objects for elevators and floors
+      const javaElevators = [];
+      let index = 0;
+      for (const elevator of elevators) {
+        const javaElevator = await new this.Elevator();
+        javaElevator.id = index++;
+        javaElevator.currentFloor = elevator.currentFloor;
+        javaElevator.destinationFloor = elevator.destinationFloor;
+        javaElevator.pressedFloorButtons = elevator.pressedFloorButtons || [];
+        javaElevator.percentFull = elevator.percentFull;
+        javaElevators.push(javaElevator);
+      }
 
-    const javaFloors = [];
-    for (const floor of floors) {
-      const javaFloor = await new this.Floor();
-      javaFloor.level = floor.level;
-      const buttons = await new this.Buttons();
-      buttons.up = floor.buttons.up;
-      buttons.down = floor.buttons.down;
-      javaFloor.buttons = buttons;
-      javaFloors.push(javaFloor);
-    }
+      const javaFloors = [];
+      for (const floor of floors) {
+        const javaFloor = await new this.Floor();
+        javaFloor.level = floor.level;
+        const buttons = await new this.Buttons();
+        buttons.up = floor.buttons.up;
+        buttons.down = floor.buttons.down;
+        javaFloor.buttons = buttons;
+        javaFloors.push(javaFloor);
+      }
 
-    await this.controller.update(javaElevators, javaFloors);
+      await this.controller.update(javaElevators, javaFloors);
+    } catch (error) {
+      throw new Error(`Java execution failed: ${error.message}${this.getLogBufferString()}`);
+    }
   }
 
   getDefaultTemplate() {
@@ -300,5 +344,7 @@ class ElevatorController {
     this.Buttons = null;
     this.ElevatorController = null;
     this.controller = null;
+    this.restoreConsoleLog();
+    this.resetLogBuffer();
   }
 }
