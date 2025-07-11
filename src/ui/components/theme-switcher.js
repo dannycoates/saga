@@ -1,0 +1,68 @@
+/**
+ * Theme Switcher Component - UI element for switching between light/dark themes
+ */
+
+export class ThemeSwitcher {
+  constructor(themeManager) {
+    this.themeManager = themeManager;
+    this.element = this.createElement();
+    this.bindEvents();
+  }
+
+  createElement() {
+    const switcher = document.createElement('div');
+    switcher.className = 'theme-switcher';
+    switcher.innerHTML = `
+      <button class="theme-toggle-btn" aria-label="Toggle theme" title="Toggle light/dark theme">
+        <svg class="theme-icon sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="theme-icon moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+    `;
+
+    return switcher;
+  }
+
+  bindEvents() {
+    const button = this.element.querySelector('.theme-toggle-btn');
+    button.addEventListener('click', () => {
+      this.themeManager.toggleTheme();
+    });
+
+    // Listen for theme changes to update button state
+    this.themeManager.onThemeChange((theme) => {
+      this.updateButtonState(theme);
+    });
+
+    // Set initial state
+    this.updateButtonState(this.themeManager.getCurrentTheme());
+  }
+
+  updateButtonState(theme) {
+    const sunIcon = this.element.querySelector('.sun-icon');
+    const moonIcon = this.element.querySelector('.moon-icon');
+    
+    if (theme === 'dark') {
+      sunIcon.style.display = 'block';
+      moonIcon.style.display = 'none';
+    } else {
+      sunIcon.style.display = 'none';
+      moonIcon.style.display = 'block';
+    }
+  }
+
+  getElement() {
+    return this.element;
+  }
+}
