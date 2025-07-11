@@ -288,7 +288,7 @@ export class JavaRuntime extends BaseRuntime {
         javaFloors.push(javaFloor);
       }
 
-      await this.controller.update(javaElevators, javaFloors);
+      await this.controller.tick(javaElevators, javaFloors);
     } catch (error) {
       throw new Error(`Java execution failed: ${error.message}${this.getLogBufferString()}`);
     }
@@ -317,11 +317,11 @@ class ElevatorController {
     private int nextFloor = 1;
 
     /**
-     * Update gets called on a regular, fast interval (a game loop)
+     * Tick gets called on a regular, fast interval (a game loop)
      * @param elevators Array of all elevators
      * @param floors Array of all floors
      */
-    public void update(Elevator[] elevators, Floor[] floors) {
+    public void tick(Elevator[] elevators, Floor[] floors) {
         Elevator elevator = elevators[0];
 
         if (elevator.destinationFloor == null) {
