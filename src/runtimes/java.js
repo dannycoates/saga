@@ -40,9 +40,11 @@ public class Floor {
     }
 }`;
 
+let ELEVATORS = []
+
 async function Java_Elevator_jsGoToFloor(lib, elevatorId, floor) {
   // Find the corresponding JavaScript elevator
-  const jsElevator = window.elevators[elevatorId];
+  const jsElevator = ELEVATORS[elevatorId];
   if (jsElevator) {
     jsElevator.goToFloor(floor);
   }
@@ -219,7 +221,7 @@ export class JavaRuntime extends BaseRuntime {
     if (!this.loaded) {
       throw new Error("Java runtime not loaded");
     }
-    window.elevators = elevators;
+    ELEVATORS = elevators;
 
     // Create Java wrapper objects for elevators and floors
     const javaElevators = [];

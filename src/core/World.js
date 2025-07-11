@@ -73,7 +73,6 @@ export class WorldCreator {
   }
 
   createWorld(options) {
-    console.log("Creating world with options", options);
     const defaultOptions = {
       floorHeight: 50,
       floorCount: 4,
@@ -228,9 +227,6 @@ export class World extends EventTarget {
   }
 
   unWind() {
-    console.log("Unwinding", this);
-
-    // Clean up user event listeners
     this.users.forEach((user) => {
       const handlers = this.userEventHandlers.get(user);
       if (handlers) {
@@ -246,7 +242,6 @@ export class World extends EventTarget {
         this.handleElevAvailability,
       );
     });
-    // Mark as ended and clear arrays to help with garbage collection
     this.challengeEnded = true;
     this.users = [];
     this.elevators = [];
