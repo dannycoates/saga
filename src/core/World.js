@@ -1,11 +1,11 @@
-import { randomInt, range } from "./utils.js";
+import { randomInt, throttle } from "./utils.js";
 import { Floor } from "./Floor.js";
 import { Elevator } from "./Elevator.js";
 import { User } from "./User.js";
 
 export class WorldCreator {
   createFloors(floorCount, floorHeight) {
-    const floors = range(0, floorCount).map((_, i) => {
+    const floors = Array.from({ length: floorCount }, (_, i) => {
       const yPos = (floorCount - 1 - i) * floorHeight;
       return new Floor(i, yPos);
     });
@@ -19,7 +19,7 @@ export class WorldCreator {
     elevatorCapacities = [4],
   ) {
     let currentX = 200.0;
-    const elevators = range(0, elevatorCount).map((_, i) => {
+    const elevators = Array.from({ length: elevatorCount }, (_, i) => {
       const elevator = new Elevator(
         2.6,
         floorCount,
@@ -118,6 +118,10 @@ export class World extends EventTarget {
     this.userEventHandlers = new WeakMap();
     this.handleElevAvailability = this.handleElevAvailability.bind(this);
     this.setupEventHandlers();
+    this.throttledStats = throttle(() => {
+      this.recalculateStats();
+      this.dispatchEvent(new CustomEvent("stats_display_changed"));
+    }, 1000);
   }
 
   handleUserCodeError(e) {
@@ -126,7 +130,6 @@ export class World extends EventTarget {
 
   recalculateStats() {
     this.transportedPerSec = this.transportedCounter / this.elapsedTime;
-    // TODO: Optimize this loop?
     this.moveCount = this.elevators.reduce(
       (sum, elevator) => sum + elevator.moveCount,
       0,
@@ -184,7 +187,7 @@ export class World extends EventTarget {
     });
   }
 
-  update(dt) {
+  tick(dt) {
     this.elapsedTime += dt;
     this.elapsedSinceSpawn += dt;
     this.elapsedSinceStatsUpdate += dt;
@@ -202,13 +205,12 @@ export class World extends EventTarget {
 
     // Update all elevators
     this.elevators.forEach((elevator) => {
-      elevator.update(dt);
-      elevator.updateElevatorMovement(dt);
+      elevator.tick(dt);
     });
 
     // Update all users
     this.users.forEach((user) => {
-      user.update(dt);
+      user.tick(dt);
       this.maxWaitTime = Math.max(
         this.maxWaitTime,
         this.elapsedTime - user.spawnTimestamp,
@@ -218,7 +220,7 @@ export class World extends EventTarget {
     // Remove users marked for removal
     this.users = this.users.filter((user) => !user.removeMe);
 
-    this.recalculateStats();
+    this.throttledStats();
   }
 
   updateDisplayPositions() {
@@ -282,11 +284,10 @@ export class WorldController extends EventTarget {
 
         while (scaledDt > 0.0 && !world.challengeEnded) {
           const thisDt = Math.min(this.dtMax, scaledDt);
-          world.update(thisDt);
+          world.tick(thisDt);
           scaledDt -= this.dtMax;
         }
         world.updateDisplayPositions();
-        world.dispatchEvent(new CustomEvent("stats_display_changed")); // TODO: Trigger less often for performance reasons etc
       }
       lastT = t;
       if (!world.challengeEnded) {

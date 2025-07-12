@@ -37,7 +37,7 @@ describe("World controller", () => {
     controller = createWorldController(DT_MAX);
 
     fakeWorld = {
-      update: vi.fn(),
+      tick: vi.fn(),
       init: vi.fn(),
       updateDisplayPositions: vi.fn(),
       dispatchEvent: vi.fn(),

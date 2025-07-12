@@ -1,4 +1,3 @@
-
 const powInterpolate = function (value0, value1, x, a) {
   return (
     value0 +
@@ -11,6 +10,7 @@ const coolInterpolate = function (value0, value1, x) {
 };
 
 const DEFAULT_INTERPOLATOR = coolInterpolate;
+const NOOP = function (_) {};
 
 const _tmpPosStorage = [0, 0];
 
@@ -23,8 +23,7 @@ export class Movable extends EventTarget {
     this.parent = null;
     this.worldX = 0.0;
     this.worldY = 0.0;
-    this.currentTask = null;
-
+    this.currentTask = NOOP;
     this.dispatchEvent(new CustomEvent("new_state", { detail: this }));
   }
 
@@ -35,34 +34,25 @@ export class Movable extends EventTarget {
     this.worldX = _tmpPosStorage[0];
     this.worldY = _tmpPosStorage[1];
     if (oldX !== this.worldX || oldY !== this.worldY || forceTrigger === true) {
-      this.dispatchEvent(new CustomEvent("new_display_state", { detail: this }));
+      this.dispatchEvent(
+        new CustomEvent("new_display_state", { detail: this }),
+      );
     }
   }
 
   moveTo(newX, newY) {
-    if (newX !== null) {
-      this.x = newX;
-    }
-    if (newY !== null) {
-      this.y = newY;
-    }
-    this.dispatchEvent(new CustomEvent("new_state", { detail: this }));
-  }
-
-  moveToFast(newX, newY) {
-    this.x = newX;
-    this.y = newY;
+    this.x = newX ?? this.x;
+    this.y = newY ?? this.y;
     this.dispatchEvent(new CustomEvent("new_state", { detail: this }));
   }
 
   isBusy() {
-    return this.currentTask !== null;
+    return this.currentTask !== NOOP;
   }
 
   makeSureNotBusy() {
     if (this.isBusy()) {
-      console.error("Attempt to use movable while it was busy", this);
-      throw { message: "Object is busy - you should use callback", obj: this };
+      throw new Error("Object is busy - you should use callback");
     }
   }
 
@@ -72,7 +62,7 @@ export class Movable extends EventTarget {
     this.currentTask = (dt) => {
       timeSpent += dt;
       if (timeSpent > millis) {
-        this.currentTask = null;
+        this.currentTask = NOOP;
         if (cb) {
           cb();
         }
@@ -82,30 +72,24 @@ export class Movable extends EventTarget {
 
   moveToOverTime(newX, newY, timeToSpend, interpolator, cb) {
     this.makeSureNotBusy();
-    this.currentTask = true;
-    if (newX === null) {
-      newX = this.x;
-    }
-    if (newY === null) {
-      newY = this.y;
-    }
-    if (typeof interpolator === "undefined") {
-      interpolator = DEFAULT_INTERPOLATOR;
-    }
+    newX ??= this.x;
+    newY ??= this.y;
+    interpolator ??= DEFAULT_INTERPOLATOR;
+
     const origX = this.x;
     const origY = this.y;
     let timeSpent = 0.0;
     this.currentTask = (dt) => {
       timeSpent = Math.min(timeToSpend, timeSpent + dt);
       if (timeSpent === timeToSpend) {
-        this.moveToFast(newX, newY);
-        this.currentTask = null;
+        this.moveTo(newX, newY);
+        this.currentTask = NOOP;
         if (cb) {
           cb();
         }
       } else {
         const factor = timeSpent / timeToSpend;
-        this.moveToFast(
+        this.moveTo(
           interpolator(origX, newX, factor),
           interpolator(origY, newY, factor),
         );
@@ -113,10 +97,8 @@ export class Movable extends EventTarget {
     };
   }
 
-  update(dt) {
-    if (this.currentTask !== null) {
-      this.currentTask(dt);
-    }
+  tick(dt) {
+    this.currentTask(dt);
   }
 
   getWorldPosition(storage) {
@@ -138,7 +120,7 @@ export class Movable extends EventTarget {
       if (this.parent !== null) {
         this.getWorldPosition(objWorld);
         this.parent = null;
-        this.moveToFast(objWorld[0], objWorld[1]);
+        this.moveTo(objWorld[0], objWorld[1]);
       }
     } else {
       // Parent is being set a non-null movable
@@ -146,10 +128,7 @@ export class Movable extends EventTarget {
       const parentWorld = [0, 0];
       movableParent.getWorldPosition(parentWorld);
       this.parent = movableParent;
-      this.moveToFast(
-        objWorld[0] - parentWorld[0],
-        objWorld[1] - parentWorld[1],
-      );
+      this.moveTo(objWorld[0] - parentWorld[0], objWorld[1] - parentWorld[1]);
     }
   }
 }
