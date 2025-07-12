@@ -27,7 +27,7 @@ All runtimes expose the same API contract:
 // Elevator properties: currentFloor, destinationFloor, pressedFloorButtons[], percentFull
 // Elevator methods: goToFloor(floorNum)
 // Floor properties: buttons.{up,down}, level
-// Entry point: update(elevators, floors) or Update(elevators, floors)
+// Entry point: tick(elevators, floors)
 ```
 
 ### Development Workflows
@@ -51,7 +51,7 @@ All runtimes expose the same API contract:
 - Code compilation happens per-language: JS uses dynamic imports, Python/Java compile to bytecode
 
 **Game State Management**:
-- `WorldController.update()` is the main game loop - calls player code, updates physics, spawns users
+- `WorldController.tick()` is the main game loop - calls player code, updates physics, spawns users
 - Player code errors are caught and dispatched as `usercode_error` events
 - Stats recalculation is throttled and event-driven (`stats_changed`)
 

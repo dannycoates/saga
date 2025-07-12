@@ -14,7 +14,9 @@ export class User extends Movable {
     this.destinationFloor = 0;
     this.done = false;
     this.removeMe = false;
-    this.exitAvailableHandler = null;
+    this.exitAvailableHandler = (event) => {
+      this.handleExit(event.detail);
+    };
   }
 
   appearOnFloor(floor, destinationFloorNum) {
@@ -83,9 +85,6 @@ export class User extends Movable {
       this.moveToOverTime(pos[0], pos[1], 1, undefined, () => {
         elevator.pressFloorButton(this.destinationFloor);
       });
-      this.exitAvailableHandler = (event) => {
-        this.handleExit(event.detail);
-      };
       elevator.addEventListener("exit_available", this.exitAvailableHandler);
     } else {
       this.pressFloorButton(floor);

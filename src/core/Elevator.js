@@ -1,11 +1,27 @@
 import { Movable } from "./Movable.js";
-import {
-  limitNumber,
-  distanceNeededToAchieveSpeed,
-  accelerationNeededToAchieveChangeDistance,
-  epsilonEquals,
-  randomInt,
-} from "./utils.js";
+import { limitNumber, randomInt } from "./utils.js";
+
+function epsilonEquals(a, b) {
+  return Math.abs(a - b) < 0.00000001;
+}
+
+function accelerationNeededToAchieveChangeDistance(
+  currentSpeed,
+  targetSpeed,
+  distance,
+) {
+  // v² = u² + 2a * d
+  const requiredAcceleration =
+    0.5 * ((Math.pow(targetSpeed, 2) - Math.pow(currentSpeed, 2)) / distance);
+  return requiredAcceleration;
+}
+
+function distanceNeededToAchieveSpeed(currentSpeed, targetSpeed, acceleration) {
+  // v² = u² + 2a * d
+  const requiredDistance =
+    (Math.pow(targetSpeed, 2) - Math.pow(currentSpeed, 2)) / (2 * acceleration);
+  return requiredDistance;
+}
 
 export class Elevator extends Movable {
   constructor(speedFloorsPerSec, floorCount, floorHeight, maxUsers = 4) {
@@ -82,7 +98,8 @@ export class Elevator extends Movable {
     }
   }
 
-  updateElevatorMovement(dt) {
+  tick(dt) {
+    super.tick(dt);
     if (this.isBusy()) {
       // TODO: Consider if having a nonzero velocity here should throw error..
       return;
