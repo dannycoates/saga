@@ -13,6 +13,15 @@ export class ThemeSwitcher {
     const switcher = document.createElement('div');
     switcher.className = 'theme-switcher';
     switcher.innerHTML = `
+      <style>
+        .theme-switcher .theme-icon {
+          display: none;
+        }
+        .theme-switcher.theme-dark .sun-icon,
+        .theme-switcher.theme-light .moon-icon {
+          display: block;
+        }
+      </style>
       <button class="theme-toggle-btn" aria-label="Toggle theme" title="Toggle light/dark theme">
         <svg class="theme-icon sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="5"></circle>
@@ -50,16 +59,9 @@ export class ThemeSwitcher {
   }
 
   updateButtonState(theme) {
-    const sunIcon = this.element.querySelector('.sun-icon');
-    const moonIcon = this.element.querySelector('.moon-icon');
-    
-    if (theme === 'dark') {
-      sunIcon.style.display = 'block';
-      moonIcon.style.display = 'none';
-    } else {
-      sunIcon.style.display = 'none';
-      moonIcon.style.display = 'block';
-    }
+    // Use CSS classes for better performance and cleaner code
+    this.element.classList.remove('theme-dark', 'theme-light');
+    this.element.classList.add(`theme-${theme}`);
   }
 
   getElement() {

@@ -1,3 +1,5 @@
+import { Display } from "./Display.js";
+
 const powInterpolate = function (value0, value1, x, a) {
   return (
     value0 +
@@ -14,7 +16,7 @@ const NOOP = function (_) {};
 
 const _tmpPosStorage = [0, 0];
 
-export class Movable extends EventTarget {
+export class Animated extends Display {
   constructor() {
     super();
 
@@ -24,7 +26,6 @@ export class Movable extends EventTarget {
     this.worldX = 0.0;
     this.worldY = 0.0;
     this.currentTask = NOOP;
-    this.dispatchEvent(new CustomEvent("new_state", { detail: this }));
   }
 
   updateDisplayPosition(forceTrigger) {
@@ -34,6 +35,7 @@ export class Movable extends EventTarget {
     this.worldX = _tmpPosStorage[0];
     this.worldY = _tmpPosStorage[1];
     if (oldX !== this.worldX || oldY !== this.worldY || forceTrigger === true) {
+      // UI components listen for this to update visual positions
       this.dispatchEvent(
         new CustomEvent("new_display_state", { detail: this }),
       );
@@ -43,35 +45,16 @@ export class Movable extends EventTarget {
   moveTo(newX, newY) {
     this.x = newX ?? this.x;
     this.y = newY ?? this.y;
-    this.dispatchEvent(new CustomEvent("new_state", { detail: this }));
   }
 
   isBusy() {
     return this.currentTask !== NOOP;
   }
 
-  makeSureNotBusy() {
-    if (this.isBusy()) {
-      throw new Error("Object is busy - you should use callback");
-    }
-  }
-
-  wait(millis, cb) {
-    this.makeSureNotBusy();
-    let timeSpent = 0.0;
-    this.currentTask = (dt) => {
-      timeSpent += dt;
-      if (timeSpent > millis) {
-        this.currentTask = NOOP;
-        if (cb) {
-          cb();
-        }
-      }
-    };
-  }
-
   moveToOverTime(newX, newY, timeToSpend, interpolator, cb) {
-    this.makeSureNotBusy();
+    if (this.isBusy()) {
+      this.cb?.();
+    }
     newX ??= this.x;
     newY ??= this.y;
     interpolator ??= DEFAULT_INTERPOLATOR;
@@ -79,13 +62,14 @@ export class Movable extends EventTarget {
     const origX = this.x;
     const origY = this.y;
     let timeSpent = 0.0;
+    this.cb = cb;
     this.currentTask = (dt) => {
-      timeSpent = Math.min(timeToSpend, timeSpent + dt);
-      if (timeSpent === timeToSpend) {
+      timeSpent += dt;
+      if (timeSpent >= timeToSpend) {
         this.moveTo(newX, newY);
         this.currentTask = NOOP;
-        if (cb) {
-          cb();
+        if (this.cb) {
+          this.cb();
         }
       } else {
         const factor = timeSpent / timeToSpend;
@@ -97,7 +81,7 @@ export class Movable extends EventTarget {
     };
   }
 
-  tick(dt) {
+  tick(dt = 0) {
     this.currentTask(dt);
   }
 
