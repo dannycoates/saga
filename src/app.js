@@ -1,5 +1,5 @@
 import { throttle } from "./core/utils.js";
-import { createWorldCreator, createWorldController } from "./core/World.js";
+import { WorldCreator, WorldController } from "./core/World.js";
 import { challenges } from "./game/challenges.js";
 import {
   presentStats,
@@ -28,52 +28,57 @@ import { ThemeSwitcher } from "./ui/components/theme-switcher.js";
 function createJavaScriptLinter() {
   try {
     const eslintLinter = new eslint.Linter();
-    
+
     return linter((view) => {
       const diagnostics = [];
       const code = view.state.doc.toString();
-      
+
       try {
-        const messages = eslintLinter.verify(code, {
-          // ESLint flat config format
-          languageOptions: {
-            ecmaVersion: 2022,
-            sourceType: "module",
-            globals: {
-              // Browser globals
-              window: "readonly",
-              document: "readonly",
-              console: "readonly",
-            }
+        const messages = eslintLinter.verify(
+          code,
+          {
+            // ESLint flat config format
+            languageOptions: {
+              ecmaVersion: 2022,
+              sourceType: "module",
+              globals: {
+                // Browser globals
+                window: "readonly",
+                document: "readonly",
+                console: "readonly",
+              },
+            },
+            rules: {
+              // Error-level rules
+              "no-undef": "error",
+              "no-redeclare": "error",
+              "no-unreachable": "error",
+              "no-dupe-keys": "error",
+              "no-dupe-args": "error",
+              "valid-typeof": "error",
+              "use-isnan": "error",
+              "no-unexpected-multiline": "error",
+
+              // Warning-level rules
+              "no-unused-vars": "warn",
+              "no-empty": "warn",
+              "no-extra-semi": "warn",
+            },
           },
-          rules: {
-            // Error-level rules
-            "no-undef": "error",
-            "no-redeclare": "error",
-            "no-unreachable": "error", 
-            "no-dupe-keys": "error",
-            "no-dupe-args": "error",
-            "valid-typeof": "error",
-            "use-isnan": "error",
-            "no-unexpected-multiline": "error",
-            
-            // Warning-level rules
-            "no-unused-vars": "warn",
-            "no-empty": "warn",
-            "no-extra-semi": "warn"
-          }
-        }, { filename: "elevator.js" });
+          { filename: "elevator.js" },
+        );
 
         // Convert ESLint messages to CodeMirror diagnostics
-        messages.forEach(message => {
+        messages.forEach((message) => {
           const doc = view.state.doc;
           const line = Math.max(1, Math.min(message.line || 1, doc.lines));
           const lineObj = doc.line(line);
-          const column = Math.max(0, Math.min(message.column || 1, lineObj.length)) - 1;
-          
+          const column =
+            Math.max(0, Math.min(message.column || 1, lineObj.length)) - 1;
+
           const from = lineObj.from + column;
           const to = Math.min(from + 5, lineObj.to); // Highlight a few characters
-          
+
           diagnostics.push({
             from,
             to,
@@ -81,7 +86,6 @@ function createJavaScriptLinter() {
             message: message.message,
           });
         });
-        
       } catch (eslintError) {
         console.warn("ESLint error:", eslintError);
         // Fall back to basic syntax checking
@@ -97,7 +101,7 @@ function createJavaScriptLinter() {
           });
         }
       }
-      
+
       return diagnostics;
     });
   } catch (error) {
@@ -105,8 +109,6 @@ function createJavaScriptLinter() {
     return null;
   }
 }
-
-
 
 // CodeMirror editor wrapper
 class CodeEditor extends EventTarget {
@@ -147,7 +149,7 @@ class CodeEditor extends EventTarget {
   getExtensions() {
     let langExtension;
     let lintExtension = null;
-    
+
     switch (this.currentLanguage) {
       case "javascript":
         langExtension = javascript();
@@ -164,7 +166,7 @@ class CodeEditor extends EventTarget {
     }
 
     const currentTheme = themeManager.getCurrentTheme();
-    const themeExtension = currentTheme === 'dark' ? gruvboxDark : gruvboxLight;
+    const themeExtension = currentTheme === "dark" ? gruvboxDark : gruvboxLight;
 
     const extensions = [
       basicSetup,
@@ -185,9 +187,9 @@ class CodeEditor extends EventTarget {
   }
 
   updateTheme(theme) {
-    const themeExtension = theme === 'dark' ? gruvboxDark : gruvboxLight;
+    const themeExtension = theme === "dark" ? gruvboxDark : gruvboxLight;
     this.view.dispatch({
-      effects: this.themeCompartment.reconfigure(themeExtension)
+      effects: this.themeCompartment.reconfigure(themeExtension),
     });
   }
 
@@ -215,9 +217,11 @@ class CodeEditor extends EventTarget {
 
     this.view.dispatch({
       effects: [
-        this.languageCompartment.reconfigure(this.getLanguageExtension(language)),
-        this.linterCompartment.reconfigure(lintExtension || [])
-      ]
+        this.languageCompartment.reconfigure(
+          this.getLanguageExtension(language),
+        ),
+        this.linterCompartment.reconfigure(lintExtension || []),
+      ],
     });
 
     // Set the code
@@ -268,21 +272,24 @@ class CodeEditor extends EventTarget {
 
   async getCodeObj(app) {
     const code = this.getCode();
-    
+
     try {
       // Show loading for language selection if needed
       const currentRuntime = this.runtimeManager.getCurrentRuntime();
       if (!currentRuntime || !currentRuntime.loaded) {
-        app.showRuntimeLoading(true, `Loading ${this.currentLanguage} runtime...`);
+        app.showRuntimeLoading(
+          true,
+          `Loading ${this.currentLanguage} runtime...`,
+        );
       }
-      
+
       // Select the language and load the code
       await this.runtimeManager.selectLanguage(this.currentLanguage);
-      
+
       // Show loading for code compilation/loading
       app.showRuntimeLoading(true, `Compiling ${this.currentLanguage} code...`);
       await this.runtimeManager.loadCode(code);
-      
+
       // Hide loading
       app?.showRuntimeLoading(false);
 
@@ -305,8 +312,8 @@ export class ElevatorApp extends EventTarget {
   constructor() {
     super();
 
-    this.worldController = createWorldController(1.0 / 60.0);
-    this.worldCreator = createWorldCreator();
+    this.worldController = new WorldController(1.0 / 60.0);
+    this.worldCreator = new WorldCreator();
     this.runtimeManager = new RuntimeManager();
     this.world = null;
     this.currentChallengeIndex = 0;
@@ -471,10 +478,10 @@ export class ElevatorApp extends EventTarget {
   initializeThemeSwitcher() {
     // Initialize theme manager
     themeManager.watchSystemTheme();
-    
+
     // Create and add theme switcher to header
     const themeSwitcher = new ThemeSwitcher(themeManager);
-    const header = document.querySelector('.header');
+    const header = document.querySelector(".header");
     if (header) {
       header.appendChild(themeSwitcher.getElement());
     }
@@ -487,7 +494,7 @@ export class ElevatorApp extends EventTarget {
     if (show) {
       loadingIndicator.style.display = "inline-flex";
       // Update the loading text
-      const loadingText = loadingIndicator.querySelector('.loading-text');
+      const loadingText = loadingIndicator.querySelector(".loading-text");
       if (loadingText) {
         loadingText.textContent = message;
       }
@@ -504,7 +511,10 @@ export class ElevatorApp extends EventTarget {
     const runtime = this.runtimeManager.getCurrentRuntime();
     if (!runtime.loaded) {
       // Show loading state
-      this.showRuntimeLoading(true, `Loading ${this.editor.currentLanguage} runtime...`);
+      this.showRuntimeLoading(
+        true,
+        `Loading ${this.editor.currentLanguage} runtime...`,
+      );
 
       try {
         // Pre-load the runtime

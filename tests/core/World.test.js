@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import {
-  createWorldController,
-  createWorldCreator,
-} from "../../src/core/World.js";
+import { WorldController, WorldCreator } from "../../src/core/World.js";
+import { FloorDisplay } from "../../src/ui/display/FloorDisplay.js";
+import { ElevatorDisplay } from "../../src/ui/display/ElevatorDisplay.js";
+import { PassengerDisplay } from "../../src/ui/display/PassengerDisplay.js";
 
 // Fake frame requester helper used for testing and fitness simulations
 function createFrameRequester(timeStep) {
@@ -34,7 +34,7 @@ describe("World controller", () => {
   const DT_MAX = 1000.0 / 59;
 
   beforeEach(() => {
-    controller = createWorldController(DT_MAX);
+    controller = new WorldController(DT_MAX);
 
     fakeWorld = {
       tick: vi.fn(),
@@ -44,8 +44,8 @@ describe("World controller", () => {
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       challengeEnded: false,
-      elevators: [],
-      floors: [],
+      elevators: new Map(),
+      floors: new Map(),
     };
 
     fakeCodeObj = {
@@ -109,44 +109,60 @@ describe("World creator", () => {
   let creator;
 
   beforeEach(() => {
-    creator = createWorldCreator();
+    creator = new WorldCreator();
   });
 
-  it("creates floors with correct properties", () => {
-    const floors = creator.createFloors(4, 50);
+  it("creates floor models with displays", () => {
+    const floors = creator.createFloors(4, FloorDisplay, 50);
+    const floorModels = Array.from(floors.keys());
+    const floorDisplays = Array.from(floors.values());
 
-    expect(floors.length).toBe(4);
-    expect(floors[0].level).toBe(0);
-    expect(floors[0].yPosition).toBe(150); // (4-1-0) * 50
-    expect(floors[3].level).toBe(3);
-    expect(floors[3].yPosition).toBe(0); // (4-1-3) * 50
+    expect(floors.size).toBe(4);
+    expect(floorModels[0].level).toBe(0);
+    expect(floorDisplays[0]).toBeDefined();
+    expect(floorDisplays[0].yPosition).toBe(150); // (4-1-0) * 50
+    expect(floorModels[3].level).toBe(3);
+    expect(floorDisplays[3].yPosition).toBe(0); // (4-1-3) * 50
   });
 
-  it("creates elevators with correct properties", () => {
-    const elevators = creator.createElevators(2, 5, 50, [4, 6]);
+  it("creates elevator models with displays", () => {
+    const elevators = creator.createElevators(
+      2,
+      2.6,
+      5,
+      [4, 6],
+      ElevatorDisplay,
+    );
+    const elevatorModels = Array.from(elevators.keys());
+    const elevatorDisplays = Array.from(elevators.values());
 
-    expect(elevators.length).toBe(2);
-    expect(elevators[0].maxUsers).toBe(4);
-    expect(elevators[1].maxUsers).toBe(6);
-    expect(elevators[0].floorCount).toBe(5);
-    expect(elevators[0].floorHeight).toBe(50);
+    expect(elevators.size).toBe(2);
+    expect(elevatorModels[0].capacity).toBe(4);
+    expect(elevatorModels[1].capacity).toBe(6);
+    expect(elevatorModels[0].MAXFLOOR).toBe(5);
+    expect(elevatorDisplays[0]).toBeDefined();
   });
 
-  it("creates random users with correct properties", () => {
-    const user = creator.createRandomUser();
+  it("creates random passenger models with displays", () => {
+    const { passenger, display } = creator.createRandomPassenger(
+      0,
+      3,
+      PassengerDisplay,
+    );
 
-    expect(user.weight).toBeGreaterThanOrEqual(55);
-    expect(user.weight).toBeLessThanOrEqual(100);
-    expect(["child", "female", "male"]).toContain(user.displayType);
+    expect(passenger.weight).toBeGreaterThanOrEqual(55);
+    expect(passenger.weight).toBeLessThanOrEqual(100);
+    expect(display).toBeDefined();
+    expect(["child", "female", "male"]).toContain(display.displayType);
   });
 
   it("creates world with default options", () => {
     const world = creator.createWorld({});
 
     expect(world.floorHeight).toBe(50);
-    expect(world.floors.length).toBe(4);
-    expect(world.elevators.length).toBe(2);
-    expect(world.users).toEqual([]);
+    expect(world.floors.size).toBe(4);
+    expect(world.elevators.size).toBe(2);
+    expect(world.passengers.size).toBe(0);
     expect(world.transportedCounter).toBe(0);
   });
 });

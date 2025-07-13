@@ -4,7 +4,7 @@ import "./components/challenge-control.js";
 import "./components/game-feedback.js";
 import "./components/elevator-floor.js";
 import "./components/elevator-car.js";
-import "./components/elevator-user.js";
+import "./components/elevator-passenger.js";
 import "./components/code-status.js";
 
 // Factory functions using web components
@@ -65,47 +65,49 @@ export function presentWorld(worldElem, world) {
   worldElem.innerHTML = "";
 
   // Set world height
-  worldElem.style.height = world.floorHeight * world.floors.length + "px";
+  worldElem.style.height = world.floorHeight * world.floors.size + "px";
 
   // Create floors
-  world.floors.forEach((floor, index) => {
+  let index = 0;
+  world.floors.forEach((floorDisplay, floor) => {
     const floorComponent = document.createElement("elevator-floor");
-    floorComponent.floor = floor;
+    floorComponent.floor = floorDisplay;
 
     // Handle first and last floor button visibility
     if (index === 0) {
       floorComponent.setAttribute("hide-down", "true");
     }
-    if (index === world.floors.length - 1) {
+    if (index === world.floors.size - 1) {
       floorComponent.setAttribute("hide-up", "true");
     }
 
     worldElem.appendChild(floorComponent);
+    index++;
   });
 
   // Create elevators
-  world.elevators.forEach((elevator) => {
+  world.elevators.forEach((elevatorDisplay, elevator) => {
     const elevatorComponent = document.createElement("elevator-car");
-    elevatorComponent.elevator = elevator;
+    elevatorComponent.elevator = elevatorDisplay;
     worldElem.appendChild(elevatorComponent);
   });
 
-  // Setup user creation
-  const newUserHandler = (event) => {
-    const user = event.detail;
-    const userComponent = document.createElement("elevator-user");
-    userComponent.user = user;
-    worldElem.appendChild(userComponent);
+  // Setup passenger creation
+  const newPassengerHandler = (event) => {
+    const passenger = event.detail;
+    const passengerComponent = document.createElement("elevator-passenger");
+    passengerComponent.passenger = passenger;
+    worldElem.appendChild(passengerComponent);
   };
-  world.addEventListener("new_user", newUserHandler);
+  world.addEventListener("new_passenger", newPassengerHandler);
 
   // Return cleanup function
   return {
     worldElem,
     world,
     cleanup: () => {
-      world.removeEventListener("new_user", newUserHandler);
-    }
+      world.removeEventListener("new_passenger", newPassengerHandler);
+    },
   };
 }
 

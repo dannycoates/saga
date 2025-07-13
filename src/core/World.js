@@ -1,58 +1,61 @@
 import { randomInt, throttle } from "./utils.js";
 import { Floor } from "./Floor.js";
 import { Elevator } from "./Elevator.js";
-import { User } from "./User.js";
+import { Passenger } from "./Passenger.js";
+import { FloorDisplay } from "../ui/display/FloorDisplay.js";
+import { ElevatorDisplay } from "../ui/display/ElevatorDisplay.js";
+import { PassengerDisplay } from "../ui/display/PassengerDisplay.js";
+import { NullDisplay } from "../ui/display/NullDisplay.js";
 
 export class WorldCreator {
-  createFloors(floorCount, floorHeight) {
-    const floors = Array.from({ length: floorCount }, (_, i) => {
+  createFloors(floorCount, displayClass = NullDisplay, floorHeight = 0) {
+    const floorMap = new Map();
+    for (let i = 0; i < floorCount; i++) {
+      const floor = new Floor(i);
       const yPos = (floorCount - 1 - i) * floorHeight;
-      return new Floor(i, yPos);
-    });
-    return floors;
+      const display = new displayClass(floor, yPos);
+      floorMap.set(floor, display);
+    }
+    return floorMap;
   }
 
   createElevators(
     elevatorCount,
+    speedFloorsPerSec,
     floorCount,
-    floorHeight,
     elevatorCapacities = [4],
+    displayClass = NullDisplay,
   ) {
+    const elevatorMap = new Map();
     let currentX = 200.0;
-    const elevators = Array.from({ length: elevatorCount }, (_, i) => {
+    for (let i = 0; i < elevatorCount; i++) {
       const elevator = new Elevator(
-        2.6,
+        i,
+        speedFloorsPerSec,
         floorCount,
-        floorHeight,
         elevatorCapacities[i % elevatorCapacities.length],
       );
-
-      // Move to right x position
-      elevator.moveTo(currentX, null);
-      elevator.setFloorPosition(0);
-      elevator.updateDisplayPosition();
-      currentX += 20 + elevator.width;
-      return elevator;
-    });
-    return elevators;
-  }
-
-  createRandomUser() {
-    const weight = randomInt(55, 100);
-    const user = new User(weight);
-    if (randomInt(0, 40) === 0) {
-      user.displayType = "child";
-    } else if (randomInt(0, 1) === 0) {
-      user.displayType = "female";
-    } else {
-      user.displayType = "male";
+      const display = new displayClass(elevator, currentX, elevator.capacity);
+      currentX += 20 + display.width;
+      elevatorMap.set(elevator, display);
     }
-    return user;
+    return elevatorMap;
   }
 
-  spawnUserRandomly(floorCount, floorHeight, floors) {
-    const user = this.createRandomUser();
-    user.moveTo(105 + randomInt(0, 40), 0);
+  createRandomPassenger(
+    currentFloor,
+    destinationFloor,
+    displayClass = NullDisplay,
+    startingY = 0,
+    elevatorDisplays = null,
+  ) {
+    const weight = randomInt(55, 100);
+    const passenger = new Passenger(weight, currentFloor, destinationFloor);
+    const display = new displayClass(passenger, startingY, elevatorDisplays);
+    return { passenger, display };
+  }
+
+  randomStartAndDestination(floorCount) {
     const currentFloor =
       randomInt(0, 1) === 0 ? 0 : randomInt(0, floorCount - 1);
     let destinationFloor;
@@ -68,8 +71,7 @@ export class WorldCreator {
         destinationFloor = 0;
       }
     }
-    user.appearOnFloor(floors[currentFloor], destinationFloor);
-    return user;
+    return { currentFloor, destinationFloor };
   }
 
   createWorld(options) {
@@ -78,11 +80,11 @@ export class WorldCreator {
       floorCount: 4,
       elevatorCount: 2,
       spawnRate: 0.5,
+      renderingEnabled: true,
     };
     options = { ...defaultOptions, ...options };
 
-    const world = new World(options, this);
-    return world;
+    return new World(options, this);
   }
 }
 
@@ -104,87 +106,142 @@ export class World extends EventTarget {
     this.elapsedSinceSpawn = 1.001 / options.spawnRate;
     this.elapsedSinceStatsUpdate = 0.0;
 
-    this.handleUserCodeError = this.handleUserCodeError.bind(this);
+    this.handlePassengerCodeError = this.handlePassengerCodeError.bind(this);
 
-    this.floors = creator.createFloors(options.floorCount, this.floorHeight);
+    const floorDisplayClass =
+      options.renderingEnabled !== false ? FloorDisplay : NullDisplay;
+    const elevatorDisplayClass =
+      options.renderingEnabled !== false ? ElevatorDisplay : NullDisplay;
+
+    this.floors = creator.createFloors(
+      options.floorCount,
+      floorDisplayClass,
+      this.floorHeight,
+    );
     this.elevators = creator.createElevators(
       options.elevatorCount,
+      2.6, // speedFloorsPerSec
       options.floorCount,
-      this.floorHeight,
       options.elevatorCapacities,
+      elevatorDisplayClass,
     );
+    this.passengers = new Map();
 
-    this.users = [];
-    this.userEventHandlers = new WeakMap();
-    this.handleElevAvailability = this.handleElevAvailability.bind(this);
-    this.setupEventHandlers();
     this.throttledStats = throttle(() => {
       this.recalculateStats();
       this.dispatchEvent(new CustomEvent("stats_display_changed"));
-    }, 1000);
+    }, 1000 / 30);
   }
 
-  handleUserCodeError(e) {
+  handlePassengerCodeError(e) {
     this.dispatchEvent(new CustomEvent("usercode_error", { detail: e }));
   }
 
   recalculateStats() {
     this.transportedPerSec = this.transportedCounter / this.elapsedTime;
-    this.moveCount = this.elevators.reduce(
-      (sum, elevator) => sum + elevator.moveCount,
+    this.moveCount = Array.from(this.elevators.keys()).reduce(
+      (sum, elevator) => sum + elevator.moves,
       0,
     );
     this.dispatchEvent(new CustomEvent("stats_changed"));
   }
 
-  registerUser(user) {
-    this.users.push(user);
-    user.updateDisplayPosition(true);
-    user.spawnTimestamp = this.elapsedTime;
-    this.dispatchEvent(new CustomEvent("new_user", { detail: user }));
+  spawnPassenger() {
+    const { currentFloor, destinationFloor } =
+      this.creator.randomStartAndDestination(this.options.floorCount);
 
-    const exitedElevatorHandler = () => {
-      this.transportedCounter++;
-      this.maxWaitTime = Math.max(
-        this.maxWaitTime,
-        this.elapsedTime - user.spawnTimestamp,
-      );
-      this.avgWaitTime =
-        (this.avgWaitTime * (this.transportedCounter - 1) +
-          (this.elapsedTime - user.spawnTimestamp)) /
-        this.transportedCounter;
-      this.recalculateStats();
-    };
+    const floors = Array.from(this.floors.keys());
+    const startFloor = floors[currentFloor];
 
-    user.addEventListener("exited_elevator", exitedElevatorHandler);
-    this.userEventHandlers.set(user, { exitedElevator: exitedElevatorHandler });
+    const displayClass =
+      this.options.renderingEnabled !== false ? PassengerDisplay : NullDisplay;
+    const startingY =
+      (this.floors.size - 1 - currentFloor) * this.floorHeight + 30;
 
-    user.updateDisplayPosition(true);
+    const { passenger, display } = this.creator.createRandomPassenger(
+      currentFloor,
+      destinationFloor,
+      displayClass,
+      startingY,
+      this.elevators,
+    );
+    passenger.spawnTimestamp = this.elapsedTime;
+    this.passengers.set(passenger, display);
+
+    this.dispatchEvent(new CustomEvent("new_passenger", { detail: display }));
+    display.tick();
+
+    if (destinationFloor > currentFloor) {
+      startFloor.pressButton("up");
+    } else if (destinationFloor < currentFloor) {
+      startFloor.pressButton("down");
+    }
   }
 
-  handleElevAvailability(event) {
-    const elevator = event.detail;
-    // Notify floors first because overflowing users
-    // will press buttons again.
-    this.floors
-      .filter((_, i) => elevator.currentFloor === i)
-      .forEach((floor) => floor.elevatorAvailable(elevator));
+  handleElevatorArrival(elevator) {
+    const currentFloor = elevator.currentFloor;
 
-    this.users
-      .filter((user) => user.currentFloor === elevator.currentFloor)
-      .forEach((user) =>
-        user.elevatorAvailable(elevator, this.floors[elevator.currentFloor]),
-      );
-  }
+    // Handle passengers exiting
+    elevator.passengers.forEach((passenger) => {
+      if (passenger && passenger.shouldExitAt(currentFloor)) {
+        elevator.removePassenger(passenger);
+        passenger.transportedTimestamp = this.elapsedTime;
 
-  setupEventHandlers() {
-    // Bind elevators to handle availability
-    this.elevators.forEach((elevator) => {
-      elevator.addEventListener(
-        "entrance_available",
-        this.handleElevAvailability,
-      );
+        // Update stats
+        this.transportedCounter++;
+        const waitTime = this.elapsedTime - passenger.spawnTimestamp;
+        this.maxWaitTime = Math.max(this.maxWaitTime, waitTime);
+        this.avgWaitTime =
+          (this.avgWaitTime * (this.transportedCounter - 1) + waitTime) /
+          this.transportedCounter;
+        this.recalculateStats();
+      }
     });
+
+    // Handle passengers boarding
+    const waitingPassengers = Array.from(this.passengers.keys()).filter(
+      (p) => p.currentFloor === currentFloor && !p.elevator,
+    );
+
+    // Check floor buttons and indicators
+    const floorModels = Array.from(this.floors.keys());
+    const floor = floorModels[currentFloor];
+    const goingUp = floor.buttons.up && elevator.goingUpIndicator;
+    const goingDown = floor.buttons.down && elevator.goingDownIndicator;
+
+    waitingPassengers.forEach((passenger) => {
+      if (elevator.isFull) return;
+
+      const wantsUp = passenger.destinationFloor > currentFloor;
+      const wantsDown = passenger.destinationFloor < currentFloor;
+
+      if ((wantsUp && goingUp) || (wantsDown && goingDown)) {
+        elevator.addPassenger(passenger);
+      }
+    });
+
+    // Clear floor buttons if no more passengers waiting
+    const remainingUp = waitingPassengers.some(
+      (p) => !p.elevator && p.destinationFloor > currentFloor,
+    );
+    const remainingDown = waitingPassengers.some(
+      (p) => !p.elevator && p.destinationFloor < currentFloor,
+    );
+
+    if (goingUp && !remainingUp) {
+      floor.clearButton("up");
+    }
+    if (goingDown && !remainingDown) {
+      floor.clearButton("down");
+    }
+  }
+
+  removeTransportedPassengers() {
+    for (const [passenger, display] of this.passengers) {
+      if (!display.active && passenger.state === "exited") {
+        this.passengers.delete(passenger);
+      }
+    }
   }
 
   tick(dt) {
@@ -194,60 +251,34 @@ export class World extends EventTarget {
 
     while (this.elapsedSinceSpawn > 1.0 / this.options.spawnRate) {
       this.elapsedSinceSpawn -= 1.0 / this.options.spawnRate;
-      this.registerUser(
-        this.creator.spawnUserRandomly(
-          this.options.floorCount,
-          this.floorHeight,
-          this.floors,
-        ),
-      );
+      this.spawnPassenger();
     }
 
-    // Update all elevators
-    this.elevators.forEach((elevator) => {
-      elevator.tick(dt);
+    this.elevators.forEach((display, elevator) => {
+      const doorsOpen = elevator.tick(dt);
+      if (doorsOpen) {
+        this.handleElevatorArrival(elevator);
+      }
+      display.tick();
     });
 
-    // Update all users
-    this.users.forEach((user) => {
-      user.tick(dt);
-      this.maxWaitTime = Math.max(
-        this.maxWaitTime,
-        this.elapsedTime - user.spawnTimestamp,
-      );
+    this.floors.forEach((display) => {
+      display.tick(dt);
     });
 
-    // Remove users marked for removal
-    this.users = this.users.filter((user) => !user.removeMe);
+    this.passengers.forEach((display) => {
+      display.tick(dt);
+    });
+
+    this.removeTransportedPassengers();
 
     this.throttledStats();
   }
 
-  updateDisplayPositions() {
-    this.elevators.forEach((elevator) => elevator.updateDisplayPosition());
-    this.users.forEach((user) => user.updateDisplayPosition());
-  }
-
   unWind() {
-    this.users.forEach((user) => {
-      const handlers = this.userEventHandlers.get(user);
-      if (handlers) {
-        if (handlers.exitedElevator) {
-          user.removeEventListener("exited_elevator", handlers.exitedElevator);
-        }
-        this.userEventHandlers.delete(user);
-      }
-    });
-    this.elevators.forEach((elevator) => {
-      elevator.removeEventListener(
-        "entrance_available",
-        this.handleElevAvailability,
-      );
-    });
     this.challengeEnded = true;
-    this.users = [];
-    this.elevators = [];
-    this.floors = [];
+    this.passengers.clear();
+    // Don't clear elevators and floors Maps as they're reused
   }
 }
 
@@ -264,22 +295,36 @@ export class WorldController extends EventTarget {
     let lastT = null;
 
     world.addEventListener("usercode_error", (e) =>
-      this.handleUserCodeError(e.detail),
+      this.handlePassengerCodeError(e.detail),
     );
 
     const updater = async (t) => {
       if (!this.isPaused && !world.challengeEnded && lastT !== null) {
         const dt = t - lastT;
         let scaledDt = dt * 0.001 * this.timeScale;
-        scaledDt = Math.min(scaledDt, this.dtMax * 3 * this.timeScale); // Limit to prevent unhealthy substepping
+        scaledDt = Math.min(scaledDt, this.dtMax * 3 * this.timeScale);
 
         try {
-          await codeObj.tick(
-            world.elevators.map((el) => el.toAPI()),
-            world.floors.map((fl) => fl.toAPI()),
+          const elevatorAPIs = Array.from(world.elevators.keys()).map(
+            (model) => ({
+              currentFloor: model.currentFloor,
+              destinationFloor: model.destinationFloor,
+              pressedFloorButtons: model.buttons
+                .map((pressed, floor) => (pressed ? floor : null))
+                .filter((floor) => floor !== null),
+              percentFull: model.percentFull,
+              goToFloor: (floor) => model.goToFloor(floor),
+            }),
           );
+
+          const floorAPIs = Array.from(world.floors.keys()).map((model) => ({
+            buttons: model.buttons,
+            level: model.level,
+          }));
+
+          await codeObj.tick(elevatorAPIs, floorAPIs);
         } catch (e) {
-          this.handleUserCodeError(e);
+          this.handlePassengerCodeError(e);
         }
 
         while (scaledDt > 0.0 && !world.challengeEnded) {
@@ -287,7 +332,6 @@ export class WorldController extends EventTarget {
           world.tick(thisDt);
           scaledDt -= this.dtMax;
         }
-        world.updateDisplayPositions();
       }
       lastT = t;
       if (!world.challengeEnded) {
@@ -301,7 +345,7 @@ export class WorldController extends EventTarget {
     animationFrameRequester(updater);
   }
 
-  handleUserCodeError(e) {
+  handlePassengerCodeError(e) {
     this.setPaused(true);
     console.log("Usercode error on update", e);
     this.dispatchEvent(new CustomEvent("usercode_error", { detail: e }));
@@ -316,13 +360,4 @@ export class WorldController extends EventTarget {
     this.timeScale = timeScale;
     this.dispatchEvent(new CustomEvent("timescale_changed"));
   }
-}
-
-// Factory functions for backward compatibility
-export function createWorldCreator() {
-  return new WorldCreator();
-}
-
-export function createWorldController(dtMax) {
-  return new WorldController(dtMax);
 }

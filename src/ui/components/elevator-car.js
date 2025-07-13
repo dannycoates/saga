@@ -13,7 +13,6 @@ export class ElevatorCar extends HTMLElement {
 
   connectedCallback() {
     this.render();
-    this.attachEventListeners();
   }
 
   disconnectedCallback() {
@@ -29,7 +28,7 @@ export class ElevatorCar extends HTMLElement {
   set elevator(elevator) {
     // Clean up previous listeners
     this._abortController?.abort();
-    
+
     this._elevator = elevator;
 
     if (elevator) {
@@ -54,33 +53,37 @@ export class ElevatorCar extends HTMLElement {
 
       // Floor buttons handler
       this._floorButtonsHandler = (event) => {
-        const detail = event.detail;
-        if (Array.isArray(detail) && detail.length === 2) {
-          const [states, indexChanged] = detail;
-          this._floorButtons = structuredClone(states);
-          this.updateFloorButton(indexChanged, states[indexChanged]);
-        }
+        const buttons = event.detail;
+        buttons.forEach((button, i) => {
+          this.updateFloorButton(i, button);
+        });
       };
 
       // Attach listeners with abort signal
-      elevator.addEventListener("new_display_state", this._displayStateHandler, { signal });
-      elevator.addEventListener("new_current_floor", this._currentFloorHandler, { signal });
-      elevator.addEventListener("floor_buttons_changed", this._floorButtonsHandler, { signal });
+      elevator.addEventListener(
+        "new_display_state",
+        this._displayStateHandler,
+        { signal },
+      );
+      elevator.addEventListener(
+        "new_current_floor",
+        this._currentFloorHandler,
+        { signal },
+      );
+      elevator.addEventListener(
+        "floor_buttons_changed",
+        this._floorButtonsHandler,
+        { signal },
+      );
 
       // Trigger initial updates
-      elevator.dispatchEvent(new CustomEvent("new_state", { detail: elevator }));
-      elevator.dispatchEvent(new CustomEvent("new_display_state", { detail: elevator }));
-      elevator.dispatchEvent(new CustomEvent("new_current_floor", { detail: elevator.currentFloor }));
+      elevator.dispatchEvent(
+        new CustomEvent("new_display_state", { detail: elevator }),
+      );
+      elevator.dispatchEvent(
+        new CustomEvent("new_current_floor", { detail: elevator.currentFloor }),
+      );
     }
-  }
-
-  attachEventListeners() {
-    this.shadowRoot.addEventListener("click", (e) => {
-      if (e.target.classList.contains("buttonpress") && this._elevator) {
-        const floorNum = parseInt(e.target.textContent);
-        this._elevator.pressFloorButton(floorNum);
-      }
-    });
   }
 
   updateDisplay(name, value) {
@@ -134,7 +137,7 @@ export class ElevatorCar extends HTMLElement {
           --elevator-height: 48px;
           --floor-text-color: rgba(255, 255, 255, 0.3);
           --button-active-color: #33ff44;
-          
+
           position: absolute;
           top: 0;
           left: 0;

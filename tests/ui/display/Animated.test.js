@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { Movable } from "../../src/core/Movable.js";
+import { Animated } from "../../../src/ui/display/Animated.js";
 
 const timeForwarder = function (dt, stepSize, fn) {
   let accumulated = 0.0;
@@ -9,12 +9,12 @@ const timeForwarder = function (dt, stepSize, fn) {
   }
 };
 
-describe("Movable class", () => {
+describe("Animated class", () => {
   let m;
   let handlers;
 
   beforeEach(() => {
-    m = new Movable();
+    m = new Animated();
     handlers = {
       someHandler: vi.fn(),
       someOtherHandler: vi.fn(),
@@ -24,7 +24,7 @@ describe("Movable class", () => {
   it("disallows incorrect creation", () => {
     const faultyCreation = () => {
       // Call without 'new' by using Function.prototype.call
-      Movable.call({});
+      Animated.call({});
     };
     expect(faultyCreation).toThrow();
   });
@@ -42,12 +42,6 @@ describe("Movable class", () => {
     expect(m.worldY).toBe(0.0);
   });
 
-  it("triggers event when moved", () => {
-    m.addEventListener("new_state", (e) => handlers.someHandler(e.detail));
-    m.moveTo(1.0, 1.0);
-    expect(handlers.someHandler).toHaveBeenCalled();
-  });
-
   it("retains x pos when moveTo x is null", () => {
     m.moveTo(1.0, 1.0);
     m.moveTo(null, 2.0);
@@ -61,7 +55,7 @@ describe("Movable class", () => {
   });
 
   it("gets new display position when parent is moved", () => {
-    const mParent = new Movable();
+    const mParent = new Animated();
     m.setParent(mParent);
     mParent.moveTo(2.0, 3.0);
     m.updateDisplayPosition();
@@ -82,7 +76,7 @@ describe("Movable class", () => {
   });
 
   it("maintains world position when setting parent", () => {
-    const parent = new Movable();
+    const parent = new Animated();
     parent.moveTo(5.0, 5.0);
 
     m.moveTo(10.0, 10.0);
@@ -97,16 +91,5 @@ describe("Movable class", () => {
     // But local position should be adjusted
     expect(m.x).toBe(5.0);
     expect(m.y).toBe(5.0);
-  });
-
-  it("can be made busy and checked", () => {
-    expect(m.isBusy()).toBe(false);
-    m.wait(100);
-    expect(m.isBusy()).toBe(true);
-  });
-
-  it("throws when trying to use while busy", () => {
-    m.wait(100);
-    expect(() => m.moveToOverTime(1, 1, 1)).toThrow();
   });
 });

@@ -12,6 +12,7 @@ Elevator Saga is an elevator programming game where users write JavaScript code 
 - `npm run dev` - Start development server on port 3000 with hot reloading
 - `npm run build` - Build for production (outputs to `dist/`)
 - `npm run preview` - Preview production build
+- Assume the dev server (npm run dev) is already running
 
 ### Testing
 - `npm run test:run` - Run tests once
@@ -19,7 +20,7 @@ Elevator Saga is an elevator programming game where users write JavaScript code 
 ## Architecture
 
 ### Key Directories
-- `/src/core/` - Core game engine components (Elevator, Floor, User, World, etc.)
+- `/src/core/` - Core game engine components (Elevator, Floor, Passenger, World, etc.)
 - `/src/game/` - Game logic including challenges and fitness evaluation
 - `/src/ui/` - UI presentation layer
 - `/tests/` - Test files mirroring src structure
@@ -28,13 +29,13 @@ Elevator Saga is an elevator programming game where users write JavaScript code 
 
 1. **World System** (`src/core/World.js`)
    - `WorldCreator` - Creates floors and elevators
-   - `WorldController` - Manages game state, user spawning, and time progression
+   - `WorldController` - Manages game state, passenger spawning, and time progression
    - Handles the main game loop and physics
 
 2. **Game Entities**
    - `Elevator` - Elevator state and behavior (capacity, movement, queue management)
-   - `Floor` - Floor state and user queues
-   - `User` - Individual users with destinations and wait times
+   - `Floor` - Floor state and passenger queues
+   - `Passenger` - Individual passengers with destinations and wait times
    - All entities extend `Movable` for position/animation handling
 
 3. **Player Code Interface**
@@ -56,7 +57,7 @@ Elevator Saga is an elevator programming game where users write JavaScript code 
 
 4. **Challenge System** (`src/game/challenges.js`)
    - Defines success criteria for each level
-   - Evaluates performance metrics (transported users, wait times, moves)
+   - Evaluates performance metrics (transported passengers, wait times, moves)
 
 5. **UI Layer** (`src/app.js`, `src/ui/presenters.js`)
    - CodeMirror integration for code editing
