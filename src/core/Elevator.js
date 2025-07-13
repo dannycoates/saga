@@ -1,309 +1,192 @@
-import { Movable } from "./Movable.js";
-import { limitNumber, randomInt } from "./utils.js";
+import { randomInt } from "./utils.js";
 
-function epsilonEquals(a, b) {
-  return Math.abs(a - b) < 0.00000001;
-}
+const ACCELERATION = 1.1;
+const DECELERATION = 1.6;
 
-function accelerationNeededToAchieveChangeDistance(
-  currentSpeed,
-  targetSpeed,
-  distance,
-) {
-  // v² = u² + 2a * d
-  const requiredAcceleration =
-    0.5 * ((Math.pow(targetSpeed, 2) - Math.pow(currentSpeed, 2)) / distance);
-  return requiredAcceleration;
-}
-
-function distanceNeededToAchieveSpeed(currentSpeed, targetSpeed, acceleration) {
-  // v² = u² + 2a * d
-  const requiredDistance =
-    (Math.pow(targetSpeed, 2) - Math.pow(currentSpeed, 2)) / (2 * acceleration);
-  return requiredDistance;
-}
-
-export class Elevator extends Movable {
-  constructor(speedFloorsPerSec, floorCount, floorHeight, maxUsers = 4) {
-    super();
-
-    this.ACCELERATION = floorHeight * 2.1;
-    this.DECELERATION = floorHeight * 2.6;
-    this.MAXSPEED = floorHeight * speedFloorsPerSec;
-    this.floorCount = floorCount;
-    this.floorHeight = floorHeight;
-    this.maxUsers = maxUsers;
-    this.destinationY = 0.0;
-    this.velocityY = 0.0;
-    // isMoving flag is needed when going to same floor again - need to re-raise events
-    this.isMoving = false;
-
+export class Elevator {
+  constructor(index, speedFloorsPerSec, floorCount, capacity = 4) {
+    this.MAXSPEED = speedFloorsPerSec;
+    this.MAXFLOOR = floorCount;
+    this.index = index;
+    this.destination = 0;
+    this.velocity = 0;
+    this.position = 0;
+    this.moves = 0;
+    this.buttons = Array(floorCount).fill(false);
+    this.passengers = Array.from({ length: capacity }, () => null);
     this.goingDownIndicator = true;
     this.goingUpIndicator = true;
-
-    this.currentFloor = 0;
-    this.previousTruncFutureFloorIfStopped = 0;
-    this.buttons = Array(floorCount).fill(false);
-    this.moveCount = 0;
-    this.removed = false;
-    this.userSlots = Array.from({ length: this.maxUsers }, (_, i) => ({
-      pos: [2 + i * 10, 30],
-      user: null,
-    }));
-    this.width = this.maxUsers * 10;
-    this.destinationY = this.getYPosOfFloor(this.currentFloor);
-
-    // Bind event handlers
-    this.addEventListener("new_state", () => this.handleNewState());
+    this.pause = 1.2;
   }
 
-  setFloorPosition(floor) {
-    const destination = this.getYPosOfFloor(floor);
-    this.currentFloor = floor;
-    this.previousTruncFutureFloorIfStopped = floor;
-    this.moveTo(null, destination);
+  get capacity() {
+    return this.passengers.length;
   }
 
-  userEntering(user) {
-    const randomOffset = randomInt(0, this.userSlots.length - 1);
-    const slot = this.userSlots
-      .slice(randomOffset)
-      .concat(this.userSlots.slice(0, randomOffset))
-      .find((slot) => slot.user === null);
-
-    if (slot) {
-      slot.user = user;
-      return slot.pos;
-    }
-    return false;
-  }
-
-  pressFloorButton(floorNumber) {
-    floorNumber = limitNumber(floorNumber, 0, this.floorCount - 1);
-    const prev = this.buttons[floorNumber];
-    this.buttons[floorNumber] = true;
-    if (!prev) {
-      this.dispatchEvent(
-        new CustomEvent("floor_buttons_changed", {
-          detail: [this.buttons, floorNumber],
-        }),
-      );
-    }
-  }
-
-  userExiting(user) {
-    const slot = this.userSlots.find((slot) => slot.user === user);
-    if (slot) {
-      slot.user = null;
-    }
-  }
-
-  tick(dt) {
-    super.tick(dt);
-    if (this.isBusy()) {
-      // TODO: Consider if having a nonzero velocity here should throw error..
-      return;
-    }
-
-    // Make sure we're not speeding
-    this.velocityY = limitNumber(this.velocityY, -this.MAXSPEED, this.MAXSPEED);
-
-    // Move elevator
-    this.moveTo(null, this.y + this.velocityY * dt);
-
-    const destinationDiff = this.destinationY - this.y;
-    const directionSign = Math.sign(destinationDiff);
-    const velocitySign = Math.sign(this.velocityY);
-    let acceleration = 0.0;
-
-    if (destinationDiff !== 0.0) {
-      if (directionSign === velocitySign) {
-        // Moving in correct direction
-        const distanceNeededToStop = distanceNeededToAchieveSpeed(
-          this.velocityY,
-          0.0,
-          this.DECELERATION,
-        );
-        if (distanceNeededToStop * 1.05 < -Math.abs(destinationDiff)) {
-          // Slow down
-          // Allow a certain factor of extra breaking, to enable a smooth breaking movement after detecting overshoot
-          const requiredDeceleration =
-            accelerationNeededToAchieveChangeDistance(
-              this.velocityY,
-              0.0,
-              destinationDiff,
-            );
-          const deceleration = Math.min(
-            this.DECELERATION * 1.1,
-            Math.abs(requiredDeceleration),
-          );
-          this.velocityY -= directionSign * deceleration * dt;
-        } else {
-          // Speed up (or keep max speed...)
-          acceleration = Math.min(
-            Math.abs(destinationDiff * 5),
-            this.ACCELERATION,
-          );
-          this.velocityY += directionSign * acceleration * dt;
-        }
-      } else if (velocitySign === 0) {
-        // Standing still - should accelerate
-        acceleration = Math.min(
-          Math.abs(destinationDiff * 5),
-          this.ACCELERATION,
-        );
-        this.velocityY += directionSign * acceleration * dt;
-      } else {
-        // Moving in wrong direction - decelerate as much as possible
-        this.velocityY -= velocitySign * this.DECELERATION * dt;
-        // Make sure we don't change direction within this time step - let standstill logic handle it
-        if (Math.sign(this.velocityY) !== velocitySign) {
-          this.velocityY = 0.0;
-        }
-      }
-    }
-
-    if (
-      this.isMoving &&
-      Math.abs(destinationDiff) < 0.5 &&
-      Math.abs(this.velocityY) < 3
-    ) {
-      // Snap to destination and stop
-      this.moveTo(null, this.destinationY);
-      this.velocityY = 0.0;
-      this.isMoving = false;
-      this.handleDestinationArrival();
-    }
-  }
-
-  handleDestinationArrival() {
-    if (this.isOnAFloor()) {
-      this.buttons[this.currentFloor] = false;
-      this.dispatchEvent(
-        new CustomEvent("floor_buttons_changed", {
-          detail: [this.buttons, this.currentFloor],
-        }),
-      );
-      // Need to allow users to get off first, so that new ones
-      // can enter on the same floor
-      this.dispatchEvent(
-        new CustomEvent("exit_available", {
-          detail: this,
-        }),
-      );
-      this.dispatchEvent(
-        new CustomEvent("entrance_available", { detail: this }),
-      );
-    }
-  }
-
-  goToFloor(floor) {
-    floor = limitNumber(floor, 0, this.floorCount - 1);
-    this.makeSureNotBusy();
-    this.isMoving = true;
-    this.destinationY = this.getYPosOfFloor(floor);
-  }
-
-  // Interface properties for user code
-  get pressedFloorButtons() {
-    return this.buttons
-      .map((pressed, floor) => (pressed ? floor : null))
-      .filter((floor) => floor !== null);
+  get currentFloor() {
+    return Math.floor(this.position);
   }
 
   get destinationFloor() {
-    return this.isMoving ? Math.round(this.getDestinationFloor()) : null;
+    return this.isMoving ? this.destination : null;
+  }
+
+  get distanceToDestination() {
+    return Math.abs(this.destination - this.position);
+  }
+
+  get direction() {
+    return Math.sign(this.destination - this.position);
+  }
+
+  get isMoving() {
+    return !!this.direction;
   }
 
   get percentFull() {
-    const load = this.userSlots.reduce((sum, slot) => {
-      return sum + (slot.user ? slot.user.weight : 0);
+    const load = this.passengers.reduce((sum, passenger) => {
+      return sum + (passenger ? passenger.weight : 0);
     }, 0);
-    return load / (this.maxUsers * 100);
+    return load / (this.capacity * 100);
   }
 
-  isSuitableForTravelBetween(fromFloorNum, toFloorNum) {
-    if (fromFloorNum > toFloorNum) {
-      return this.goingDownIndicator;
-    }
-    if (fromFloorNum < toFloorNum) {
-      return this.goingUpIndicator;
-    }
-    return true;
+  get isFull() {
+    return this.passengers.every(Boolean);
   }
 
-  getYPosOfFloor(floorNum) {
-    return (
-      (this.floorCount - 1) * this.floorHeight - floorNum * this.floorHeight
-    );
+  get isEmpty() {
+    return this.passengers.every((u) => !u);
   }
 
-  getExactFloorOfYPos(y) {
-    return ((this.floorCount - 1) * this.floorHeight - y) / this.floorHeight;
-  }
-
-  getExactCurrentFloor() {
-    return this.getExactFloorOfYPos(this.y);
-  }
-
-  getDestinationFloor() {
-    return this.getExactFloorOfYPos(this.destinationY);
-  }
-
-  getRoundedCurrentFloor() {
-    return Math.round(this.getExactCurrentFloor());
-  }
-
-  getExactFutureFloorIfStopped() {
-    const distanceNeededToStop = distanceNeededToAchieveSpeed(
-      this.velocityY,
-      0.0,
-      this.DECELERATION,
-    );
-    return this.getExactFloorOfYPos(
-      this.y - Math.sign(this.velocityY) * distanceNeededToStop,
-    );
-  }
-
-  isOnAFloor() {
-    return epsilonEquals(
-      this.getExactCurrentFloor(),
-      this.getRoundedCurrentFloor(),
-    );
-  }
-
-  isFull() {
-    return this.userSlots.every((slot) => slot.user !== null);
-  }
-
-  isEmpty() {
-    return this.userSlots.every((slot) => slot.user === null);
-  }
-
-  handleNewState() {
-    // Recalculate the floor number etc
-    const currentFloor = this.getRoundedCurrentFloor();
-    if (currentFloor !== this.currentFloor) {
-      this.moveCount++;
-      this.currentFloor = currentFloor;
-      this.dispatchEvent(
-        new CustomEvent("new_current_floor", { detail: this.currentFloor }),
-      );
+  tick(dt) {
+    this.pause = Math.max(0, this.pause - dt);
+    if (!this.isMoving || this.pause > 0) {
+      return true;
     }
 
-    const futureTruncFloorIfStopped = Math.trunc(
-      this.getExactFutureFloorIfStopped(),
+    // Update position
+    this.position += this.velocity * dt;
+
+    // Check if arrived
+    if (this.distanceToDestination < 0.01) {
+      this.position = this.destination;
+      this.velocity = 0;
+      this.buttons[this.currentFloor] = false;
+      this.pause = 1.2;
+      return true;
+    }
+
+    // Calculate new velocity, clamped to +/- MAXSPEED
+    const newVelocity = Math.max(
+      -this.MAXSPEED,
+      Math.min(this.MAXSPEED, this.calculateVelocity(dt)),
     );
-    this.previousTruncFutureFloorIfStopped = futureTruncFloorIfStopped;
+    this.velocity = newVelocity;
+
+    return false;
+  }
+
+  calculateVelocity(dt) {
+    const targetDirection = this.direction;
+    const currentDirection = Math.sign(this.velocity);
+    const distance = this.distanceToDestination;
+
+    // Starting from rest
+    if (this.velocity === 0) {
+      const acceleration = Math.min(distance * 5, ACCELERATION);
+      return targetDirection * acceleration * dt;
+    }
+
+    // Moving in wrong direction - need to stop first
+    if (targetDirection !== currentDirection) {
+      const newVelocity = this.velocity - currentDirection * DECELERATION * dt;
+      return Math.sign(newVelocity) !== currentDirection ? 0 : newVelocity;
+    }
+
+    // Moving in correct direction - decide whether to accelerate or decelerate
+    const stoppingDistance =
+      (this.velocity * this.velocity) / (2 * DECELERATION);
+
+    if (stoppingDistance * 1.05 < distance) {
+      // Can safely accelerate
+      const acceleration = Math.min(distance * 5, ACCELERATION);
+      return this.velocity + targetDirection * acceleration * dt;
+    } else {
+      // Need to decelerate
+      const requiredDecel = (this.velocity * this.velocity) / (2 * distance);
+      const deceleration = Math.min(DECELERATION * 1.1, requiredDecel);
+      return this.velocity - targetDirection * deceleration * dt;
+    }
+  }
+
+  addPassenger(passenger) {
+    const freeSlots = this.passengers
+      .map((u, i) => (!!u ? -1 : i))
+      .filter((i) => i > -1);
+    if (freeSlots.length === 0) {
+      return false;
+    }
+    const slotIndex = randomInt(0, freeSlots.length - 1);
+    const slot = freeSlots[slotIndex];
+    this.passengers[slot] = passenger;
+    this.buttons[passenger.destinationFloor] = true;
+    passenger.enterElevator(this, slot);
+    return slot;
+  }
+
+  removePassenger(passenger) {
+    passenger.exitElevator();
+    this.passengers[this.passengers.indexOf(passenger)] = null;
+  }
+
+  goToFloor(floor) {
+    floor = Math.max(0, Math.min(floor, this.MAXFLOOR - 1));
+    if (this.destination !== floor) {
+      this.destination = floor;
+      this.moves++;
+    }
+  }
+
+  setIndicators(up, down) {
+    this.goingUpIndicator = up;
+    this.goingDownIndicator = down;
+  }
+
+  toJSON() {
+    return {
+      index: this.index,
+      position: this.position,
+      currentFloor: this.currentFloor,
+      destinationFloor: this.destinationFloor,
+      velocity: this.velocity,
+      buttons: [...this.buttons],
+      passengers: this.passengers.map((p, slot) =>
+        p
+          ? {
+              passengerId: p.id,
+              slot,
+            }
+          : null,
+      ),
+      goingUpIndicator: this.goingUpIndicator,
+      goingDownIndicator: this.goingDownIndicator,
+      capacity: this.capacity,
+      percentFull: this.percentFull,
+      moves: this.moves,
+    };
   }
 
   toAPI() {
     return {
       currentFloor: this.currentFloor,
       destinationFloor: this.destinationFloor,
-      pressedFloorButtons: this.pressedFloorButtons,
+      pressedFloorButtons: this.buttons
+        .map((pressed, floor) => (pressed ? floor : null))
+        .filter((floor) => floor !== null),
       percentFull: this.percentFull,
-      goToFloor: this.goToFloor.bind(this),
+      goingUpIndicator: this.goingUpIndicator,
+      goingDownIndicator: this.goingDownIndicator,
+      goToFloor: (floor) => this.goToFloor(floor),
     };
   }
 }

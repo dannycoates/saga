@@ -1,4 +1,5 @@
 import { BaseRuntime } from "./base.js";
+import { loadExternalScript, executeWithTimeout } from "../utils/AsyncUtils.js";
 
 const BASE_PYTHON_CODE = `
 import js
@@ -81,24 +82,25 @@ export class PythonRuntime extends BaseRuntime {
     this.loading = true;
     try {
       // Load Pyodide script
-      const script = document.createElement("script");
-      script.src = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js";
-
-      await new Promise((resolve, reject) => {
-        script.onload = resolve;
-        script.onerror = () =>
-          reject(new Error("Failed to load Pyodide script"));
-        document.head.appendChild(script);
-      });
+      // Use enhanced script loading with timeout
+      await loadExternalScript(
+        "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js",
+        30000, // 30 second timeout
+      );
 
       // Now loadPyodide should be available globally
       if (typeof loadPyodide === "undefined") {
         throw new Error("loadPyodide is not defined after script load");
       }
 
-      this.pyodide = await loadPyodide({
-        indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/",
-      });
+      // Load Pyodide with timeout protection
+      this.pyodide = await executeWithTimeout(
+        () =>
+          loadPyodide({
+            indexURL: "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/",
+          }),
+        60000, // 60 second timeout for Pyodide initialization
+      );
 
       // Initialize the Python environment with our API wrapper
       await this.pyodide.runPythonAsync(BASE_PYTHON_CODE);
@@ -120,7 +122,9 @@ export class PythonRuntime extends BaseRuntime {
     await this.pyodide.runPythonAsync(code);
 
     // Check if tick function exists
-    const hasTick = await this.pyodide.runPythonAsync(`\n'tick' in globals()\n`);
+    const hasTick = await this.pyodide.runPythonAsync(
+      `\n'tick' in globals()\n`,
+    );
 
     if (!hasTick) {
       throw new Error("Code must define a tick function");
@@ -146,7 +150,9 @@ export class PythonRuntime extends BaseRuntime {
     this.pyodide.globals.set("js_floors", floors);
 
     // Execute the tick function with wrapped objects
-    await this.pyodide.runPythonAsync(`\n_execute_tick(js_elevators, js_floors)\n`);
+    await this.pyodide.runPythonAsync(
+      `\n_execute_tick(js_elevators, js_floors)\n`,
+    );
   }
 
   getDefaultTemplate() {

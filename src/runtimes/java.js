@@ -1,4 +1,5 @@
 import { BaseRuntime } from "./base.js";
+import { loadExternalScript } from "../utils/AsyncUtils.js";
 
 const ELEVATOR_SOURCE = `import java.util.*;
 /**
@@ -40,7 +41,7 @@ public class Floor {
     }
 }`;
 
-let ELEVATORS = []
+let ELEVATORS = [];
 
 async function Java_Elevator_jsGoToFloor(lib, elevatorId, floor) {
   // Find the corresponding JavaScript elevator
@@ -71,13 +72,13 @@ export class JavaRuntime extends BaseRuntime {
     this.originalConsoleLog = console.log;
     const self = this;
 
-    console.log = function(...args) {
+    console.log = function (...args) {
       // Check if the log message originates from cheerpOS.js
       const stack = new Error().stack;
-      if (stack && stack.includes('cheerpOS.js')) {
-        self.logBuffer.push(args.join(' '));
+      if (stack && stack.includes("cheerpOS.js")) {
+        self.logBuffer.push(args.join(" "));
       }
-      
+
       // Call the original console.log
       self.originalConsoleLog.apply(console, args);
     };
@@ -95,8 +96,8 @@ export class JavaRuntime extends BaseRuntime {
   }
 
   getLogBufferString() {
-    if (this.logBuffer.length === 0) return '';
-    return '\n\nCheerpJ logs:\n' + this.logBuffer.join('\n');
+    if (this.logBuffer.length === 0) return "";
+    return "\n\nCheerpJ logs:\n" + this.logBuffer.join("\n");
   }
 
   async loadRuntime() {
@@ -107,16 +108,11 @@ export class JavaRuntime extends BaseRuntime {
     this.captureConsoleLog();
 
     try {
-      // Load CheerpJ script
-      const script = document.createElement("script");
-      script.src = "https://cjrtnc.leaningtech.com/4.2/loader.js";
-
-      await new Promise((resolve, reject) => {
-        script.onload = resolve;
-        script.onerror = () =>
-          reject(new Error("Failed to load CheerpJ script"));
-        document.head.appendChild(script);
-      });
+      // Load CheerpJ script with enhanced timeout handling
+      await loadExternalScript(
+        "https://cjrtnc.leaningtech.com/4.2/loader.js",
+        60000,
+      );
 
       // Wait for cheerpjInit to be available
       if (typeof window.cheerpjInit === "undefined") {
@@ -172,7 +168,7 @@ export class JavaRuntime extends BaseRuntime {
         floorFile,
         "-d",
         "/files/",
-        "-Xlint:none"
+        "-Xlint:none",
       );
 
       if (compileResult !== 0) {
@@ -186,7 +182,9 @@ export class JavaRuntime extends BaseRuntime {
       this.loaded = true;
     } catch (error) {
       this.loading = false;
-      throw new Error(`Failed to load Java runtime: ${error.message}${this.getLogBufferString()}`);
+      throw new Error(
+        `Failed to load Java runtime: ${error.message}${this.getLogBufferString()}`,
+      );
     } finally {
       this.loading = false;
     }
@@ -240,7 +238,7 @@ export class JavaRuntime extends BaseRuntime {
         controllerFile,
         "-d",
         "/files/",
-        "-Xlint:none"
+        "-Xlint:none",
       );
 
       if (compileResult !== 0) {
@@ -253,7 +251,9 @@ export class JavaRuntime extends BaseRuntime {
       this.loadedCode = code;
     } catch (error) {
       console.error(error);
-      throw new Error(`Failed to compile Java code: ${error.message}${this.getLogBufferString()}`);
+      throw new Error(
+        `Failed to compile Java code: ${error.message}${this.getLogBufferString()}`,
+      );
     }
   }
 
@@ -290,7 +290,9 @@ export class JavaRuntime extends BaseRuntime {
 
       await this.controller.tick(javaElevators, javaFloors);
     } catch (error) {
-      throw new Error(`Java execution failed: ${error.message}${this.getLogBufferString()}`);
+      throw new Error(
+        `Java execution failed: ${error.message}${this.getLogBufferString()}`,
+      );
     }
   }
 
