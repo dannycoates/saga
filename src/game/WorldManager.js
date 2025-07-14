@@ -1,26 +1,27 @@
-import { WorldCreator, WorldController } from "../core/World.js";
-import { presentStats, presentWorld } from "../ui/presenters.js";
+import { World, WorldController } from "../core/World.js";
+import { presentStats } from "../ui/presenters.js";
+import { presentWorld } from "../ui/presentWorld.js";
 import { APP_CONSTANTS } from "../config/constants.js";
 
+/**
+ * WorldManager that uses modern architecture
+ */
 export class WorldManager {
   constructor(dom) {
     this.dom = dom;
     this.worldController = new WorldController(APP_CONSTANTS.FRAME_RATE);
-    this.worldCreator = new WorldCreator();
     this.world = null;
     this.worldPresenter = null;
     this.abortController = new AbortController();
-    
+
     // Event handlers
-    this.timescaleChangedHandler = null;
-  }
-
-  getWorldController() {
-    return this.worldController;
-  }
-
-  getCurrentWorld() {
-    return this.world;
+    this.timescaleChangedHandler = () => {
+      localStorage.setItem(
+        APP_CONSTANTS.TIME_SCALE_KEY,
+        this.worldController.timeScale,
+      );
+      // The challenge control component will update automatically via its worldController property
+    };
   }
 
   setTimeScale(timeScale) {
@@ -31,15 +32,18 @@ export class WorldManager {
     // Clean up previous world
     this.cleanup();
 
-    // Create new world
-    this.world = this.worldCreator.createWorld(challengeOptions);
+    // Create new world with refactored architecture
+    this.world = new World(challengeOptions);
 
     // Clear UI elements
-    this.dom.clearElements(['world', 'feedback']);
+    this.dom.clearElements(["world", "feedback"]);
 
     // Present world and stats
-    presentStats(this.dom.getElement('stats'), this.world);
-    this.worldPresenter = presentWorld(this.dom.getElement('world'), this.world);
+    presentStats(this.dom.getElement("stats"), this.world);
+    this.worldPresenter = presentWorld(
+      this.dom.getElement("world"),
+      this.world,
+    );
 
     // Setup timescale change handler
     this.setupTimescaleHandler();
@@ -49,14 +53,10 @@ export class WorldManager {
 
   setupTimescaleHandler() {
     const { signal } = this.abortController;
-    this.timescaleChangedHandler = () => {
-      localStorage.setItem(APP_CONSTANTS.TIME_SCALE_KEY, this.worldController.timeScale);
-      // The challenge control component will update automatically via its worldController property
-    };
     this.worldController.addEventListener(
       "timescale_changed",
       this.timescaleChangedHandler,
-      { signal }
+      { signal },
     );
   }
 
@@ -96,9 +96,6 @@ export class WorldManager {
   cleanup() {
     // AbortController automatically removes all event listeners
     this.abortController.abort();
-    
-    // Clean up event handlers for memory cleanup
-    this.timescaleChangedHandler = null;
 
     // Clean up world presenter
     if (this.worldPresenter && this.worldPresenter.cleanup) {
@@ -110,7 +107,7 @@ export class WorldManager {
     if (this.world) {
       this.world.unWind();
     }
-    
+
     // Create new AbortController for future use
     this.abortController = new AbortController();
   }

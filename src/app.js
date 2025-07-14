@@ -8,7 +8,6 @@ import { ChallengeManager } from "./game/ChallengeManager.js";
 import { APP_CONSTANTS } from "./config/constants.js";
 import { performanceMonitor } from "./ui/PerformanceMonitor.js";
 
-
 // Main Application class
 export class ElevatorApp extends EventTarget {
   constructor() {
@@ -18,15 +17,24 @@ export class ElevatorApp extends EventTarget {
     this.dom = new AppDOM();
     this.runtimeManager = new RuntimeManager();
     this.editor = new CodeEditor(
-      this.dom.getElement('codeArea'),
+      this.dom.getElement("codeArea"),
       APP_CONSTANTS.STORAGE_KEY,
       this.runtimeManager,
     );
-    
+
     this.worldManager = new WorldManager(this.dom);
     this.urlManager = new URLManager(this);
-    this.challengeManager = new ChallengeManager(this.dom, this.worldManager, this.urlManager);
-    this.eventHandlers = new AppEventHandlers(this, this.dom, this.editor, this.runtimeManager);
+    this.challengeManager = new ChallengeManager(
+      this.dom,
+      this.worldManager,
+      this.urlManager,
+    );
+    this.eventHandlers = new AppEventHandlers(
+      this,
+      this.dom,
+      this.editor,
+      this.runtimeManager,
+    );
 
     // Setup all event handlers
     this.eventHandlers.setupAllHandlers();
@@ -51,8 +59,8 @@ export class ElevatorApp extends EventTarget {
     this.worldManager.setTimeScale(timeScale);
   }
 
-  getWorldController() {
-    return this.worldManager.getWorldController();
+  get worldController() {
+    return this.worldManager.worldController;
   }
 
   showRuntimeLoading(show, message) {
@@ -88,13 +96,22 @@ export class ElevatorApp extends EventTarget {
   }
 
   async startChallenge(challengeIndex, autoStart) {
-    performanceMonitor.mark('challenge-start');
+    performanceMonitor.mark("challenge-start");
     try {
-      await this.challengeManager.startChallenge(challengeIndex, autoStart, this.editor, this);
-      performanceMonitor.mark('challenge-end');
-      performanceMonitor.measure('challenge-duration', 'challenge-start', 'challenge-end');
+      await this.challengeManager.startChallenge(
+        challengeIndex,
+        autoStart,
+        this.editor,
+        this,
+      );
+      performanceMonitor.mark("challenge-end");
+      performanceMonitor.measure(
+        "challenge-duration",
+        "challenge-start",
+        "challenge-end",
+      );
     } catch (error) {
-      performanceMonitor.mark('challenge-error');
+      performanceMonitor.mark("challenge-error");
       throw error;
     }
   }

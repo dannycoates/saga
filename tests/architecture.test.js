@@ -1,0 +1,261 @@
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { JSSimulationBackend } from "../src/core/JSSimulationBackend.js";
+import { SimulationCore } from "../src/core/SimulationCore.js";
+import { DisplayManager } from "../src/ui/DisplayManager.js";
+import { World } from "../src/core/World.js";
+
+describe("Modern Architecture", () => {
+  describe("SimulationCore", () => {
+    let simulation;
+
+    beforeEach(() => {
+      simulation = new SimulationCore({
+        floorCount: 4,
+        elevatorCount: 2,
+        elevatorCapacities: [4, 6],
+        spawnRate: 0.5,
+        speedFloorsPerSec: 2.0,
+      });
+    });
+
+    it("should initialize with correct configuration", () => {
+      expect(simulation.floors).toHaveLength(4);
+      expect(simulation.elevators).toHaveLength(2);
+      expect(simulation.elevators[0].capacity).toBe(4);
+      expect(simulation.elevators[1].capacity).toBe(6);
+    });
+
+    it("should spawn passengers based on spawn rate", () => {
+      const spawnSpy = vi.spyOn(simulation, "spawnPassenger");
+
+      // Advance time by 2 seconds (should spawn 1 passenger at 0.5 rate)
+      simulation.tick(2.0);
+
+      expect(spawnSpy).toHaveBeenCalled();
+      expect(simulation.passengers.length).toBeGreaterThan(0);
+    });
+
+    it("should emit state_changed events", () => {
+      const stateHandler = vi.fn();
+      simulation.addEventListener("state_changed", stateHandler);
+
+      simulation.tick(0.1);
+
+      expect(stateHandler).toHaveBeenCalled();
+      const state = stateHandler.mock.calls[0][0].detail;
+      expect(state).toHaveProperty("floors");
+      expect(state).toHaveProperty("elevators");
+      expect(state).toHaveProperty("passengers");
+      expect(state).toHaveProperty("stats");
+    });
+
+    it("should create immutable state snapshots", () => {
+      const state1 = simulation.getState();
+      simulation.tick(0.1);
+      const state2 = simulation.getState();
+
+      expect(state1).not.toBe(state2);
+      expect(state1.stats.elapsedTime).toBeLessThan(state2.stats.elapsedTime);
+    });
+  });
+
+  describe("JSSimulationBackend", () => {
+    let backend;
+
+    beforeEach(() => {
+      backend = new JSSimulationBackend();
+      backend.initialize({
+        floorCount: 3,
+        elevatorCount: 1,
+        spawnRate: 1.0,
+      });
+    });
+
+    it("should implement SimulationBackend interface", () => {
+      expect(backend.initialize).toBeDefined();
+      expect(backend.tick).toBeDefined();
+      expect(backend.getState).toBeDefined();
+      expect(backend.callUserCode).toBeDefined();
+      expect(backend.dispose).toBeDefined();
+      expect(backend.getStats).toBeDefined();
+      expect(backend.hasEnded).toBeDefined();
+    });
+
+    it("should forward events from SimulationCore", () => {
+      const stateHandler = vi.fn();
+      backend.addEventListener("state_changed", stateHandler);
+
+      backend.tick(0.1);
+
+      expect(stateHandler).toHaveBeenCalled();
+    });
+
+    it("should handle user code execution", async () => {
+      const mockCodeObj = {
+        tick: vi.fn(),
+      };
+
+      await backend.callUserCode(mockCodeObj);
+
+      expect(mockCodeObj.tick).toHaveBeenCalledWith(
+        expect.any(Array), // elevator APIs
+        expect.any(Array), // floor APIs
+      );
+    });
+  });
+
+  describe("DisplayManager", () => {
+    let displayManager;
+    let backend;
+
+    beforeEach(() => {
+      displayManager = new DisplayManager({
+        renderingEnabled: true,
+        floorHeight: 50,
+      });
+
+      backend = new JSSimulationBackend();
+      backend.initialize({
+        floorCount: 2,
+        elevatorCount: 1,
+        spawnRate: 0.5,
+      });
+    });
+
+    it("should initialize displays from state", () => {
+      const mockElement = document.createElement("div");
+      const initialState = backend.getState();
+
+      displayManager.initialize(initialState, mockElement);
+
+      expect(displayManager.floorDisplays.size).toBe(2);
+      expect(displayManager.elevatorDisplays.size).toBe(1);
+    });
+
+    it("should subscribe to backend events", () => {
+      displayManager.subscribeToBackend(backend);
+
+      const updateSpy = vi.spyOn(displayManager, "updateDisplays");
+      backend.tick(0.1);
+
+      expect(updateSpy).toHaveBeenCalled();
+    });
+
+    it("should not create displays when rendering disabled", () => {
+      const noRenderManager = new DisplayManager({
+        renderingEnabled: false,
+      });
+
+      const initialState = backend.getState();
+      noRenderManager.initialize(initialState, document.createElement("div"));
+
+      expect(noRenderManager.floorDisplays.size).toBe(0);
+      expect(noRenderManager.elevatorDisplays.size).toBe(0);
+    });
+  });
+
+  describe("World", () => {
+    let world;
+
+    beforeEach(() => {
+      world = new World({
+        floorCount: 4,
+        elevatorCount: 2,
+        spawnRate: 0.5,
+        renderingEnabled: false, // Disable for testing
+      });
+    });
+
+    it("should maintain compatibility with old API", () => {
+      expect(world.transportedCounter).toBeDefined();
+      expect(world.transportedPerSec).toBeDefined();
+      expect(world.moveCount).toBeDefined();
+      expect(world.elapsedTime).toBeDefined();
+      expect(world.maxWaitTime).toBeDefined();
+      expect(world.avgWaitTime).toBeDefined();
+      expect(world.challengeEnded).toBeDefined();
+    });
+
+    it("should use SimulationBackend internally", () => {
+      expect(world.backend).toBeDefined();
+      expect(world.backend.constructor.name).toBe("JSSimulationBackend");
+    });
+
+    it("should use DisplayManager internally", () => {
+      expect(world.displayManager).toBeDefined();
+      expect(world.displayManager.constructor.name).toBe("DisplayManager");
+    });
+
+    it("should forward tick to backend", () => {
+      const tickSpy = vi.spyOn(world.backend, "tick");
+
+      world.tick(0.1);
+
+      expect(tickSpy).toHaveBeenCalledWith(0.1);
+    });
+
+    it("should forward user code to backend", async () => {
+      const callUserCodeSpy = vi.spyOn(world.backend, "callUserCode");
+      const mockCode = { tick: vi.fn() };
+
+      await world.callUserCode(mockCode);
+
+      expect(callUserCodeSpy).toHaveBeenCalledWith(mockCode);
+    });
+  });
+
+  describe("State Snapshot Integrity", () => {
+    it("should create complete elevator snapshots", () => {
+      const simulation = new SimulationCore({
+        floorCount: 4,
+        elevatorCount: 1,
+      });
+
+      const elevator = simulation.elevators[0];
+      elevator.goToFloor(2);
+
+      const snapshot = simulation.createElevatorSnapshot(elevator);
+
+      expect(snapshot).toMatchObject({
+        index: 0,
+        position: expect.any(Number),
+        currentFloor: expect.any(Number),
+        destinationFloor: expect.any(Number),
+        velocity: expect.any(Number),
+        buttons: expect.any(Array),
+        passengers: expect.any(Array),
+        goingUpIndicator: expect.any(Boolean),
+        goingDownIndicator: expect.any(Boolean),
+        capacity: expect.any(Number),
+        percentFull: expect.any(Number),
+        moves: expect.any(Number),
+      });
+    });
+
+    it("should create complete passenger snapshots", () => {
+      const simulation = new SimulationCore({
+        floorCount: 4,
+        elevatorCount: 1,
+        spawnRate: 10, // High rate to ensure spawn
+      });
+
+      simulation.tick(0.1);
+
+      if (simulation.passengers.length > 0) {
+        const passenger = simulation.passengers[0];
+        const snapshot = simulation.createPassengerSnapshot(passenger);
+
+        expect(snapshot).toMatchObject({
+          id: expect.any(String),
+          weight: expect.any(Number),
+          startingFloor: expect.any(Number),
+          destinationFloor: expect.any(Number),
+          currentFloor: expect.any(Number),
+          state: expect.any(String),
+        });
+        expect(snapshot).toHaveProperty("elevatorIndex");
+        expect(snapshot).toHaveProperty("slotInElevator");
+      }
+    });
+  });
+});

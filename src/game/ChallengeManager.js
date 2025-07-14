@@ -23,7 +23,7 @@ export class ChallengeManager {
   async startChallenge(challengeIndex, autoStart, editor, app) {
     // Update current challenge
     this.currentChallengeIndex = challengeIndex;
-    
+
     // Create world for this challenge
     const world = this.worldManager.createWorld(
       challenges[challengeIndex].options,
@@ -31,10 +31,10 @@ export class ChallengeManager {
 
     // Present challenge UI
     this.challengePresenter = presentChallenge(
-      this.dom.getElement('challenge'),
+      this.dom.getElement("challenge"),
       challenges[challengeIndex],
       app,
-      this.worldManager.getWorldController(),
+      this.worldManager.worldController,
       challengeIndex + 1,
     );
 
@@ -50,24 +50,28 @@ export class ChallengeManager {
   setupChallengeCompletionHandler(world, challengeIndex) {
     // Clean up previous handler
     if (this.statsChangedHandler && world) {
-      const previousWorld = this.worldManager.getCurrentWorld();
+      const previousWorld = this.worldManager.world;
       if (previousWorld && previousWorld !== world) {
-        previousWorld.removeEventListener("stats_changed", this.statsChangedHandler);
+        previousWorld.removeEventListener(
+          "stats_changed",
+          this.statsChangedHandler,
+        );
       }
     }
 
     // Setup new handler
     this.statsChangedHandler = () => {
-      const challengeStatus = challenges[challengeIndex].condition.evaluate(world);
-      
+      const challengeStatus =
+        challenges[challengeIndex].condition.evaluate(world);
+
       if (challengeStatus !== null) {
         world.challengeEnded = true;
-        this.worldManager.getWorldController().setPaused(true);
+        this.worldManager.worldController.setPaused(true);
 
         if (challengeStatus) {
           // Challenge succeeded
           presentFeedback(
-            this.dom.getElement('feedback'),
+            this.dom.getElement("feedback"),
             APP_CONSTANTS.MESSAGES.SUCCESS_TITLE,
             APP_CONSTANTS.MESSAGES.SUCCESS_MESSAGE,
             this.urlManager.createParamsUrl({ challenge: challengeIndex + 2 }),
@@ -75,7 +79,7 @@ export class ChallengeManager {
         } else {
           // Challenge failed
           presentFeedback(
-            this.dom.getElement('feedback'),
+            this.dom.getElement("feedback"),
             APP_CONSTANTS.MESSAGES.FAILURE_TITLE,
             APP_CONSTANTS.MESSAGES.FAILURE_MESSAGE,
             "",
@@ -83,7 +87,7 @@ export class ChallengeManager {
         }
       }
     };
-    
+
     world.addEventListener("stats_changed", this.statsChangedHandler);
   }
 
@@ -98,7 +102,7 @@ export class ChallengeManager {
   cleanup() {
     // Clean up challenge completion handler
     if (this.statsChangedHandler) {
-      const world = this.worldManager.getCurrentWorld();
+      const world = this.worldManager.world;
       if (world) {
         world.removeEventListener("stats_changed", this.statsChangedHandler);
       }

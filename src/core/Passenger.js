@@ -6,6 +6,7 @@ export class Passenger {
     this.elevator = null;
     this.slotInElevator = null;
     this.state = "waiting";
+    this.id = null; // Will be set by SimulationCore
   }
 
   enterElevator(elevator, slot) {
