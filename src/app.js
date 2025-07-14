@@ -508,6 +508,10 @@ export class ElevatorApp extends EventTarget {
   }
 
   async initializeWithRuntime() {
+    // Load challenge and render world area immediately, before waiting for runtime
+    this.loadFromUrl();
+
+    // Load runtime in parallel - this won't block the world rendering
     const runtime = this.runtimeManager.getCurrentRuntime();
     if (!runtime.loaded) {
       // Show loading state
@@ -517,7 +521,7 @@ export class ElevatorApp extends EventTarget {
       );
 
       try {
-        // Pre-load the runtime
+        // Pre-load the runtime in the background
         await this.runtimeManager.selectLanguage(this.editor.currentLanguage);
         this.showRuntimeLoading(false);
       } catch (error) {
@@ -525,9 +529,6 @@ export class ElevatorApp extends EventTarget {
         this.showRuntimeLoading(false);
       }
     }
-
-    // Now that runtime is loaded, proceed with loading from URL
-    this.loadFromUrl();
   }
 
   setStartButtonEnabled(enabled) {
@@ -555,12 +556,6 @@ export class ElevatorApp extends EventTarget {
   }
 
   async startChallenge(challengeIndex, autoStart) {
-    // Check if runtime is still loading
-    const loadingIndicator = document.getElementById("runtime-loading");
-    if (loadingIndicator && loadingIndicator.style.display !== "none") {
-      console.log("Runtime is still loading, please wait...");
-      return;
-    }
     // Clean up previous event listeners
     if (this.timescaleChangedHandler) {
       this.worldController.removeEventListener(
@@ -582,12 +577,13 @@ export class ElevatorApp extends EventTarget {
       this.world.unWind();
     }
 
+    // Update challenge index and create world first
     this.currentChallengeIndex = challengeIndex;
     this.world = this.worldCreator.createWorld(
       challenges[challengeIndex].options,
     );
 
-    // Clear and setup UI
+    // Clear and setup UI immediately - this allows rendering before runtime loads
     const clearElems = [this.worldElem, this.feedbackElem];
     clearElems.forEach((elem) => (elem.innerHTML = ""));
 
@@ -639,15 +635,26 @@ export class ElevatorApp extends EventTarget {
     };
     this.world.addEventListener("stats_changed", this.statsChangedHandler);
 
-    const codeObj = await this.editor.getCodeObj(this);
-    if (codeObj) {
-      this.worldController.start(
-        this.world,
-        codeObj,
-        window.requestAnimationFrame,
-        autoStart,
-      );
+    // Only proceed with runtime-dependent operations if we're auto-starting
+    if (autoStart) {
+      // Check if runtime is still loading
+      const loadingIndicator = document.getElementById("runtime-loading");
+      if (loadingIndicator && loadingIndicator.style.display !== "none") {
+        console.log("Runtime is still loading, please wait...");
+        return;
+      }
+
+      const codeObj = await this.editor.getCodeObj(this);
+      if (codeObj) {
+        this.worldController.start(
+          this.world,
+          codeObj,
+          window.requestAnimationFrame,
+          autoStart,
+        );
+      }
     }
+    // If not auto-starting, just render the world and wait for user to click start
   }
 
   createParamsUrl(overrides) {
