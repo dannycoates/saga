@@ -7,6 +7,7 @@ export class AppEventHandlers {
     this.dom = dom;
     this.editor = editor;
     this.runtimeManager = runtimeManager;
+    this.abortController = new AbortController();
     this.boundHandlers = {};
   }
 
@@ -18,6 +19,8 @@ export class AppEventHandlers {
   }
 
   setupButtonHandlers() {
+    const { signal } = this.abortController;
+
     // Reset button
     this.dom.getElement('buttonReset')?.addEventListener("click", () => {
       if (confirm(APP_CONSTANTS.MESSAGES.RESET_CONFIRM)) {
@@ -29,7 +32,7 @@ export class AppEventHandlers {
         this.editor.reset();
       }
       this.editor.view.focus();
-    });
+    }, { signal });
 
     // Reset undo button
     this.dom.getElement('buttonResetUndo')?.addEventListener("click", () => {
@@ -45,41 +48,46 @@ export class AppEventHandlers {
         }
       }
       this.editor.view.focus();
-    });
+    }, { signal });
 
     // Apply button
     const applyButton = this.dom.getElement('buttonApply');
     if (applyButton) {
       applyButton.addEventListener("click", () => {
         this.editor.dispatchEvent(new CustomEvent("apply_code"));
-      });
+      }, { signal });
     }
   }
 
   setupEditorHandlers() {
+    const { signal } = this.abortController;
+
     // Apply code event
     this.editor.addEventListener("apply_code", () => {
       this.app.startChallenge(this.app.getCurrentChallengeIndex(), true);
-    });
+    }, { signal });
 
     // User code error event
     this.boundHandlers.editorError = (e) => {
       presentCodeStatus(this.dom.getElement('codeStatus'), e.detail);
     };
-    this.editor.addEventListener("usercode_error", this.boundHandlers.editorError);
+    this.editor.addEventListener("usercode_error", this.boundHandlers.editorError, { signal });
   }
 
   setupWorldControllerHandlers() {
+    const { signal } = this.abortController;
+
     // World controller error handling
     this.boundHandlers.worldControllerError = (e) => {
       this.editor.dispatchEvent(
         new CustomEvent("usercode_error", { detail: e.detail }),
       );
     };
-    this.app.getWorldController().addEventListener("usercode_error", this.boundHandlers.worldControllerError);
+    this.app.getWorldController().addEventListener("usercode_error", this.boundHandlers.worldControllerError, { signal });
   }
 
   setupLanguageHandler() {
+    const { signal } = this.abortController;
     const languageSelect = this.dom.getElement('languageSelect');
     if (languageSelect) {
       languageSelect.value = this.editor.currentLanguage;
@@ -109,25 +117,15 @@ export class AppEventHandlers {
         }
       };
       
-      languageSelect.addEventListener("change", this.boundHandlers.languageChange);
+      languageSelect.addEventListener("change", this.boundHandlers.languageChange, { signal });
     }
   }
 
   cleanup() {
-    // Clean up event listeners
-    if (this.boundHandlers.editorError) {
-      this.editor.removeEventListener("usercode_error", this.boundHandlers.editorError);
-    }
+    // AbortController automatically removes all event listeners
+    this.abortController.abort();
     
-    if (this.boundHandlers.worldControllerError) {
-      this.app.getWorldController().removeEventListener("usercode_error", this.boundHandlers.worldControllerError);
-    }
-    
-    if (this.boundHandlers.languageChange) {
-      const languageSelect = this.dom.getElement('languageSelect');
-      if (languageSelect) {
-        languageSelect.removeEventListener("change", this.boundHandlers.languageChange);
-      }
-    }
+    // Clear bound handlers for memory cleanup
+    this.boundHandlers = {};
   }
 }

@@ -4,12 +4,14 @@ import { APP_CONSTANTS } from "../config/constants.js";
 export class URLManager {
   constructor(app) {
     this.app = app;
+    this.abortController = new AbortController();
     this.setupHashChangeListener();
   }
 
   setupHashChangeListener() {
+    const { signal } = this.abortController;
     this.boundLoadFromUrl = () => this.loadFromUrl();
-    window.addEventListener("hashchange", this.boundLoadFromUrl);
+    window.addEventListener("hashchange", this.boundLoadFromUrl, { signal });
   }
 
   parseParams() {
@@ -62,9 +64,10 @@ export class URLManager {
   }
 
   cleanup() {
-    // Remove event listeners if needed
-    if (this.boundLoadFromUrl) {
-      window.removeEventListener("hashchange", this.boundLoadFromUrl);
-    }
+    // AbortController automatically removes all event listeners
+    this.abortController.abort();
+    
+    // Clear bound handlers for memory cleanup
+    this.boundLoadFromUrl = null;
   }
 }
