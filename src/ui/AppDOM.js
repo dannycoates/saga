@@ -50,20 +50,24 @@ export class AppDOM {
     const loadingIndicator = this.elements.runtimeLoading;
     const languageSelect = this.elements.languageSelect;
 
-    if (show) {
-      loadingIndicator.style.display = "inline-flex";
-      // Update the loading text
-      const loadingText = loadingIndicator.querySelector(APP_CONSTANTS.SELECTORS.LOADING_TEXT);
-      if (loadingText) {
-        loadingText.textContent = message;
+    if (loadingIndicator) {
+      // Direct style manipulation for display (original working approach)
+      loadingIndicator.style.display = show ? "inline-flex" : "none";
+      
+      if (show) {
+        // Update the loading text
+        const loadingText = loadingIndicator.querySelector(APP_CONSTANTS.SELECTORS.LOADING_TEXT);
+        if (loadingText) {
+          loadingText.textContent = message;
+        }
       }
-      languageSelect.disabled = true;
-      this.setStartButtonEnabled(false);
-    } else {
-      loadingIndicator.style.display = "none";
-      languageSelect.disabled = false;
-      this.setStartButtonEnabled(true);
     }
+    
+    // Use disabled property instead of style manipulation
+    if (languageSelect) {
+      languageSelect.disabled = show;
+    }
+    this.setStartButtonEnabled(!show);
   }
 
   setStartButtonEnabled(enabled) {
@@ -83,14 +87,14 @@ export class AppDOM {
     elementNames.forEach((name) => {
       const element = this.elements[name];
       if (element) {
-        element.innerHTML = "";
+        element.replaceChildren();
       }
     });
   }
 
   isRuntimeLoading() {
     const loadingIndicator = this.elements.runtimeLoading;
-    return loadingIndicator && loadingIndicator.style.display !== "none";
+    return loadingIndicator?.style.display === 'inline-flex' ?? false;
   }
 
   cleanup() {

@@ -9,8 +9,8 @@ import "./components/code-status.js";
 
 // Factory functions using web components
 export function presentStats(parentElem, world) {
-  // Clear existing content
-  parentElem.innerHTML = "";
+  // Clear existing content using modern method
+  parentElem.replaceChildren();
 
   // Create and append the web component
   const statsComponent = document.createElement("elevator-stats");
@@ -27,8 +27,8 @@ export function presentChallenge(
   worldController,
   challengeNum,
 ) {
-  // Clear existing content
-  parentElem.innerHTML = "";
+  // Clear existing content using modern method
+  parentElem.replaceChildren();
 
   // Create and append the web component
   const challengeComponent = document.createElement("challenge-control");
@@ -45,8 +45,8 @@ export function presentChallenge(
 }
 
 export function presentFeedback(parentElem, title, message, url) {
-  // Clear existing content
-  parentElem.innerHTML = "";
+  // Clear existing content using modern method
+  parentElem.replaceChildren();
 
   // Create and append the web component
   const feedbackComponent = document.createElement("game-feedback");
@@ -61,8 +61,8 @@ export function presentFeedback(parentElem, title, message, url) {
 }
 
 export function presentWorld(worldElem, world) {
-  // Clear existing content
-  worldElem.innerHTML = "";
+  // Clear existing content using modern method
+  worldElem.replaceChildren();
 
   // Set world height
   worldElem.style.height = world.floorHeight * world.floors.size + "px";
@@ -112,8 +112,8 @@ export function presentWorld(worldElem, world) {
 }
 
 export function presentCodeStatus(parentElem, error) {
-  // Clear existing content
-  parentElem.innerHTML = "";
+  // Clear existing content using modern method
+  parentElem.replaceChildren();
 
   // Create and append the web component
   const codeStatusComponent = document.createElement("code-status");

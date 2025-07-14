@@ -6,6 +6,7 @@ import { URLManager } from "./utils/URLManager.js";
 import { WorldManager } from "./game/WorldManager.js";
 import { ChallengeManager } from "./game/ChallengeManager.js";
 import { APP_CONSTANTS } from "./config/constants.js";
+import { performanceMonitor } from "./ui/PerformanceMonitor.js";
 
 
 // Main Application class
@@ -87,7 +88,15 @@ export class ElevatorApp extends EventTarget {
   }
 
   async startChallenge(challengeIndex, autoStart) {
-    await this.challengeManager.startChallenge(challengeIndex, autoStart, this.editor, this);
+    performanceMonitor.mark('challenge-start');
+    try {
+      await this.challengeManager.startChallenge(challengeIndex, autoStart, this.editor, this);
+      performanceMonitor.mark('challenge-end');
+      performanceMonitor.measure('challenge-duration', 'challenge-start', 'challenge-end');
+    } catch (error) {
+      performanceMonitor.mark('challenge-error');
+      throw error;
+    }
   }
 
   cleanup() {
@@ -97,6 +106,7 @@ export class ElevatorApp extends EventTarget {
     this.challengeManager.cleanup();
     this.urlManager.cleanup();
     this.dom.cleanup();
+    performanceMonitor.cleanup();
   }
 }
 

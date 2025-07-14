@@ -104,10 +104,10 @@ export class ElevatorCar extends HTMLElement {
   updatePosition() {
     const x = this.getAttribute("x-position") ?? "0";
     const y = this.getAttribute("y-position") ?? "0";
-    const style = `translate(${x}px,${y}px) translateZ(0)`;
-    this.style.transform = style;
-    this.style["-ms-transform"] = style;
-    this.style["-webkit-transform"] = style;
+    
+    // Use CSS Custom Properties for better performance and cleaner code
+    this.style.setProperty('--translate-x', `${x}px`);
+    this.style.setProperty('--translate-y', `${y}px`);
   }
 
   updateFloorButton(index, isActive) {
@@ -147,6 +147,9 @@ export class ElevatorCar extends HTMLElement {
           height: var(--elevator-height);
           z-index: 1;
           width: var(--elevator-width);
+          /* Use CSS Custom Properties for transforms - hardware accelerated */
+          transform: translate3d(var(--translate-x, 0px), var(--translate-y, 0px), 0);
+          contain: layout style paint;
         }
 
         .floorindicator {

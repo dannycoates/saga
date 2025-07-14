@@ -7,10 +7,13 @@ export class ElevatorPassenger extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     this._passenger = null;
+    this._isVisible = true;
+    this._intersectionObserver = null;
   }
 
   connectedCallback() {
     this.render();
+    this.setupIntersectionObserver();
   }
 
   disconnectedCallback() {
@@ -18,6 +21,7 @@ export class ElevatorPassenger extends HTMLElement {
       this._passenger.removeEventListener("new_display_state", this._displayStateHandler);
       this._passenger.removeEventListener("removed", this._removedHandler);
     }
+    this._intersectionObserver?.disconnect();
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -83,13 +87,36 @@ export class ElevatorPassenger extends HTMLElement {
     }
   }
 
+  setupIntersectionObserver() {
+    // Use Intersection Observer for performance optimization
+    this._intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          this._isVisible = entry.isIntersecting;
+          // Only update transforms when visible for better performance
+          if (this._isVisible) {
+            this.updatePosition();
+          }
+        });
+      },
+      {
+        rootMargin: '50px', // Start rendering slightly before coming into view
+        threshold: 0
+      }
+    );
+    this._intersectionObserver.observe(this);
+  }
+
   updatePosition() {
+    // Only update position if visible to improve performance
+    if (!this._isVisible) return;
+    
     const x = +(this.getAttribute("x-position") || "0") - 4;
     const y = +(this.getAttribute("y-position") || "0") - 4;
-    const style = `translate(${x}px,${y}px) translateZ(0)`;
-    this.style.transform = style;
-    this.style["-ms-transform"] = style;
-    this.style["-webkit-transform"] = style;
+    
+    // Use CSS Custom Properties for better performance and cleaner code
+    this.style.setProperty('--translate-x', `${x}px`);
+    this.style.setProperty('--translate-y', `${y}px`);
   }
 
   getPassengerSvg(passengerType) {
@@ -113,6 +140,9 @@ export class ElevatorPassenger extends HTMLElement {
           left: 0;
           display: block;
           z-index: 2;
+          /* Use CSS Custom Properties for transforms - hardware accelerated */
+          transform: translate3d(var(--translate-x, 0px), var(--translate-y, 0px), 0);
+          contain: layout style paint;
         }
 
         .passenger-icon {

@@ -17,7 +17,16 @@ export class ChallengeControl extends HTMLElement {
 
   connectedCallback() {
     this.render();
+    this.cacheElements();
     this.attachEventListeners();
+  }
+
+  cacheElements() {
+    // Cache frequently accessed elements for better performance
+    this._cachedElements = {
+      startStopButton: this.shadowRoot.querySelector(".startstop"),
+      timeDisplay: this.shadowRoot.querySelector(".time-scale-value"),
+    };
   }
 
   disconnectedCallback() {
@@ -62,40 +71,39 @@ export class ChallengeControl extends HTMLElement {
   }
 
   attachEventListeners() {
-    const startStopBtn = this.shadowRoot.querySelector(".startstop");
-    const increaseBtn = this.shadowRoot.querySelector(".timescale_increase");
-    const decreaseBtn = this.shadowRoot.querySelector(".timescale_decrease");
+    // Use event delegation for better performance and cleaner code
+    this.shadowRoot.addEventListener("click", (e) => {
+      const button = e.target.closest("button");
+      if (!button) return;
 
-    startStopBtn?.addEventListener("click", () => {
-      if (this._app) {
-        this._app.startStopOrRestart();
-      }
-    });
-
-    increaseBtn?.addEventListener("click", (e) => {
-      e.preventDefault();
-      if (this._worldController && this._worldController.timeScale < 40) {
-        const timeScale = Math.round(this._worldController.timeScale * 1.618);
-        this._worldController.setTimeScale(timeScale);
-      }
-    });
-
-    decreaseBtn?.addEventListener("click", (e) => {
-      e.preventDefault();
-      if (this._worldController) {
-        const timeScale = Math.round(this._worldController.timeScale / 1.618);
-        this._worldController.setTimeScale(timeScale);
+      // Use matches() for efficient button identification
+      if (button.matches(".startstop")) {
+        if (this._app) {
+          this._app.startStopOrRestart();
+        }
+      } else if (button.matches(".timescale_increase")) {
+        e.preventDefault();
+        if (this._worldController && this._worldController.timeScale < 40) {
+          const timeScale = Math.round(this._worldController.timeScale * 1.618);
+          this._worldController.setTimeScale(timeScale);
+        }
+      } else if (button.matches(".timescale_decrease")) {
+        e.preventDefault();
+        if (this._worldController) {
+          const timeScale = Math.round(this._worldController.timeScale / 1.618);
+          this._worldController.setTimeScale(timeScale);
+        }
       }
     });
   }
 
   updateDisplay() {
-    const button = this.shadowRoot.querySelector(".startstop");
-    const timeDisplay = this.shadowRoot.querySelector(".time-scale-value");
+    // Use cached elements for better performance
+    const { startStopButton, timeDisplay } = this._cachedElements || {};
 
-    if (button) {
+    if (startStopButton) {
       const isPaused = this.getAttribute("is-paused") === "true";
-      button.textContent = isPaused ? "Start" : "Stop";
+      startStopButton.textContent = isPaused ? "Start" : "Stop";
     }
 
     if (timeDisplay) {
@@ -116,6 +124,15 @@ export class ChallengeControl extends HTMLElement {
           align-items: center;
           justify-content: space-between;
           padding: 5px 0;
+
+          /* CSS-based state management */
+          --state-paused: 0;
+          --state-running: 1;
+        }
+
+        :host([is-paused="true"]) {
+          --state-paused: 1;
+          --state-running: 0;
         }
 
         .challenge-info {
@@ -150,13 +167,17 @@ export class ChallengeControl extends HTMLElement {
           border-radius: 5px;
           cursor: pointer;
           width: 110px;
-          transition: background-color 0.2s ease;
+          transition: all 0.2s ease;
+
+          /* Use CSS state variables for dynamic styling */
+          opacity: calc(var(--state-running) * 1 + var(--state-paused) * 0.8);
+          transform: scale(calc(var(--state-running) * 1 + var(--state-paused) * 0.98));
         }
 
         button:hover:not(:disabled) {
           background-color: var(--accent-tertiary, #076678);
         }
-        
+
         button:disabled {
           opacity: 0.6;
           cursor: not-allowed;
@@ -169,19 +190,27 @@ export class ChallengeControl extends HTMLElement {
 
         .timescale_decrease,
         .timescale_increase {
-          padding: 4px 8px;
+          margin: 0 4px;
+          padding: 4px 4px;
           line-height: 20px;
           cursor: pointer;
           color: var(--text-primary, #3c3836);
+          background: transparent;
+          border: none;
           display: inline-flex;
           align-items: center;
           border-radius: 3px;
           transition: background-color 0.2s ease;
+          width: auto;
+          height: auto;
+          font-size: inherit;
+          font-weight: inherit;
         }
 
         .timescale_decrease:hover,
         .timescale_increase:hover {
           background-color: var(--bg-tertiary, #bdae93);
+          color: var(--button-text);
         }
 
         .timescale_decrease svg,
@@ -214,25 +243,26 @@ export class ChallengeControl extends HTMLElement {
         <h3>Challenge #${challengeNum}: <span id="description"></span></h3>
       </div>
       <div class="controls-group">
-        <h3 class="timescale-controls">
-          <span class="timescale_decrease unselectable">
+        <div class="timescale-controls">
+          <button class="timescale_decrease unselectable" aria-label="Decrease time scale">
             <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-              <rect x="1" y="1" width="14" height="14" rx="2" fill="currentColor"/>
-              <rect x="4" y="7" width="8" height="2" fill="#fbf1c7"/>
+              <rect x="4" y="7" width="8" height="2"/>
             </svg>
-          </span>
+          </button>
           <span class="time-scale-value">${timeScale}</span>
-          <span class="timescale_increase unselectable">
+          <button class="timescale_increase unselectable" aria-label="Increase time scale">
             <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-              <rect x="1" y="1" width="14" height="14" rx="2" fill="currentColor"/>
-              <rect x="4" y="7" width="8" height="2" fill="#fbf1c7"/>
-              <rect x="7" y="4" width="2" height="8" fill="#fbf1c7"/>
+              <rect x="4" y="7" width="8" height="2"/>
+              <rect x="7" y="4" width="2" height="8"/>
             </svg>
-          </span>
-        </h3>
+          </button>
+        </div>
         <button class="startstop unselectable">${isPaused ? "Start" : "Stop"}</button>
       </div>
     `;
+
+    // Re-cache elements after innerHTML update
+    this.cacheElements();
 
     // Set HTML content for description to preserve formatting
     const descElem = this.shadowRoot.querySelector("#description");
