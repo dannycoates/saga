@@ -79,7 +79,7 @@ export class ChallengeControl extends HTMLElement {
       // Use matches() for efficient button identification
       if (button.matches(".startstop")) {
         if (this._app) {
-          this._app.startStopOrRestart();
+          this._app.startOrStop();
         }
       } else if (button.matches(".timescale_increase")) {
         e.preventDefault();
