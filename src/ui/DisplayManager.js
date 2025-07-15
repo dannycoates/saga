@@ -1,7 +1,6 @@
 import { FloorDisplay } from "./display/FloorDisplay.js";
 import { ElevatorDisplay } from "./display/ElevatorDisplay.js";
 import { PassengerDisplay } from "./display/PassengerDisplay.js";
-import { NullDisplay } from "./display/NullDisplay.js";
 
 /**
  * Manages all display objects and updates them based on simulation state
@@ -15,7 +14,6 @@ export class DisplayManager {
     this.elevatorDisplays = new Map();
     this.passengerDisplays = new Map();
 
-    this.worldElement = null;
     this.abortController = new AbortController();
   }
 
@@ -34,9 +32,7 @@ export class DisplayManager {
   /**
    * Initialize displays based on initial simulation state
    */
-  initialize(initialState, worldElement) {
-    this.worldElement = worldElement;
-
+  initialize(initialState) {
     if (!this.renderingEnabled) return;
 
     // Clear existing displays
@@ -95,14 +91,6 @@ export class DisplayManager {
       },
       { signal },
     );
-
-    backend.addEventListener(
-      "passengers_boarded",
-      (e) => {
-        this.handlePassengersBoarded(e.detail.passengers);
-      },
-      { signal },
-    );
   }
 
   /**
@@ -134,7 +122,6 @@ export class DisplayManager {
       let display = this.passengerDisplays.get(passenger.id);
       if (display) {
         display.updateFromState(passenger, state.elevators);
-        display.tick(dt);
       }
     });
 
@@ -147,7 +134,7 @@ export class DisplayManager {
     }
 
     // Clean up exited passengers
-    this.cleanupExitedPassengers(state.passengers);
+    this.cleanupExitedPassengers();
   }
 
   /**
@@ -184,19 +171,9 @@ export class DisplayManager {
   }
 
   /**
-   * Handle passengers boarding elevators
-   */
-  handlePassengersBoarded(passengers) {
-    // State update will handle the visual changes
-  }
-
-  /**
    * Clean up displays for exited passengers
    */
-  cleanupExitedPassengers(currentPassengers) {
-    const currentIds = new Set(currentPassengers.map((p) => p.id));
-
-    // Clean up displays that are inactive (animation completed)
+  cleanupExitedPassengers() {
     for (const [id, display] of this.passengerDisplays) {
       if (!display.active) {
         // Force DOM cleanup for inactive displays
@@ -204,11 +181,6 @@ export class DisplayManager {
         this.passengerDisplays.delete(id);
       }
     }
-
-    // For passengers no longer in simulation but still animating,
-    // let them finish their animation (they'll set active=false when done)
-    // This allows exit animations to complete even though the passenger
-    // has been removed from the simulation immediately
   }
 
   /**

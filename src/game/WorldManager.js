@@ -1,7 +1,10 @@
 import { JSSimulationBackend } from "../core/JSSimulationBackend.js";
 import { DisplayManager } from "../ui/DisplayManager.js";
-import { presentStats } from "../ui/presenters.js";
-import { presentWorld } from "../ui/presentWorld.js";
+import {
+  presentPassenger,
+  presentStats,
+  presentWorld,
+} from "../ui/presenters.js";
 import { APP_CONSTANTS } from "../config/constants.js";
 
 /**
@@ -15,7 +18,6 @@ export class WorldManager extends EventTarget {
     // Core components
     this.backend = null;
     this.displayManager = null;
-    this.worldPresenter = null;
 
     // Configuration
     this.options = null;
@@ -58,18 +60,6 @@ export class WorldManager extends EventTarget {
     };
   }
 
-  get floors() {
-    return this.displayManager.floors;
-  }
-
-  get elevators() {
-    return this.displayManager.elevators;
-  }
-
-  get passengers() {
-    return this.displayManager.passengers;
-  }
-
   get stats() {
     return this.backend
       ? this.backend.getStats()
@@ -106,26 +96,6 @@ export class WorldManager extends EventTarget {
 
   initializeDisplays(worldElement) {
     if (!this.backend || !this.displayManager) return;
-
-    const state = this.backend.getState();
-    this.displayManager.initialize(state, worldElement);
-
-    // Subscribe the display manager to backend events
-    this.displayManager.subscribeToBackend(this.backend);
-
-    // Set up passenger spawn forwarding for UI components
-    this.backend.addEventListener(
-      "passenger_spawned",
-      (e) => {
-        const display = this.passengers.get(e.detail.passenger.id);
-        if (display) {
-          this.dispatchEvent(
-            new CustomEvent("new_passenger", { detail: display }),
-          );
-        }
-      },
-      { signal: this.abortController.signal },
-    );
   }
 
   initializeChallenge(challengeOptions) {
@@ -161,15 +131,21 @@ export class WorldManager extends EventTarget {
       speedFloorsPerSec: this.options.speedFloorsPerSec,
     });
 
-    // Set up event forwarding
-    this.setupEventForwarding();
+    // Initialize displays with the world element
+    this.displayManager.initialize(this.backend.getState());
+
+    // Subscribe the display manager to backend events
+    this.displayManager.subscribeToBackend(this.backend);
 
     // Clear UI elements
     this.dom.clearElements(["world", "feedback"]);
 
+    // Set up event forwarding
+    this.setupEventForwarding();
+
     // Present world and stats (passing this as the "world" object)
     presentStats(this.dom.getElement("stats"), this);
-    this.worldPresenter = presentWorld(this.dom.getElement("world"), this);
+    presentWorld(this.dom.getElement("world"), this.displayManager);
   }
 
   setupEventForwarding() {
@@ -190,6 +166,17 @@ export class WorldManager extends EventTarget {
       (e) => {
         this.dispatchEvent(
           new CustomEvent("usercode_error", { detail: e.detail }),
+        );
+      },
+      { signal },
+    );
+
+    this.backend.addEventListener(
+      "passenger_spawned",
+      (e) => {
+        presentPassenger(
+          this.dom.getElement("world"),
+          this.displayManager.passengerDisplays.get(e.detail.passenger.id),
         );
       },
       { signal },
@@ -221,12 +208,6 @@ export class WorldManager extends EventTarget {
 
     // AbortController automatically removes all event listeners
     this.abortController.abort();
-
-    // Clean up world presenter
-    if (this.worldPresenter && this.worldPresenter.cleanup) {
-      this.worldPresenter.cleanup();
-      this.worldPresenter = null;
-    }
 
     // Clean up backend and display manager
     if (this.backend) {
