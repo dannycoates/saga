@@ -20,6 +20,7 @@ export class ElevatorApp extends EventTarget {
       this.dom.getElement("codeArea"),
       APP_CONSTANTS.STORAGE_KEY,
       this.runtimeManager,
+      this,
     );
 
     this.worldManager = new WorldManager(this.dom);

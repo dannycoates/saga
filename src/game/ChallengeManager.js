@@ -8,7 +8,6 @@ export class ChallengeManager {
     this.worldManager = worldManager;
     this.urlManager = urlManager;
     this.currentChallengeIndex = 0;
-    this.challengePresenter = null;
     this.statsChangedHandler = null;
   }
 
@@ -27,7 +26,7 @@ export class ChallengeManager {
     this.worldManager.initializeChallenge(challenges[challengeIndex].options);
 
     // Present challenge UI
-    this.challengePresenter = presentChallenge(
+    presentChallenge(
       this.dom.getElement("challenge"),
       challenges[challengeIndex],
       app,
@@ -41,7 +40,9 @@ export class ChallengeManager {
     // Start world if auto-starting
     if (autoStart) {
       const codeObj = await editor.getCodeObj(app);
-      await this.worldManager.start(codeObj);
+      if (codeObj) {
+        await this.worldManager.start(codeObj);
+      }
     }
   }
 
@@ -106,12 +107,6 @@ export class ChallengeManager {
         this.statsChangedHandler,
       );
       this.statsChangedHandler = null;
-    }
-
-    // Clean up challenge presenter
-    if (this.challengePresenter) {
-      // Challenge presenter cleanup if needed
-      this.challengePresenter = null;
     }
   }
 }
