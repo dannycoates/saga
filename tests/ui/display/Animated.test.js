@@ -31,7 +31,7 @@ describe("Animated class", () => {
 
   it("updates display position when told to", () => {
     m.moveTo(1.0, 1.0);
-    m.updateDisplayPosition();
+    m.syncUIComponent();
     expect(m.worldX).toBe(1.0);
     expect(m.worldY).toBe(1.0);
   });
@@ -58,7 +58,7 @@ describe("Animated class", () => {
     const mParent = new Animated();
     m.setParent(mParent);
     mParent.moveTo(2.0, 3.0);
-    m.updateDisplayPosition();
+    m.syncUIComponent();
     expect(m.x).toBe(0.0);
     expect(m.y).toBe(0.0);
     expect(m.worldX).toBe(2.0);

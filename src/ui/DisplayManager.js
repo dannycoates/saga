@@ -121,7 +121,7 @@ export class DisplayManager {
     state.passengers.forEach((passenger) => {
       let display = this.passengerDisplays.get(passenger.id);
       if (display) {
-        display.updateFromState(passenger, state.elevators);
+        display.updateFromState(passenger);
       }
     });
 
@@ -165,7 +165,7 @@ export class DisplayManager {
     passengers.forEach((passenger) => {
       const display = this.passengerDisplays.get(passenger.id);
       if (display) {
-        display.updateFromState(passenger, []);
+        display.updateFromState(passenger);
       }
     });
   }

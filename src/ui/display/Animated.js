@@ -28,7 +28,7 @@ export class Animated extends Display {
     this.currentTask = NOOP;
   }
 
-  updateDisplayPosition(forceTrigger) {
+  syncUIComponent(forceTrigger) {
     this.getWorldPosition(_tmpPosStorage);
     const oldX = this.worldX;
     const oldY = this.worldY;

@@ -5,7 +5,7 @@ export class Display extends EventTarget {
 
   tick(dt) {}
 
-  updateDisplayPosition() {
+  syncUIComponent() {
     this.dispatchEvent(new CustomEvent("new_display_state"));
   }
 }
