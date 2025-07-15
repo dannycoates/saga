@@ -22,32 +22,28 @@ Elevator Saga is a multi-language elevator programming game where users write Ja
 
 ### Core Architecture Pattern
 
-The codebase uses a **layered, event-driven architecture** with clear separation of concerns:
+The codebase uses a **streamlined, event-driven architecture** with clear separation of concerns:
 
 ```
-SimulationCore → JSSimulationBackend → World → DisplayManager → UI
-     (Logic)       (Abstraction)     (Compat)    (Presentation)
+JSSimulationBackend → WorldManager → DisplayManager → UI
+   (Simulation)       (Game Logic)    (Presentation)
 ```
 
 ### Key Components
 
-**SimulationCore** (`src/core/SimulationCore.js`)
-- Pure simulation engine handling game physics and logic
-- Event-driven with immutable state snapshots
+**JSSimulationBackend** (`src/core/JSSimulationBackend.js`)
+- Primary simulation engine handling game physics and logic
+- Event-driven with direct state management
 - Manages passengers, elevators, floors, and their interactions
+- Handles user code execution and error propagation
 - Emits `state_changed`, `stats_changed`, `passenger_spawned` events
 
-**JSSimulationBackend** (`src/core/JSSimulationBackend.js`)
-- Implements the `SimulationBackend` interface as an adapter layer
-- Wraps `SimulationCore` and forwards its events
-- Handles user code execution and error propagation
-- Enables pluggable backends (JavaScript, WASM, Web Workers)
-
-**World** (`src/core/World.js`)
-- Compatibility layer maintaining legacy API while using modern architecture
+**WorldManager** (`src/game/WorldManager.js`)
+- Main game orchestrator and controller
 - Composes `JSSimulationBackend` and `DisplayManager`
+- Manages game loops, user code execution, and challenge evaluation
 - Uses **AbortController** for proper event listener cleanup
-- Provides backward compatibility properties (`transportedCounter`, `moveCount`, etc.)
+- Provides game state properties (`transportedCounter`, `moveCount`, etc.)
 
 **DisplayManager** (`src/ui/DisplayManager.js`)
 - Pure presentation layer separated from simulation logic
@@ -95,11 +91,10 @@ function tick(elevators, floors) { /* player code */ }
 ### Event-Driven Architecture
 
 The system uses **EventTarget** extensively for loose coupling:
-- `SimulationCore` emits core events (`state_changed`, `stats_changed`, `passenger_spawned`)
-- `JSSimulationBackend` forwards these events
+- `JSSimulationBackend` emits core events (`state_changed`, `stats_changed`, `passenger_spawned`)
 - `DisplayManager` subscribes to backend events for UI updates
-- `World` uses **AbortController** for proper event cleanup
-- `worldManager` handles game loop and user code errors
+- `WorldManager` uses **AbortController** for proper event cleanup
+- `WorldManager` handles game loop and user code errors
 
 ### Critical Patterns
 
@@ -107,7 +102,7 @@ The system uses **EventTarget** extensively for loose coupling:
 
 **Event Cleanup**: All event listeners use `AbortController` for proper cleanup, preventing memory leaks and start/stop bugs.
 
-**Immutable State**: `SimulationCore` provides immutable state snapshots, preventing direct mutation and enabling consistent rendering.
+**Direct State Management**: `JSSimulationBackend` manages simulation state directly, providing consistent state updates and rendering.
 
 **Multi-Language Bridging**: Each runtime maintains API parity through wrapper classes (Python) or JNI callbacks (Java).
 
@@ -115,7 +110,7 @@ The system uses **EventTarget** extensively for loose coupling:
 
 The project uses Vitest with JSDOM for testing. Test files are in `/tests/` and follow the naming pattern `*.test.js`. Tests focus on:
 - Core game mechanics and entity behaviors
-- Architecture components (SimulationCore, DisplayManager, World)
+- Architecture components (JSSimulationBackend, DisplayManager, WorldManager)
 - Multi-runtime compatibility
 - Event-driven system behavior
 
@@ -125,9 +120,8 @@ The project uses Vitest with JSDOM for testing. Test files are in `/tests/` and 
 
 ## Important Files
 
-- `src/core/World.js` - Main World class with AbortController event management
-- `src/core/SimulationCore.js` - Core simulation engine
-- `src/core/JSSimulationBackend.js` - Backend abstraction layer
+- `src/game/WorldManager.js` - Main game orchestrator with AbortController event management
+- `src/core/JSSimulationBackend.js` - Primary simulation engine and backend
 - `src/ui/DisplayManager.js` - Presentation layer management
 - `src/game/challenges.js` - Challenge definitions and evaluation
 - `src/runtimes/RuntimeManager.js` - Multi-language runtime coordination

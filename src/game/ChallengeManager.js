@@ -40,7 +40,8 @@ export class ChallengeManager {
 
     // Start world if auto-starting
     if (autoStart) {
-      await this.worldManager.start(editor, app, autoStart);
+      const codeObj = await editor.getCodeObj(app);
+      await this.worldManager.start(codeObj);
     }
   }
 
@@ -61,7 +62,6 @@ export class ChallengeManager {
       );
 
       if (challengeStatus !== null) {
-        world.challengeEnded = true;
         this.worldManager.setPaused(true);
 
         if (challengeStatus) {
