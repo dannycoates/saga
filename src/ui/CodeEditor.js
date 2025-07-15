@@ -101,10 +101,11 @@ function createJavaScriptLinter() {
 
 // CodeMirror editor wrapper
 export class CodeEditor extends EventTarget {
-  constructor(element, storageKey, runtimeManager) {
+  constructor(element, storageKey, runtimeManager, app = null) {
     super();
     this.storageKey = storageKey;
     this.runtimeManager = runtimeManager;
+    this.app = app;
     this.currentLanguage =
       localStorage.getItem(`${storageKey}_language`) || "javascript";
 
@@ -164,7 +165,22 @@ export class CodeEditor extends EventTarget {
       indentUnit.of("    "), // 4 spaces for indentation
       lintGutter(), // Add lint gutter for error indicators
       this.linterCompartment.of(lintExtension || []), // Use compartment for linter
-      keymap.of([indentWithTab]),
+      keymap.of([
+        indentWithTab,
+        {
+          key: "Mod-s",
+          preventDefault: true,
+          run: () => {
+            if (this.app && this.app.worldManager) {
+              if (!this.app.worldManager.isPaused) {
+                this.app.startOrStop(); // restart
+              }
+              this.app.startOrStop();
+            }
+            return true;
+          },
+        },
+      ]),
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
           this.autoSave();
