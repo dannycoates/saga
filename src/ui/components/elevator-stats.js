@@ -51,16 +51,16 @@ export class ElevatorStats extends HTMLElement {
     }
   }
 
-  updateFromWorld(world) {
-    this.setAttribute("transported", world.transportedCounter);
-    this.setAttribute("elapsed-time", world.elapsedTime.toFixed(0) + "s");
+  updateFromWorld(stats) {
+    this.setAttribute("transported", stats.transportedCounter);
+    this.setAttribute("elapsed-time", stats.elapsedTime.toFixed(0) + "s");
     this.setAttribute(
       "transported-per-sec",
-      world.transportedPerSec.toPrecision(3),
+      stats.transportedPerSec.toPrecision(3),
     );
-    this.setAttribute("avg-wait-time", world.avgWaitTime.toFixed(1) + "s");
-    this.setAttribute("max-wait-time", world.maxWaitTime.toFixed(1) + "s");
-    this.setAttribute("move-count", world.moveCount);
+    this.setAttribute("avg-wait-time", stats.avgWaitTime.toFixed(1) + "s");
+    this.setAttribute("max-wait-time", stats.maxWaitTime.toFixed(1) + "s");
+    this.setAttribute("move-count", stats.moveCount);
   }
 
   updateStat(name, value) {
