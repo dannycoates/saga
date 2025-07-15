@@ -12,7 +12,7 @@ export class ElevatorDisplay extends Animated {
     this.moveTo(xPos, this.getDisplayYPos(0));
     this.updateFromState(elevatorState);
     // Trigger initial position update for UI
-    this.updateDisplayPosition(true);
+    this.syncUIComponent(true);
   }
 
   getDisplayYPos(position) {
@@ -33,7 +33,7 @@ export class ElevatorDisplay extends Animated {
 
     // Update position
     this.moveTo(null, this.getDisplayYPos(elevatorState.position));
-    this.updateDisplayPosition();
+    this.syncUIComponent();
 
     // Check for floor changes
     const newFloor = elevatorState.currentFloor;
@@ -52,7 +52,7 @@ export class ElevatorDisplay extends Animated {
 
   tick(dt) {
     // Update display position to trigger UI updates
-    this.updateDisplayPosition();
+    this.syncUIComponent();
   }
 
   get buttons() {

@@ -14,7 +14,6 @@ export class PassengerDisplay extends Animated {
     this.startingY = startingY;
     this.elevatorDisplays = elevatorDisplays; // Reference to world's elevator displays Map
     this.active = true; // prevents the World from deleting passenger until falsy. NullDisplay is always falsy
-    this.done = false; // Compatibility property
     if (randomInt(0, 40) === 0) {
       this.displayType = "child";
     } else if (randomInt(0, 1) === 0) {
@@ -24,9 +23,9 @@ export class PassengerDisplay extends Animated {
     }
     // Set initial position
     this.appearOnFloor();
-    this.updateDisplayPosition(true);
+    this.syncUIComponent(true);
     // Process initial state
-    this.updateFromState(passengerState, []);
+    this.updateFromState(passengerState);
   }
 
   appearOnFloor() {
@@ -35,7 +34,6 @@ export class PassengerDisplay extends Animated {
 
   animateExit() {
     this.setParent(null);
-    this.done = true; // Set done flag for UI component
     const destination = this.x + 100;
     this.moveToOverTime(destination, null, 1, linearInterpolate, () => {
       this.active = false;
@@ -45,7 +43,9 @@ export class PassengerDisplay extends Animated {
 
   animateBoarding() {
     if (this.elevatorDisplays && this.passengerState.elevatorIndex !== null) {
-      const parent = this.elevatorDisplays.get(this.passengerState.elevatorIndex);
+      const parent = this.elevatorDisplays.get(
+        this.passengerState.elevatorIndex,
+      );
       if (parent) {
         this.setParent(parent);
         const [x, y] = parent.getPassengerPosition(
@@ -56,9 +56,9 @@ export class PassengerDisplay extends Animated {
     }
   }
 
-  updateFromState(passengerState, elevators) {
+  updateFromState(passengerState) {
     this.passengerState = passengerState;
-    
+
     if (this.state !== passengerState.state) {
       switch (passengerState.state) {
         case "waiting": {
@@ -81,13 +81,11 @@ export class PassengerDisplay extends Animated {
     }
   }
 
+  // We need this so we can do the exit animation
+  // after the passenger has already been removed
+  // from simulation state
   tick(dt) {
     super.tick(dt);
-    this.updateDisplayPosition();
-  }
-
-  get passenger() {
-    // Compatibility getter
-    return this.passengerState;
+    this.syncUIComponent();
   }
 }
