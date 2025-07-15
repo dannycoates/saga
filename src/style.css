@@ -110,9 +110,10 @@ dl dd {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    width: 1220px;
+    max-width: 1220px;
+    width: 100%;
     margin: 0 auto;
-    padding: 10px 0 20px 0;
+    padding: 10px 20px 20px 20px;
     gap: 4px;
 }
 
@@ -295,7 +296,6 @@ button:hover {
 
 .world {
     display: flex;
-    width: 1220px;
     background-color: var(--world-bg);
     padding: 0;
     position: relative; /* Keep for feedbackcontainer */
@@ -326,6 +326,12 @@ button:hover {
 }
 
 .feedbackcontainer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
     /* Container for game feedback messages */
 }
 

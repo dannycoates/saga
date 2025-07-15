@@ -46,15 +46,26 @@ export class DisplayManager {
     });
 
     // Create elevator displays
-    let currentX = 200.0;
-    initialState.elevators.forEach((elevator) => {
-      const display = new ElevatorDisplay(
-        elevator,
-        currentX,
-        elevator.capacity,
-      );
-      currentX += 20 + display.width;
-      this.elevatorDisplays.set(elevator.index, display);
+    const elevatorGutter = 20;
+    const initialXOffset = 200; // For floor display
+    const elevatorDisplays = initialState.elevators.map((elevator) => {
+      return new ElevatorDisplay(elevator, 0, elevator.capacity);
+    });
+
+    const totalElevatorWidth = elevatorDisplays.reduce((sum, display) => {
+      return sum + display.width + elevatorGutter;
+    }, 0);
+
+    const innerWorld = document.querySelector(".innerworld");
+    if (innerWorld) {
+      innerWorld.style.minWidth = `${totalElevatorWidth + initialXOffset}px`;
+    }
+
+    let currentX = initialXOffset;
+    elevatorDisplays.forEach((display, i) => {
+      display.moveTo(currentX, display.getDisplayYPos(initialState.elevators[i].position));
+      this.elevatorDisplays.set(initialState.elevators[i].index, display);
+      currentX += display.width + elevatorGutter;
     });
 
     // Initial render with tick to set up positions
