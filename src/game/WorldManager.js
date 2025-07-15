@@ -28,7 +28,7 @@ export class WorldManager extends EventTarget {
     this.dtMax = APP_CONSTANTS.FRAME_RATE;
     this.timeScale = 1.0;
     this.isPaused = true;
-    
+
     // Animation frame tracking
     this.animationFrameId = null;
   }
@@ -229,7 +229,6 @@ export class WorldManager extends EventTarget {
           let scaledDt = dt * 0.001 * this.timeScale;
           scaledDt = Math.min(scaledDt, this.dtMax * 3 * this.timeScale);
 
-
           try {
             await this.callUserCode(codeObj, dt);
           } catch (e) {
@@ -255,7 +254,7 @@ export class WorldManager extends EventTarget {
     }
   }
 
-  startStopOrRestart(app) {
+  startOrStop(app) {
     if (this.isPaused) {
       // Start button clicked - start the challenge
       app.startChallenge(app.getCurrentChallengeIndex(), true);

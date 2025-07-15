@@ -87,8 +87,8 @@ export class ElevatorApp extends EventTarget {
     }
   }
 
-  startStopOrRestart() {
-    this.worldManager.startStopOrRestart(this);
+  startOrStop() {
+    this.worldManager.startOrStop(this);
   }
 
   async startChallenge(challengeIndex, autoStart) {
