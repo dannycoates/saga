@@ -1,5 +1,6 @@
 import { APP_CONSTANTS } from "../config/constants.js";
 import { presentCodeStatus } from "./presenters.js";
+import { KonamiCodeDetector } from "./KonamiCodeDetector.js";
 
 export class AppEventHandlers {
   constructor(app, dom, editor, runtimeManager) {
@@ -9,6 +10,8 @@ export class AppEventHandlers {
     this.runtimeManager = runtimeManager;
     this.abortController = new AbortController();
     this.boundHandlers = {};
+    this.konamiDetector = new KonamiCodeDetector();
+    this.wasmUnlocked = false;
   }
 
   setupAllHandlers() {
@@ -16,6 +19,7 @@ export class AppEventHandlers {
     this.setupEditorHandlers();
     this.setupworldManagerHandlers();
     this.setupLanguageHandler();
+    this.setupKonamiCodeHandler();
   }
 
   setupButtonHandlers() {
@@ -114,6 +118,12 @@ export class AppEventHandlers {
     const { signal } = this.abortController;
     const languageSelect = this.dom.getElement("languageSelect");
     if (languageSelect) {
+      // Check if WASM was previously unlocked by checking if current language is WASM
+      if (this.editor.currentLanguage === 'wasm') {
+        this.wasmUnlocked = true;
+        this.addWasmToLanguageSelector();
+      }
+      
       languageSelect.value = this.editor.currentLanguage;
 
       this.boundHandlers.languageChange = async (e) => {
@@ -152,9 +162,42 @@ export class AppEventHandlers {
     }
   }
 
+  setupKonamiCodeHandler() {
+    const { signal } = this.abortController;
+    
+    this.boundHandlers.konamiCode = () => {
+      if (!this.wasmUnlocked) {
+        this.wasmUnlocked = true;
+        this.addWasmToLanguageSelector();
+        console.log("🎮 Konami code activated! WASM runtime unlocked!");
+      }
+    };
+
+    this.konamiDetector.addEventListener(
+      'konamicode',
+      this.boundHandlers.konamiCode,
+      { signal }
+    );
+  }
+
+  addWasmToLanguageSelector() {
+    const languageSelect = this.dom.getElement("languageSelect");
+    if (languageSelect && !languageSelect.querySelector('option[value="wasm"]')) {
+      const wasmOption = document.createElement('option');
+      wasmOption.value = 'wasm';
+      wasmOption.textContent = 'WebAssembly';
+      languageSelect.appendChild(wasmOption);
+    }
+  }
+
   cleanup() {
     // AbortController automatically removes all event listeners
     this.abortController.abort();
+
+    // Clean up konami detector
+    if (this.konamiDetector) {
+      this.konamiDetector.dispose();
+    }
 
     // Clear bound handlers for memory cleanup
     this.boundHandlers = {};

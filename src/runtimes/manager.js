@@ -1,6 +1,7 @@
 import { JavaScriptRuntime } from "./javascript.js";
 import { PythonRuntime } from "./python.js";
 import { JavaRuntime } from "./java.js";
+import { WasmRuntime } from "./wasm.js";
 
 export class RuntimeManager {
   constructor() {
@@ -8,6 +9,7 @@ export class RuntimeManager {
       javascript: new JavaScriptRuntime(),
       python: new PythonRuntime(),
       java: new JavaRuntime(),
+      wasm: new WasmRuntime(),
     };
 
     this.currentLanguage = "javascript";

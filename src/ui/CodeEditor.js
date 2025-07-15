@@ -107,25 +107,15 @@ export class CodeEditor extends EventTarget {
     this.runtimeManager = runtimeManager;
     this.currentLanguage =
       localStorage.getItem(`${storageKey}_language`) || "javascript";
+    this.parentElement = element;
 
     // Create compartments for extensions
     this.languageCompartment = new Compartment();
     this.linterCompartment = new Compartment();
     this.themeCompartment = new Compartment();
 
-    // Get the appropriate default code based on language
-    const defaultCode =
-      this.runtimeManager.runtimes[this.currentLanguage].getDefaultTemplate();
-
-    const existingCode =
-      localStorage.getItem(`${storageKey}_${this.currentLanguage}`) ||
-      defaultCode;
-
-    this.view = new EditorView({
-      doc: existingCode,
-      extensions: this.getExtensions(),
-      parent: element,
-    });
+    // Initialize the appropriate interface
+    this.initializeInterface();
 
     this.autoSave = throttle(() => this.saveCode(), 1000);
 
@@ -133,6 +123,177 @@ export class CodeEditor extends EventTarget {
     themeManager.onThemeChange((theme) => {
       this.updateTheme(theme);
     });
+  }
+
+  initializeInterface() {
+    if (this.currentLanguage === 'wasm') {
+      this.createWasmInterface();
+    } else {
+      this.createCodeEditor();
+    }
+  }
+
+  createCodeEditor() {
+    // Clear existing content
+    this.parentElement.innerHTML = '';
+
+    // Get the appropriate default code based on language
+    const defaultCode =
+      this.runtimeManager.runtimes[this.currentLanguage].getDefaultTemplate();
+
+    const existingCode =
+      localStorage.getItem(`${this.storageKey}_${this.currentLanguage}`) ||
+      defaultCode;
+
+    this.view = new EditorView({
+      doc: existingCode,
+      extensions: this.getExtensions(),
+      parent: this.parentElement,
+    });
+    
+    // Clear any WASM interface references
+    this.wasmInterface = null;
+  }
+
+  createWasmInterface() {
+    // Clear existing content and CodeMirror view
+    this.parentElement.innerHTML = '';
+    if (this.view) {
+      this.view.destroy();
+      this.view = null;
+    }
+
+    // Create WASM file interface
+    this.wasmInterface = document.createElement('div');
+    this.wasmInterface.className = 'wasm-interface';
+    this.wasmInterface.innerHTML = `
+      <div class="wasm-upload-area">
+        <div class="drop-zone" id="wasm-drop-zone">
+          <div class="drop-zone-content">
+            <div class="upload-icon">📁</div>
+            <h3>Drop your WASM file here</h3>
+            <p>or</p>
+            <input type="file" id="wasm-file-input" accept=".wasm" style="display: none;">
+            <button id="wasm-file-button" class="file-select-button">Select WASM File</button>
+          </div>
+        </div>
+        <div class="wasm-file-info" id="wasm-file-info" style="display: none;">
+          <h4>Loaded WASM File:</h4>
+          <div class="file-details">
+            <span class="file-name" id="wasm-file-name"></span>
+            <span class="file-size" id="wasm-file-size"></span>
+          </div>
+          <button id="wasm-file-remove" class="remove-button">Remove File</button>
+        </div>
+        <div class="wasm-instructions">
+          <h4>Instructions:</h4>
+          <ol>
+            <li>Implement the elevator-api.wit interface in your preferred language</li>
+            <li>Compile your code to a WASM component (.wasm file)</li>
+            <li>Upload the .wasm file using the file selector or drag & drop</li>
+            <li>Click "Apply" to run your WASM elevator controller</li>
+          </ol>
+          <p><strong>Interface specification:</strong> See <code>elevator-api.wit</code> in the project root</p>
+        </div>
+      </div>
+    `;
+
+    this.parentElement.appendChild(this.wasmInterface);
+    this.setupWasmFileHandlers();
+  }
+
+  setupWasmFileHandlers() {
+    const dropZone = this.wasmInterface.querySelector('#wasm-drop-zone');
+    const fileInput = this.wasmInterface.querySelector('#wasm-file-input');
+    const fileButton = this.wasmInterface.querySelector('#wasm-file-button');
+    const fileInfo = this.wasmInterface.querySelector('#wasm-file-info');
+    const fileName = this.wasmInterface.querySelector('#wasm-file-name');
+    const fileSize = this.wasmInterface.querySelector('#wasm-file-size');
+    const removeButton = this.wasmInterface.querySelector('#wasm-file-remove');
+
+    // File button click
+    fileButton.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    // File input change
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        this.handleWasmFile(e.target.files[0]);
+      }
+    });
+
+    // Drag and drop
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+
+    dropZone.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      
+      const files = e.dataTransfer.files;
+      if (files.length > 0 && files[0].name.endsWith('.wasm')) {
+        this.handleWasmFile(files[0]);
+      } else {
+        alert('Please drop a .wasm file');
+      }
+    });
+
+    // Remove button
+    removeButton.addEventListener('click', () => {
+      this.currentWasmFile = null;
+      fileInfo.style.display = 'none';
+      dropZone.style.display = 'block';
+      fileInput.value = '';
+    });
+
+    const updateFileInfo = () => {
+      const runtime = this.runtimeManager.runtimes.wasm;
+      if (runtime && runtime.hasWasmFile()) {
+        const fileInfo = runtime.getFileInfo();
+        fileName.textContent = 'WASM Module';
+        fileSize.textContent = `${(fileInfo.size / 1024).toFixed(1)} KB`;
+        dropZone.style.display = 'none';
+        this.wasmInterface.querySelector('#wasm-file-info').style.display = 'block';
+      }
+    };
+
+    // Check if there's already a WASM file loaded
+    updateFileInfo();
+  }
+
+  async handleWasmFile(file) {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      
+      // Store the file for the runtime
+      this.currentWasmFile = arrayBuffer;
+      
+      // Update UI
+      const fileName = this.wasmInterface.querySelector('#wasm-file-name');
+      const fileSize = this.wasmInterface.querySelector('#wasm-file-size');
+      const fileInfo = this.wasmInterface.querySelector('#wasm-file-info');
+      const dropZone = this.wasmInterface.querySelector('#wasm-drop-zone');
+      
+      fileName.textContent = file.name;
+      fileSize.textContent = `${(file.size / 1024).toFixed(1)} KB`;
+      dropZone.style.display = 'none';
+      fileInfo.style.display = 'block';
+
+      // Trigger save event
+      this.dispatchEvent(new CustomEvent("change"));
+      
+    } catch (error) {
+      console.error('Failed to load WASM file:', error);
+      alert('Failed to load WASM file: ' + error.message);
+    }
   }
 
   getExtensions() {
@@ -176,45 +337,29 @@ export class CodeEditor extends EventTarget {
   }
 
   updateTheme(theme) {
-    const themeExtension = theme === "dark" ? gruvboxDark : gruvboxLight;
-    this.view.dispatch({
-      effects: this.themeCompartment.reconfigure(themeExtension),
-    });
+    // Only update theme if we have a CodeMirror view (not for WASM interface)
+    if (this.view) {
+      const themeExtension = theme === "dark" ? gruvboxDark : gruvboxLight;
+      this.view.dispatch({
+        effects: this.themeCompartment.reconfigure(themeExtension),
+      });
+    }
   }
 
   setLanguage(language) {
     if (language === this.currentLanguage) return;
 
-    // Save current code
-    this.saveCode();
+    // Save current code if we have a code editor
+    if (this.view) {
+      this.saveCode();
+    }
 
     // Update language
     this.currentLanguage = language;
     localStorage.setItem(`${this.storageKey}_language`, language);
 
-    // Load code for new language
-    const defaultCode =
-      this.runtimeManager.runtimes[language].getDefaultTemplate();
-    const existingCode =
-      localStorage.getItem(`${this.storageKey}_${language}`) || defaultCode;
-
-    // Reconfigure both language and linter compartments
-    let lintExtension = null;
-    if (language === "javascript") {
-      lintExtension = createJavaScriptLinter();
-    }
-
-    this.view.dispatch({
-      effects: [
-        this.languageCompartment.reconfigure(
-          this.getLanguageExtension(language),
-        ),
-        this.linterCompartment.reconfigure(lintExtension || []),
-      ],
-    });
-
-    // Set the code
-    this.setCode(existingCode);
+    // Reinitialize the interface for the new language
+    this.initializeInterface();
   }
 
   getLanguageExtension(language) {
@@ -231,15 +376,39 @@ export class CodeEditor extends EventTarget {
   }
 
   reset() {
+    if (this.currentLanguage === 'wasm') {
+      // Reset WASM interface
+      this.currentWasmFile = null;
+      if (this.wasmInterface) {
+        const fileInfo = this.wasmInterface.querySelector('#wasm-file-info');
+        const dropZone = this.wasmInterface.querySelector('#wasm-drop-zone');
+        const fileInput = this.wasmInterface.querySelector('#wasm-file-input');
+        fileInfo.style.display = 'none';
+        dropZone.style.display = 'block';
+        fileInput.value = '';
+      }
+      return;
+    }
+
     const defaultCode =
       this.runtimeManager.runtimes[this.currentLanguage].getDefaultTemplate();
 
-    this.view.dispatch({
-      changes: { from: 0, to: this.view.state.doc.length, insert: defaultCode },
-    });
+    if (this.view) {
+      this.view.dispatch({
+        changes: { from: 0, to: this.view.state.doc.length, insert: defaultCode },
+      });
+    }
   }
 
   saveCode() {
+    if (this.currentLanguage === 'wasm') {
+      // WASM files don't get saved to localStorage (too large)
+      document.getElementById("save_message").textContent =
+        "WASM file loaded " + new Date().toTimeString();
+      this.dispatchEvent(new CustomEvent("change"));
+      return;
+    }
+
     localStorage.setItem(
       `${this.storageKey}_${this.currentLanguage}`,
       this.getCode(),
@@ -250,13 +419,25 @@ export class CodeEditor extends EventTarget {
   }
 
   getCode() {
-    return this.view.state.doc.toString();
+    if (this.currentLanguage === 'wasm') {
+      return this.currentWasmFile || null;
+    }
+    return this.view ? this.view.state.doc.toString() : '';
   }
 
   setCode(code) {
-    this.view.dispatch({
-      changes: { from: 0, to: this.view.state.doc.length, insert: code },
-    });
+    if (this.currentLanguage === 'wasm') {
+      // For WASM, code would be an ArrayBuffer
+      if (code instanceof ArrayBuffer) {
+        this.currentWasmFile = code;
+      }
+      return;
+    }
+    if (this.view) {
+      this.view.dispatch({
+        changes: { from: 0, to: this.view.state.doc.length, insert: code },
+      });
+    }
   }
 
   async getCodeObj(app) {

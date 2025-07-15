@@ -1,0 +1,20 @@
+package component:elevator@0.1.0;
+
+world elevator {
+  import gofloor: func(elevator-id: u32, floor-num: u32);
+  export tick: func(elevators: list<elevator>, floors: list<floor>);
+  
+  record elevator {
+    id: u32,
+    current-floor: u32,
+    destination-floor: option<u32>,
+    pressed-floors: list<u32>,
+    load: f32,
+  }
+
+  record floor {
+    level: u32,
+    up-button: bool,
+    down-button: bool,
+  }
+}
