@@ -60,11 +60,12 @@ export class GameFeedback extends HTMLElement {
       <style>
         :host {
           display: block;
+          pointer-events: auto;
         }
 
         .feedback {
           position: absolute;
-          width: 1220px;
+          width: 100%;
           height: 100%;
           padding-top: 20px;
           line-height: 20px;
