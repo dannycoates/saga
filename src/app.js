@@ -88,7 +88,14 @@ export class ElevatorApp extends EventTarget {
   }
 
   startOrStop() {
-    this.worldManager.startOrStop(this);
+    if (this.worldManager.isPaused) {
+      // Start button clicked - start the challenge
+      this.startChallenge(this.getCurrentChallengeIndex(), true);
+    } else {
+      // Stop button clicked - reset the game state
+      this.worldManager.setPaused(true);
+      this.startChallenge(this.getCurrentChallengeIndex(), false);
+    }
   }
 
   async startChallenge(challengeIndex, autoStart) {

@@ -31,6 +31,31 @@ export class WorldManager extends EventTarget {
 
     // Animation frame tracking
     this.animationFrameId = null;
+    this.codeObj = null;
+    this.lastT = null;
+    this.runFrame = async (t) => {
+      if (!this.isPaused && !this.challengeEnded && this.lastT !== null) {
+        const dt = t - this.lastT;
+        let scaledDt = dt * 0.001 * this.timeScale;
+        scaledDt = Math.min(scaledDt, this.dtMax * 3 * this.timeScale);
+
+        try {
+          await this.backend.callUserCode(this.codeObj, dt);
+        } catch (e) {
+          this.handlePassengerCodeError(e);
+        }
+
+        while (scaledDt > 0.0 && !this.challengeEnded) {
+          const thisDt = Math.min(this.dtMax, scaledDt);
+          this.backend.tick(thisDt);
+          scaledDt -= this.dtMax;
+        }
+      }
+      this.lastT = t;
+      if (!this.challengeEnded) {
+        this.animationFrameId = window.requestAnimationFrame(this.runFrame);
+      }
+    };
   }
 
   get floors() {
@@ -62,12 +87,6 @@ export class WorldManager extends EventTarget {
     return this.backend ? this.backend.hasEnded() : true;
   }
 
-  set challengeEnded(value) {
-    if (value && this.backend) {
-      this.unWind();
-    }
-  }
-
   setTimeScale(timeScale) {
     this.timeScale = timeScale;
     this.dispatchEvent(new CustomEvent("timescale_changed"));
@@ -83,30 +102,6 @@ export class WorldManager extends EventTarget {
     this.setPaused(true);
     console.log("Usercode error on update", e);
     this.dispatchEvent(new CustomEvent("usercode_error", { detail: e }));
-  }
-
-  tick(dt) {
-    this.backend?.tick(dt);
-  }
-
-  async callUserCode(codeObj, dt) {
-    return this.backend?.callUserCode(codeObj, dt);
-  }
-
-  unWind() {
-    // Abort all event listeners
-    this.abortController.abort();
-
-    // Clean up backend and display manager
-    if (this.backend) {
-      this.backend.dispose();
-    }
-    if (this.displayManager) {
-      this.displayManager.cleanup();
-    }
-
-    // Create new AbortController for potential reuse
-    this.abortController = new AbortController();
   }
 
   initializeDisplays(worldElement) {
@@ -201,7 +196,7 @@ export class WorldManager extends EventTarget {
     );
   }
 
-  async start(editor, app, autoStart) {
+  async start(codeObj) {
     if (!this.backend) {
       throw new Error("World not created. Call initializeChallenge() first.");
     }
@@ -212,57 +207,9 @@ export class WorldManager extends EventTarget {
       return;
     }
 
-    const codeObj = await editor.getCodeObj(app);
-    if (codeObj) {
-      this.isPaused = true;
-      let lastT = null;
-
-      this.addEventListener(
-        "usercode_error",
-        (e) => this.handlePassengerCodeError(e.detail),
-        { signal: this.abortController.signal },
-      );
-
-      const updater = async (t) => {
-        if (!this.isPaused && !this.challengeEnded && lastT !== null) {
-          const dt = t - lastT;
-          let scaledDt = dt * 0.001 * this.timeScale;
-          scaledDt = Math.min(scaledDt, this.dtMax * 3 * this.timeScale);
-
-          try {
-            await this.callUserCode(codeObj, dt);
-          } catch (e) {
-            this.handlePassengerCodeError(e);
-          }
-
-          while (scaledDt > 0.0 && !this.challengeEnded) {
-            const thisDt = Math.min(this.dtMax, scaledDt);
-            this.tick(thisDt);
-            scaledDt -= this.dtMax;
-          }
-        }
-        lastT = t;
-        if (!this.challengeEnded) {
-          this.animationFrameId = window.requestAnimationFrame(updater);
-        }
-      };
-
-      if (autoStart) {
-        this.setPaused(false);
-      }
-      this.animationFrameId = window.requestAnimationFrame(updater);
-    }
-  }
-
-  startOrStop(app) {
-    if (this.isPaused) {
-      // Start button clicked - start the challenge
-      app.startChallenge(app.getCurrentChallengeIndex(), true);
-    } else {
-      // Stop button clicked - reset the game state
-      this.setPaused(true);
-      app.startChallenge(app.getCurrentChallengeIndex(), false);
-    }
+    this.codeObj = codeObj;
+    this.setPaused(false);
+    this.animationFrameId = window.requestAnimationFrame(this.runFrame);
   }
 
   cleanup() {
