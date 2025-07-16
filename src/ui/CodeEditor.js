@@ -113,6 +113,7 @@ export class CodeEditor extends EventTarget {
     this.languageCompartment = new Compartment();
     this.linterCompartment = new Compartment();
     this.themeCompartment = new Compartment();
+    this.layoutCompartment = new Compartment();
 
     // Get the appropriate default code based on language
     const defaultCode = defaultTemplates[this.currentLanguage];
@@ -157,10 +158,14 @@ export class CodeEditor extends EventTarget {
     const currentTheme = themeManager.getCurrentTheme();
     const themeExtension = currentTheme === "dark" ? gruvboxDark : gruvboxLight;
 
+    // Default layout theme (no height constraints)
+    const defaultLayoutTheme = EditorView.theme({});
+
     const extensions = [
       basicSetup,
       this.languageCompartment.of(langExtension),
       this.themeCompartment.of(themeExtension),
+      this.layoutCompartment.of(defaultLayoutTheme),
       indentUnit.of("    "), // 4 spaces for indentation
       lintGutter(), // Add lint gutter for error indicators
       this.linterCompartment.of(lintExtension || []), // Use compartment for linter
@@ -270,5 +275,53 @@ export class CodeEditor extends EventTarget {
     this.view.dispatch({
       changes: { from: 0, to: this.view.state.doc.length, insert: code },
     });
+  }
+  setLayoutMode(isSideBySide) {
+    const layoutTheme = isSideBySide
+      ? EditorView.theme({
+          "&": { height: "100%" },
+          ".cm-editor": { overflow: "auto" },
+        })
+      : EditorView.theme({});
+
+    this.view.dispatch({
+      effects: this.layoutCompartment.reconfigure(layoutTheme),
+    });
+  }
+
+  async getCodeObj(app) {
+    const code = this.getCode();
+
+    try {
+      // Show loading for language selection if needed
+      const currentRuntime = this.runtimeManager.getCurrentRuntime();
+      if (!currentRuntime || !currentRuntime.loaded) {
+        app.showRuntimeLoading(
+          true,
+          `Loading ${this.currentLanguage} runtime...`,
+        );
+      }
+
+      // Select the language and load the code
+      await this.runtimeManager.selectLanguage(this.currentLanguage);
+
+      // Show loading for code compilation/loading
+      app.showRuntimeLoading(true, `Compiling ${this.currentLanguage} code...`);
+      await this.runtimeManager.loadCode(code);
+
+      // Hide loading
+      app?.showRuntimeLoading(false);
+
+      // Return a wrapper object that calls the runtime manager
+      return {
+        tick: async (elevators, floors) => {
+          return await this.runtimeManager.execute(elevators, floors);
+        },
+      };
+    } catch (e) {
+      app.showRuntimeLoading(false);
+      this.dispatchEvent(new CustomEvent("usercode_error", { detail: e }));
+      return null;
+    }
   }
 }

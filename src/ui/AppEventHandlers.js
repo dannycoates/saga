@@ -18,6 +18,7 @@ export class AppEventHandlers {
     this.setupEditorHandlers();
     this.setupLanguageHandler();
     this.setupChallengeEndedHandler();
+    this.setupLayoutToggle();
   }
 
   setupButtonHandlers() {
@@ -161,6 +162,89 @@ export class AppEventHandlers {
       this.boundHandlers.challenge_ended,
       { signal },
     );
+  }
+
+  setupLayoutToggle() {
+    const { signal } = this.abortController;
+    const layoutToggle = document.getElementById('layout-toggle');
+    const mainContent = document.querySelector('.main-content');
+    const splitter = document.getElementById('layout-splitter');
+    
+    if (!layoutToggle || !mainContent || !splitter) return;
+
+    // Initialize layout state
+    let isResizing = false;
+    let isSideBySide = false;
+
+    // Layout toggle functionality
+    this.boundHandlers.layoutToggle = () => {
+      isSideBySide = !isSideBySide;
+      mainContent.classList.toggle('side-by-side', isSideBySide);
+      
+      // Toggle full-width container for side-by-side layout
+      const container = document.querySelector('.container');
+      if (container) {
+        container.classList.toggle('full-width', isSideBySide);
+      }
+      
+      // Update CodeMirror layout mode
+      if (this.editor && this.editor.setLayoutMode) {
+        this.editor.setLayoutMode(isSideBySide);
+      }
+      
+      // Update button icon
+      const icon = layoutToggle.querySelector('.layout-icon');
+      if (icon) {
+        icon.textContent = isSideBySide ? '⚎' : '⚏';
+      }
+      
+      // Save layout preference
+      localStorage.setItem('layout-preference', isSideBySide ? 'side-by-side' : 'vertical');
+    };
+
+    // Splitter resize functionality
+    this.boundHandlers.splitterMouseDown = (e) => {
+      if (!isSideBySide) return;
+      
+      isResizing = true;
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      
+      e.preventDefault();
+    };
+
+    this.boundHandlers.splitterMouseMove = (e) => {
+      if (!isResizing || !isSideBySide) return;
+      
+      const container = mainContent.getBoundingClientRect();
+      const codeSection = mainContent.querySelector('.code-section');
+      const newWidth = ((e.clientX - container.left) / container.width) * 100;
+      
+      // Constrain between 20% and 80%
+      const constrainedWidth = Math.max(20, Math.min(80, newWidth));
+      
+      codeSection.style.flex = `0 0 ${constrainedWidth}%`;
+      
+      e.preventDefault();
+    };
+
+    this.boundHandlers.splitterMouseUp = () => {
+      isResizing = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    // Add event listeners
+    layoutToggle.addEventListener('click', this.boundHandlers.layoutToggle, { signal });
+    splitter.addEventListener('mousedown', this.boundHandlers.splitterMouseDown, { signal });
+    document.addEventListener('mousemove', this.boundHandlers.splitterMouseMove, { signal });
+    document.addEventListener('mouseup', this.boundHandlers.splitterMouseUp, { signal });
+
+    // Load saved layout preference
+    const savedLayout = localStorage.getItem('layout-preference');
+    if (savedLayout === 'side-by-side') {
+      this.boundHandlers.layoutToggle();
+    }
   }
 
   cleanup() {
