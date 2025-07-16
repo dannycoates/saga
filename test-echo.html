@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Echo Server Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            margin: 20px 0;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin: 10px 0;
+        }
+        button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover {
+            background: #005999;
+        }
+        .response {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>Echo Server Test</h1>
+    
+    <div class="container">
+        <h3>Test the /echo endpoint:</h3>
+        <textarea id="requestBody" placeholder="Enter request body (JSON, text, etc.)">{"message": "Hello from the client!", "timestamp": "2025-01-16T10:00:00Z"}</textarea>
+        <br>
+        <button onclick="sendEchoRequest()">Send POST to /echo</button>
+    </div>
+
+    <div class="container">
+        <h3>Response:</h3>
+        <div id="response" class="response">Click "Send POST to /echo" to test the endpoint</div>
+    </div>
+
+    <script>
+        async function sendEchoRequest() {
+            const body = document.getElementById('requestBody').value;
+            const responseDiv = document.getElementById('response');
+            
+            try {
+                responseDiv.textContent = 'Sending request...';
+                
+                const response = await fetch('/echo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: body
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                responseDiv.textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                responseDiv.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        // Test on page load with a GET request
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch('/echo?test=true', {
+                    method: 'GET'
+                });
+                
+                if (response.ok) {
+                    console.log('Echo server is working! Status:', response.status);
+                } else {
+                    console.log('Echo server responded with status:', response.status);
+                }
+            } catch (error) {
+                console.error('Could not reach echo server:', error.message);
+            }
+        });
+    </script>
+</body>
+</html>

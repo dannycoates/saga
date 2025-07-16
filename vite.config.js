@@ -122,6 +122,13 @@ export default defineConfig(({ mode }) => ({
   server: {
     open: true,
     port: 3000,
+    proxy: {
+      '/echo': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false
+      }
+    }
   },
   test: {
     globals: true,
