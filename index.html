@@ -18,6 +18,11 @@
                         >The elevator programming game</em
                     >
                 </h1>
+                <div class="layout-controls">
+                    <button id="layout-toggle" class="layout-toggle-btn" title="Toggle Layout">
+                        <span class="layout-icon">⚏</span>
+                    </button>
+                </div>
             </div>
 
             <div class="challenge">
@@ -26,33 +31,39 @@
                 </h3>
             </div>
 
-            <div class="world">
-                <div class="feedbackcontainer"></div>
-                <div class="innerworld"></div>
-                <div class="statscontainer">
-                    <!-- Stats will be populated by web component -->
-                </div>
-            </div>
-
-            <div class="codestatus"></div>
-            <div class="code">
-                <div class="language-selector">
-                    <label for="language-select">Language:</label>
-                    <select id="language-select">
-                        <option value="javascript">JavaScript</option>
-                        <option value="python">Python</option>
-                        <option value="java">Java</option>
-                    </select>
-                    <div
-                        class="loading-indicator"
-                        id="runtime-loading"
-                        style="display: none"
-                    >
-                        <span class="spinner"></span>
-                        <span class="loading-text">Loading runtime...</span>
+            <div class="main-content">
+                <div class="world">
+                    <div class="feedbackcontainer"></div>
+                    <div class="innerworld"></div>
+                    <div class="statscontainer">
+                        <!-- Stats will be populated by web component -->
                     </div>
                 </div>
-                <div id="code"></div>
+
+                <div class="code-section">
+                    <div class="codestatus"></div>
+                    <div class="code">
+                        <div class="language-selector">
+                            <label for="language-select">Language:</label>
+                            <select id="language-select">
+                                <option value="javascript">JavaScript</option>
+                                <option value="python">Python</option>
+                                <option value="java">Java</option>
+                            </select>
+                            <div
+                                class="loading-indicator"
+                                id="runtime-loading"
+                                style="display: none"
+                            >
+                                <span class="spinner"></span>
+                                <span class="loading-text">Loading runtime...</span>
+                            </div>
+                        </div>
+                        <div id="code"></div>
+                    </div>
+                </div>
+
+                <div class="splitter" id="layout-splitter"></div>
             </div>
             <div class="controls">
                 <div>

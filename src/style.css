@@ -119,6 +119,13 @@ dl dd {
     gap: 4px;
 }
 
+.container.full-width {
+    max-width: none;
+    padding: 10px 20px 20px 20px;
+    height: 100vh;
+    box-sizing: border-box;
+}
+
 .unselectable {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
@@ -220,7 +227,8 @@ button:hover {
 }
 
 .code {
-    flex: 1;
+    display: flex;
+    flex-direction: column;
     border: 2px solid var(--bg-primary);
 }
 
@@ -272,10 +280,17 @@ button:hover {
     }
 }
 
+#code {
+    height: calc(100% - 45px);
+}
+
 /* CodeMirror 6 editor styles */
 .code .cm-editor {
     font-size: 14px;
-    height: 100%;
+}
+
+.code .cm-editor.cm-focused {
+    outline: none;
 }
 
 .code .cm-content {
@@ -399,6 +414,120 @@ button:hover {
     transition: all 0.2s ease;
 }
 
+/* Layout Controls */
+.layout-controls {
+    display: flex;
+    align-items: center;
+}
+
+.layout-toggle-btn {
+    background: transparent;
+    border: 1px solid var(--text-tertiary);
+    border-radius: 6px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+    margin: 0;
+    padding: 0;
+    font-size: 18px;
+}
+
+.layout-toggle-btn:hover {
+    background-color: var(--bg-secondary);
+    border-color: var(--accent-secondary);
+    color: var(--accent-secondary);
+}
+
+.layout-toggle-btn:focus {
+    outline: 2px solid var(--accent-secondary);
+    outline-offset: 2px;
+}
+
+.layout-icon {
+    transition: all 0.2s ease;
+}
+
+/* Main Content Layout */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 0;
+}
+
+/* Side-by-side layout */
+.main-content.side-by-side {
+    flex-direction: row;
+    gap: 0;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.main-content.side-by-side .code-section {
+    flex: 0 0 66.67%;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    order: 1;
+    height: 100%;
+    min-height: 0;
+}
+
+.main-content.side-by-side .world {
+    flex: 1;
+    min-width: 200px;
+    order: 3;
+    height: 100%;
+    min-height: 0;
+}
+
+.main-content.side-by-side .splitter {
+    display: block;
+    order: 2;
+}
+
+/* Splitter */
+.splitter {
+    display: none;
+    width: 4px;
+    background-color: var(--bg-tertiary);
+    cursor: col-resize;
+    position: relative;
+    transition: background-color 0.2s ease;
+}
+
+.splitter:hover {
+    background-color: var(--accent-secondary);
+}
+
+.splitter::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -2px;
+    right: -2px;
+    bottom: 0;
+}
+
+/* Code Section */
+.code-section {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.main-content.side-by-side .code-section .code {
+    flex: 1;
+    height: 100%;
+    min-height: 0;
+}
 /* Smooth theme transitions for themed elements */
 html,
 body,
