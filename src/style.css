@@ -4,6 +4,7 @@
     --bg-primary: #f2e5bc;
     --bg-secondary: #ebdbb2;
     --bg-tertiary: #d5c4a1;
+    --bg-active-line: #00000008;
     --text-primary: #3c3836;
     --text-secondary: #504945;
     --text-tertiary: #928374;
@@ -22,6 +23,7 @@
     --bg-primary: #32302f;
     --bg-secondary: #3c3836;
     --bg-tertiary: #504945;
+    --bg-active-line: #ffffff08;
     --text-primary: #ebdbb2;
     --text-secondary: #d5c4a1;
     --text-tertiary: #bdae93;
@@ -280,6 +282,10 @@ button:hover {
     font-family: Consolas, Monaco, monospace;
 }
 
+.code .cm-activeLine {
+    background-color: var(--bg-active-line);
+}
+
 .codestatus {
     padding-top: 10px;
     color: var(--error-color);
@@ -394,6 +400,15 @@ button:hover {
 }
 
 /* Smooth theme transitions for themed elements */
-html, body, .header, .challenge, .controls, .footer, .language-selector {
-    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+html,
+body,
+.header,
+.challenge,
+.controls,
+.footer,
+.language-selector {
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease,
+        border-color 0.2s ease;
 }
