@@ -2,6 +2,7 @@ import { throttle } from "../core/utils.js";
 import { basicSetup, EditorView } from "codemirror";
 import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
+import { rust } from "@codemirror/lang-rust";
 import { java } from "@codemirror/lang-java";
 import { gruvboxLight } from "cm6-theme-gruvbox-light";
 import { gruvboxDark } from "cm6-theme-gruvbox-dark";
@@ -145,6 +146,9 @@ export class CodeEditor extends EventTarget {
         langExtension = javascript();
         lintExtension = createJavaScriptLinter();
         break;
+      case "rust":
+        langExtension = rust();
+        break;
       case "python":
         langExtension = python();
         break;
@@ -237,6 +241,8 @@ export class CodeEditor extends EventTarget {
     switch (language) {
       case "javascript":
         return javascript();
+      case "rust":
+        return rust();
       case "python":
         return python();
       case "java":

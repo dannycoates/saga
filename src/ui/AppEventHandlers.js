@@ -1,5 +1,6 @@
 import { APP_CONSTANTS } from "../config/constants.js";
 import { presentCodeStatus } from "./presenters.js";
+import { KonamiCode } from "./KonamiCode.js";
 
 export class AppEventHandlers {
   constructor(app, dom, editor, runtimeManager) {
@@ -9,6 +10,7 @@ export class AppEventHandlers {
     this.runtimeManager = runtimeManager;
     this.abortController = new AbortController();
     this.boundHandlers = {};
+    this.konamiCode = new KonamiCode();
   }
 
   setupAllHandlers() {
@@ -16,6 +18,7 @@ export class AppEventHandlers {
     this.setupEditorHandlers();
     this.setupworldManagerHandlers();
     this.setupLanguageHandler();
+    this.setupKonamiCodeHandler();
   }
 
   setupButtonHandlers() {
@@ -150,6 +153,23 @@ export class AppEventHandlers {
         { signal },
       );
     }
+  }
+
+  setupKonamiCodeHandler() {
+    const { signal } = this.abortController;
+
+    this.boundHandlers.konamiCode = () => {
+      if (!this.cheatMode) {
+        this.cheatMode = true;
+        console.log("🎮 Konami code activated!");
+      }
+    };
+
+    this.konamiCode.addEventListener(
+      "konamicode",
+      this.boundHandlers.konamiCode,
+      { signal },
+    );
   }
 
   cleanup() {

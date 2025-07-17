@@ -1,11 +1,13 @@
 import { JavaScriptRuntime } from "./javascript.js";
 import { PythonRuntime } from "./python.js";
 import { JavaRuntime } from "./java.js";
+import { RustRuntime } from "./rust.js";
 
 export class RuntimeManager {
   constructor() {
     this.runtimes = {
       javascript: new JavaScriptRuntime(),
+      rust: new RustRuntime(),
       python: new PythonRuntime(),
       java: new JavaRuntime(),
     };
