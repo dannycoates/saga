@@ -17,7 +17,7 @@ export class AppEventHandlers {
     this.setupButtonHandlers();
     this.setupEditorHandlers();
     this.setupLanguageHandler();
-    this.setupStatsHandler();
+    this.setupChallengeEndedHandler();
   }
 
   setupButtonHandlers() {
@@ -134,40 +134,31 @@ export class AppEventHandlers {
     }
   }
 
-  setupStatsHandler() {
+  setupChallengeEndedHandler() {
     const { signal } = this.abortController;
-    this.boundHandlers.stats = () => {
-      const challengeStatus = this.app.currentChallenge.condition.evaluate(
-        this.worldManager.stats,
-      );
-
-      if (challengeStatus !== null) {
-        this.worldManager.end();
-
-        if (challengeStatus) {
-          // Challenge succeeded
-          presentFeedback(
-            this.dom.getElement("feedback"),
-            APP_CONSTANTS.MESSAGES.SUCCESS_TITLE,
-            APP_CONSTANTS.MESSAGES.SUCCESS_MESSAGE,
-            this.urlManager.createParamsUrl({
-              challenge: this.app.currentChallenge.id + 2,
-            }),
-          );
-        } else {
-          // Challenge failed
-          presentFeedback(
-            this.dom.getElement("feedback"),
-            APP_CONSTANTS.MESSAGES.FAILURE_TITLE,
-            APP_CONSTANTS.MESSAGES.FAILURE_MESSAGE,
-            "",
-          );
-        }
+    this.boundHandlers.challenge_ended = (e) => {
+      const succeeded = e.detail;
+      if (succeeded) {
+        presentFeedback(
+          this.dom.getElement("feedback"),
+          APP_CONSTANTS.MESSAGES.SUCCESS_TITLE,
+          APP_CONSTANTS.MESSAGES.SUCCESS_MESSAGE,
+          this.urlManager.createParamsUrl({
+            challenge: this.app.currentChallenge.id + 2,
+          }),
+        );
+      } else {
+        presentFeedback(
+          this.dom.getElement("feedback"),
+          APP_CONSTANTS.MESSAGES.FAILURE_TITLE,
+          APP_CONSTANTS.MESSAGES.FAILURE_MESSAGE,
+          "",
+        );
       }
     };
     this.worldManager.addEventListener(
-      "stats_changed",
-      this.boundHandlers.stats,
+      "challenge_ended",
+      this.boundHandlers.challenge_ended,
       { signal },
     );
   }
