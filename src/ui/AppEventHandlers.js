@@ -104,16 +104,12 @@ export class AppEventHandlers {
 
         try {
           // Show loading state
-          this.dom.showRuntimeLoading(
-            true,
-            `Loading ${newLanguage} runtime...`,
-          );
-
-          // Select the language in runtime manager
-          await this.runtimeManager.selectLanguage(newLanguage);
-
+          this.dom.showRuntimeStatus(true, `Loading ${newLanguage} runtime...`);
           // Update editor language
           this.editor.setLanguage(newLanguage);
+          // Select the language in runtime manager
+          // Note: not using withStatusIfSlow because pyodide blocks the event loop
+          await this.runtimeManager.selectLanguage(newLanguage);
 
           // Clear status
           presentCodeStatus(this.dom.getElement("codeStatus"));
@@ -123,7 +119,7 @@ export class AppEventHandlers {
           languageSelect.value = this.editor.currentLanguage;
         } finally {
           // Hide loading state
-          this.dom.showRuntimeLoading(false);
+          this.dom.showRuntimeStatus(false);
         }
       };
 

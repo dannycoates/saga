@@ -46,7 +46,7 @@ export class AppDOM {
     return this.elements[name];
   }
 
-  showRuntimeLoading(show, message = "Loading runtime...") {
+  showRuntimeStatus(show, message = "Loading runtime...") {
     const loadingIndicator = this.elements.runtimeLoading;
     const languageSelect = this.elements.languageSelect;
 
