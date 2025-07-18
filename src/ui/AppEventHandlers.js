@@ -1,12 +1,14 @@
 import { APP_CONSTANTS } from "../config/constants.js";
-import { presentCodeStatus } from "./presenters.js";
+import { presentCodeStatus, presentFeedback } from "./presenters.js";
 
 export class AppEventHandlers {
-  constructor(app, dom, editor, runtimeManager) {
+  constructor(app, dom, editor, runtimeManager, worldManager, urlManager) {
     this.app = app;
     this.dom = dom;
     this.editor = editor;
     this.runtimeManager = runtimeManager;
+    this.worldManager = worldManager;
+    this.urlManager = urlManager;
     this.abortController = new AbortController();
     this.boundHandlers = {};
   }
@@ -15,6 +17,7 @@ export class AppEventHandlers {
     this.setupButtonHandlers();
     this.setupEditorHandlers();
     this.setupLanguageHandler();
+    this.setupStatsHandler();
   }
 
   setupButtonHandlers() {
@@ -77,7 +80,7 @@ export class AppEventHandlers {
     this.editor.addEventListener(
       "apply_code",
       () => {
-        this.app.startChallenge(this.app.getCurrentChallengeIndex(), true);
+        this.app.startChallenge();
       },
       { signal },
     );
@@ -129,6 +132,44 @@ export class AppEventHandlers {
         { signal },
       );
     }
+  }
+
+  setupStatsHandler() {
+    const { signal } = this.abortController;
+    this.boundHandlers.stats = () => {
+      const challengeStatus = this.app.currentChallenge.condition.evaluate(
+        this.worldManager.stats,
+      );
+
+      if (challengeStatus !== null) {
+        this.worldManager.end();
+
+        if (challengeStatus) {
+          // Challenge succeeded
+          presentFeedback(
+            this.dom.getElement("feedback"),
+            APP_CONSTANTS.MESSAGES.SUCCESS_TITLE,
+            APP_CONSTANTS.MESSAGES.SUCCESS_MESSAGE,
+            this.urlManager.createParamsUrl({
+              challenge: this.app.currentChallenge.id + 2,
+            }),
+          );
+        } else {
+          // Challenge failed
+          presentFeedback(
+            this.dom.getElement("feedback"),
+            APP_CONSTANTS.MESSAGES.FAILURE_TITLE,
+            APP_CONSTANTS.MESSAGES.FAILURE_MESSAGE,
+            "",
+          );
+        }
+      }
+    };
+    this.worldManager.addEventListener(
+      "stats_changed",
+      this.boundHandlers.stats,
+      { signal },
+    );
   }
 
   cleanup() {

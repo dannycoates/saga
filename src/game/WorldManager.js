@@ -14,13 +14,9 @@ export class WorldManager extends EventTarget {
   constructor(dom) {
     super();
     this.dom = dom;
-
-    // Core components
     this.backend = null;
     this.displayManager = null;
-
-    // Configuration
-    this.options = null;
+    this.challenge = null;
 
     // Event handling
     this.abortController = new AbortController();
@@ -72,7 +68,7 @@ export class WorldManager extends EventTarget {
 
   end() {
     this.setPaused(true);
-    this.initializeChallenge(this.options, false);
+    this.initializeChallenge(this.challenge, false);
   }
 
   setTimeScale(timeScale) {
@@ -86,34 +82,36 @@ export class WorldManager extends EventTarget {
     this.dispatchEvent(new CustomEvent("timescale_changed"));
   }
 
-  initializeChallenge(challengeOptions, clearStats = true) {
+  initializeChallenge(challenge, clearStats = true) {
     // Clean up previous world
     this.cleanup();
 
+    this.challenge = challenge;
     // Set default options
     const defaultOptions = {
       floorHeight: 50,
       spawnRate: 0.5,
       renderingEnabled: true,
     };
-    this.options = { ...defaultOptions, ...challengeOptions };
+    const challengeOptions = challenge.options;
+    const options = { ...defaultOptions, ...challengeOptions };
 
     // Create simulation backend
     this.backend = new JSSimulationBackend();
 
     // Create display manager
     this.displayManager = new DisplayManager({
-      renderingEnabled: this.options.renderingEnabled,
-      floorHeight: this.options.floorHeight,
+      renderingEnabled: options.renderingEnabled,
+      floorHeight: options.floorHeight,
     });
 
     // Initialize simulation
     this.backend.initialize({
-      floorCount: this.options.floorCount,
-      elevatorCount: this.options.elevatorCount,
-      elevatorCapacities: this.options.elevatorCapacities,
-      spawnRate: this.options.spawnRate,
-      speedFloorsPerSec: this.options.speedFloorsPerSec,
+      floorCount: options.floorCount,
+      elevatorCount: options.elevatorCount,
+      elevatorCapacities: options.elevatorCapacities,
+      spawnRate: options.spawnRate,
+      speedFloorsPerSec: options.speedFloorsPerSec,
     });
 
     // Initialize displays with the world element
