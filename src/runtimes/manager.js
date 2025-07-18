@@ -48,6 +48,10 @@ export class RuntimeManager {
     await runtime.loadCode(code);
   }
 
+  async start() {
+    await this.getCurrentRuntime().start();
+  }
+
   async execute(elevators, floors) {
     const runtime = this.getCurrentRuntime();
 

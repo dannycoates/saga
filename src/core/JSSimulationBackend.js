@@ -275,14 +275,9 @@ export class JSSimulationBackend extends SimulationBackend {
   }
 
   async callUserCode(codeObj, dt) {
-    try {
-      const elevatorAPIs = this.elevators.map((elevator) => elevator.toAPI());
-      const floorAPIs = this.floors.map((floor) => floor.toJSON());
-      await codeObj.tick(elevatorAPIs, floorAPIs, dt);
-    } catch (error) {
-      this.dispatchEvent(new CustomEvent("usercode_error", { detail: error }));
-      throw error;
-    }
+    const elevatorAPIs = this.elevators.map((elevator) => elevator.toAPI());
+    const floorAPIs = this.floors.map((floor) => floor.toJSON());
+    await codeObj.tick(elevatorAPIs, floorAPIs, dt);
   }
 
   hasEnded() {

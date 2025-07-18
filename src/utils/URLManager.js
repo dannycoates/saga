@@ -54,19 +54,15 @@ export class URLManager {
       parseFloat(params.timescale) ||
       APP_CONSTANTS.DEFAULT_TIME_SCALE;
 
-    // Parse auto-start flag
-    const shouldAutoStart = params.autostart === "true";
-
     // Apply settings and start challenge
-    this.app.setCurrentChallengeIndex(challengeIndex);
+    this.app.loadChallenge(challengeIndex);
     this.app.setTimeScale(timeScale);
-    this.app.startChallenge(challengeIndex, shouldAutoStart);
   }
 
   cleanup() {
     // AbortController automatically removes all event listeners
     this.abortController.abort();
-    
+
     // Clear bound handlers for memory cleanup
     this.boundLoadFromUrl = null;
   }

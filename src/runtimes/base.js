@@ -10,6 +10,10 @@ export class BaseRuntime {
     throw new Error("load() must be implemented by subclass");
   }
 
+  async start() {
+    // do nothing by default
+  }
+
   async loadCode(code) {
     throw new Error("loadCode() must be implemented by subclass");
   }

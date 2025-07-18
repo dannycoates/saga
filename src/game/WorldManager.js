@@ -21,7 +21,6 @@ export class WorldManager extends EventTarget {
 
     // Configuration
     this.options = null;
-    this.floorHeight = 50;
 
     // Event handling
     this.abortController = new AbortController();
@@ -41,11 +40,7 @@ export class WorldManager extends EventTarget {
         let scaledDt = dt * 0.001 * this.timeScale;
         scaledDt = Math.min(scaledDt, this.dtMax * 3 * this.timeScale);
 
-        try {
-          await this.backend.callUserCode(this.codeObj, dt);
-        } catch (e) {
-          this.handlePassengerCodeError(e);
-        }
+        await this.backend.callUserCode(this.codeObj, dt);
 
         while (scaledDt > 0.0 && !this.challengeEnded) {
           const thisDt = Math.min(this.dtMax, scaledDt);
@@ -77,6 +72,11 @@ export class WorldManager extends EventTarget {
     return this.backend ? this.backend.hasEnded() : true;
   }
 
+  end() {
+    this.setPaused(true);
+    this.initializeChallenge(this.options, false);
+  }
+
   setTimeScale(timeScale) {
     this.timeScale = timeScale;
     this.dispatchEvent(new CustomEvent("timescale_changed"));
@@ -88,30 +88,17 @@ export class WorldManager extends EventTarget {
     this.dispatchEvent(new CustomEvent("timescale_changed"));
   }
 
-  handlePassengerCodeError(e) {
-    this.setPaused(true);
-    console.log("Usercode error on update", e);
-    this.dispatchEvent(new CustomEvent("usercode_error", { detail: e }));
-  }
-
-  initializeDisplays(worldElement) {
-    if (!this.backend || !this.displayManager) return;
-  }
-
-  initializeChallenge(challengeOptions) {
+  initializeChallenge(challengeOptions, clearStats = true) {
     // Clean up previous world
     this.cleanup();
 
     // Set default options
     const defaultOptions = {
       floorHeight: 50,
-      floorCount: 4,
-      elevatorCount: 2,
       spawnRate: 0.5,
       renderingEnabled: true,
     };
     this.options = { ...defaultOptions, ...challengeOptions };
-    this.floorHeight = this.options.floorHeight || 50;
 
     // Create simulation backend
     this.backend = new JSSimulationBackend();
@@ -119,7 +106,7 @@ export class WorldManager extends EventTarget {
     // Create display manager
     this.displayManager = new DisplayManager({
       renderingEnabled: this.options.renderingEnabled,
-      floorHeight: this.floorHeight,
+      floorHeight: this.options.floorHeight,
     });
 
     // Initialize simulation
@@ -137,14 +124,13 @@ export class WorldManager extends EventTarget {
     // Subscribe the display manager to backend events
     this.displayManager.subscribeToBackend(this.backend);
 
-    // Clear UI elements
-    this.dom.clearElements(["world", "feedback"]);
-
     // Set up event forwarding
     this.setupEventForwarding();
 
     // Present world and stats (passing this as the "world" object)
-    presentStats(this.dom.getElement("stats"), this);
+    if (clearStats) {
+      presentStats(this.dom.getElement("stats"), this);
+    }
     presentWorld(this.dom.getElement("world"), this.displayManager);
   }
 
@@ -157,16 +143,6 @@ export class WorldManager extends EventTarget {
       (e) => {
         this.dispatchEvent(new CustomEvent("stats_display_changed"));
         this.dispatchEvent(new CustomEvent("stats_changed"));
-      },
-      { signal },
-    );
-
-    this.backend.addEventListener(
-      "usercode_error",
-      (e) => {
-        this.dispatchEvent(
-          new CustomEvent("usercode_error", { detail: e.detail }),
-        );
       },
       { signal },
     );
@@ -193,8 +169,9 @@ export class WorldManager extends EventTarget {
       console.log(APP_CONSTANTS.MESSAGES.RUNTIME_LOADING);
       return;
     }
-
+    presentStats(this.dom.getElement("stats"), this);
     this.codeObj = codeObj;
+    await this.codeObj.start();
     this.setPaused(false);
     this.animationFrameId = window.requestAnimationFrame(this.runFrame);
   }
@@ -205,6 +182,7 @@ export class WorldManager extends EventTarget {
       window.cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
     }
+    this.dom.clearElements("world");
 
     // AbortController automatically removes all event listeners
     this.abortController.abort();

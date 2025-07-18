@@ -246,7 +246,6 @@ export class JavaRuntime extends BaseRuntime {
       }
 
       this.ElevatorController = await this.lib[mainClassName];
-      this.controller = await new this.ElevatorController();
 
       this.loadedCode = code;
     } catch (error) {
@@ -255,6 +254,10 @@ export class JavaRuntime extends BaseRuntime {
         `Failed to compile Java code: ${error.message}${this.getLogBufferString()}`,
       );
     }
+  }
+
+  async start() {
+    this.controller = await new this.ElevatorController();
   }
 
   async execute(elevators, floors) {

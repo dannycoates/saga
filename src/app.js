@@ -52,8 +52,9 @@ export class ElevatorApp extends EventTarget {
     return this.challengeManager.getCurrentChallengeIndex();
   }
 
-  setCurrentChallengeIndex(index) {
-    this.challengeManager.setCurrentChallengeIndex(index);
+  loadChallenge(index) {
+    this.dom.clearElements("feedback");
+    this.challengeManager.showChallenge(index, this);
   }
 
   setTimeScale(timeScale) {
@@ -91,33 +92,65 @@ export class ElevatorApp extends EventTarget {
   startOrStop() {
     if (this.worldManager.isPaused) {
       // Start button clicked - start the challenge
-      this.startChallenge(this.getCurrentChallengeIndex(), true);
+      this.dom.clearElements("feedback");
+      this.startChallenge();
     } else {
       // Stop button clicked - reset the game state
       this.worldManager.setPaused(true);
-      this.startChallenge(this.getCurrentChallengeIndex(), false);
+      this.loadChallenge(this.getCurrentChallengeIndex());
     }
   }
 
-  async startChallenge(challengeIndex, autoStart) {
-    performanceMonitor.mark("challenge-start");
+  async getCodeObj() {
+    const code = this.editor.getCode();
+
     try {
-      await this.challengeManager.startChallenge(
-        challengeIndex,
-        autoStart,
-        this.editor,
-        this,
+      // Show loading for language selection if needed
+      const currentRuntime = this.runtimeManager.getCurrentRuntime();
+      if (!currentRuntime || !currentRuntime.loaded) {
+        this.showRuntimeLoading(
+          true,
+          `Loading ${this.editor.currentLanguage} runtime...`,
+        );
+      }
+
+      // Select the language and load the code
+      await this.runtimeManager.selectLanguage(this.editor.currentLanguage);
+
+      // Show loading for code compilation/loading
+      this.showRuntimeLoading(
+        true,
+        `Compiling ${this.editor.currentLanguage} code...`,
       );
-      performanceMonitor.mark("challenge-end");
-      performanceMonitor.measure(
-        "challenge-duration",
-        "challenge-start",
-        "challenge-end",
-      );
-    } catch (error) {
-      performanceMonitor.mark("challenge-error");
-      throw error;
+      await this.runtimeManager.loadCode(code);
+
+      // Hide loading
+      this.showRuntimeLoading(false);
+
+      // Return a wrapper object that calls the runtime manager
+      return {
+        start: this.runtimeManager.start.bind(this.runtimeManager),
+        tick: async (elevators, floors) => {
+          try {
+            return await this.runtimeManager.execute(elevators, floors);
+          } catch (e) {
+            this.worldManager.setPaused(true);
+            this.dispatchEvent(
+              new CustomEvent("usercode_error", { detail: e }),
+            );
+          }
+        },
+      };
+    } catch (e) {
+      this.showRuntimeLoading(false);
+      this.dispatchEvent(new CustomEvent("usercode_error", { detail: e }));
+      return null;
     }
+  }
+
+  async startChallenge() {
+    const codeObj = await this.getCodeObj();
+    await this.worldManager.start(codeObj);
   }
 
   cleanup() {
