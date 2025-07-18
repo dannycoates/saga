@@ -14,6 +14,14 @@ export class RuntimeManager {
     this.loadingPromises = {};
   }
 
+  get defaultTemplates() {
+    return Object.fromEntries(
+      Object.entries(this.runtimes).map(([name, rt]) => {
+        return [name, rt.getDefaultTemplate()];
+      }),
+    );
+  }
+
   async selectLanguage(language) {
     if (!this.runtimes[language]) {
       throw new Error(`Unsupported language: ${language}`);
@@ -57,18 +65,6 @@ export class RuntimeManager {
 
     // Execute the loaded code
     return await runtime.execute(elevators, floors);
-  }
-
-  getDefaultTemplate() {
-    return this.getCurrentRuntime().getDefaultTemplate();
-  }
-
-  getSupportedLanguages() {
-    return Object.keys(this.runtimes);
-  }
-
-  getCurrentLanguage() {
-    return this.currentLanguage;
   }
 
   dispose() {
