@@ -22,13 +22,8 @@ export class RuntimeManager {
     );
   }
 
-  async selectLanguage(language) {
-    if (!this.runtimes[language]) {
-      throw new Error(`Unsupported language: ${language}`);
-    }
-
-    this.currentLanguage = language;
-
+  async loadCurrentRuntime() {
+    const language = this.currentLanguage;
     // Load the runtime if needed
     const runtime = this.runtimes[language];
     if (!runtime.loaded && !runtime.loading) {
@@ -38,6 +33,17 @@ export class RuntimeManager {
       }
       await this.loadingPromises[language];
     }
+    return runtime;
+  }
+
+  async selectLanguage(language) {
+    if (!this.runtimes[language]) {
+      throw new Error(`Unsupported language: ${language}`);
+    }
+
+    this.currentLanguage = language;
+
+    return this.loadCurrentRuntime();
   }
 
   getCurrentRuntime() {

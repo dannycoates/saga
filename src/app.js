@@ -61,31 +61,36 @@ export class ElevatorApp extends EventTarget {
     this.worldManager.setTimeScale(timeScale);
   }
 
-  showRuntimeLoading(show, message) {
-    this.dom.showRuntimeLoading(show, message);
+  showRuntimeStatus(show, message) {
+    this.dom.showRuntimeStatus(show, message);
+  }
+
+  async withStatusIfSlow(promise, msg) {
+    const delayedStatus = new Promise((resolve) => {
+      setTimeout(resolve, 300, "show");
+    });
+
+    const maybe = await Promise.race([promise, delayedStatus]);
+    if (maybe === "show") {
+      this.showRuntimeStatus(true, msg);
+    }
+    return promise;
   }
 
   async initializeWithRuntime() {
     // Load challenge and render world area immediately, before waiting for runtime
     this.urlManager.loadFromUrl();
 
-    // Load runtime in parallel - this won't block the world rendering
-    const runtime = this.runtimeManager.getCurrentRuntime();
-    if (!runtime.loaded) {
-      // Show loading state
-      this.showRuntimeLoading(
-        true,
+    try {
+      await this.withStatusIfSlow(
+        this.runtimeManager.loadCurrentRuntime(),
         `Loading ${this.editor.currentLanguage} runtime...`,
       );
-
-      try {
-        // Pre-load the runtime in the background
-        await this.runtimeManager.selectLanguage(this.editor.currentLanguage);
-        this.showRuntimeLoading(false);
-      } catch (error) {
-        console.error("Failed to load initial runtime:", error);
-        this.showRuntimeLoading(false);
-      }
+    } catch (error) {
+      console.error("Failed to load initial runtime:", error);
+      this.dispatchEvent(new CustomEvent("usercode_error", { detail: error }));
+    } finally {
+      this.showRuntimeStatus(false);
     }
   }
 
@@ -104,27 +109,18 @@ export class ElevatorApp extends EventTarget {
     const code = this.editor.getCode();
 
     try {
-      // Show loading for language selection if needed
-      const currentRuntime = this.runtimeManager.getCurrentRuntime();
-      if (!currentRuntime || !currentRuntime.loaded) {
-        this.showRuntimeLoading(
-          true,
-          `Loading ${this.editor.currentLanguage} runtime...`,
-        );
-      }
+      await this.withStatusIfSlow(
+        this.runtimeManager.loadCurrentRuntime(),
+        `Loading ${this.editor.currentLanguage} runtime...`,
+      );
 
-      // Select the language and load the code
-      await this.runtimeManager.selectLanguage(this.editor.currentLanguage);
-
-      // Show loading for code compilation/loading
-      this.showRuntimeLoading(
-        true,
+      await this.withStatusIfSlow(
+        this.runtimeManager.loadCode(code),
         `Compiling ${this.editor.currentLanguage} code...`,
       );
-      await this.runtimeManager.loadCode(code);
 
       // Hide loading
-      this.showRuntimeLoading(false);
+      this.showRuntimeStatus(false);
 
       // Return a wrapper object that calls the runtime manager
       return {
@@ -142,7 +138,7 @@ export class ElevatorApp extends EventTarget {
         },
       };
     } catch (e) {
-      this.showRuntimeLoading(false);
+      this.showRuntimeStatus(false);
       this.dispatchEvent(new CustomEvent("usercode_error", { detail: e }));
       return null;
     }
