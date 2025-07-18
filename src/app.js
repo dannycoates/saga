@@ -96,8 +96,7 @@ export class ElevatorApp extends EventTarget {
       this.startChallenge();
     } else {
       // Stop button clicked - reset the game state
-      this.worldManager.setPaused(true);
-      this.loadChallenge(this.getCurrentChallengeIndex());
+      this.worldManager.end();
     }
   }
 
@@ -132,12 +131,13 @@ export class ElevatorApp extends EventTarget {
         start: this.runtimeManager.start.bind(this.runtimeManager),
         tick: async (elevators, floors) => {
           try {
-            return await this.runtimeManager.execute(elevators, floors);
+            await this.runtimeManager.execute(elevators, floors);
           } catch (e) {
             this.worldManager.setPaused(true);
             this.dispatchEvent(
               new CustomEvent("usercode_error", { detail: e }),
             );
+            throw e;
           }
         },
       };
@@ -150,7 +150,9 @@ export class ElevatorApp extends EventTarget {
 
   async startChallenge() {
     const codeObj = await this.getCodeObj();
-    await this.worldManager.start(codeObj);
+    if (codeObj) {
+      await this.worldManager.start(codeObj);
+    }
   }
 
   cleanup() {

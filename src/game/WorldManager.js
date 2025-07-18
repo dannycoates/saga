@@ -39,9 +39,7 @@ export class WorldManager extends EventTarget {
         const dt = t - this.lastT;
         let scaledDt = dt * 0.001 * this.timeScale;
         scaledDt = Math.min(scaledDt, this.dtMax * 3 * this.timeScale);
-
         await this.backend.callUserCode(this.codeObj, dt);
-
         while (scaledDt > 0.0 && !this.challengeEnded) {
           const thisDt = Math.min(this.dtMax, scaledDt);
           this.backend.tick(thisDt);
@@ -49,7 +47,7 @@ export class WorldManager extends EventTarget {
         }
       }
       this.lastT = t;
-      if (!this.challengeEnded) {
+      if (!this.challengeEnded && this.animationFrameId) {
         this.animationFrameId = window.requestAnimationFrame(this.runFrame);
       }
     };
@@ -182,6 +180,7 @@ export class WorldManager extends EventTarget {
       window.cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
     }
+    this.lastT = null;
     this.dom.clearElements("world");
 
     // AbortController automatically removes all event listeners
