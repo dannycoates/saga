@@ -4,9 +4,10 @@ import { AppDOM } from "./ui/AppDOM.js";
 import { AppEventHandlers } from "./ui/AppEventHandlers.js";
 import { URLManager } from "./utils/URLManager.js";
 import { WorldManager } from "./game/WorldManager.js";
-import { ChallengeManager } from "./game/ChallengeManager.js";
+import { challenges } from "./game/challenges.js";
 import { APP_CONSTANTS } from "./config/constants.js";
 import { performanceMonitor } from "./ui/PerformanceMonitor.js";
+import { presentChallenge } from "./ui/presenters.js";
 
 // Main Application class
 export class ElevatorApp extends EventTarget {
@@ -22,19 +23,16 @@ export class ElevatorApp extends EventTarget {
       this.runtimeManager.defaultTemplates,
       this,
     );
-
+    this.currentChallengeIndex = 0;
     this.worldManager = new WorldManager(this.dom);
     this.urlManager = new URLManager(this);
-    this.challengeManager = new ChallengeManager(
-      this.dom,
-      this.worldManager,
-      this.urlManager,
-    );
     this.eventHandlers = new AppEventHandlers(
       this,
       this.dom,
       this.editor,
       this.runtimeManager,
+      this.worldManager,
+      this.urlManager,
     );
 
     // Setup all event handlers
@@ -47,14 +45,24 @@ export class ElevatorApp extends EventTarget {
     this.initializeWithRuntime();
   }
 
-  // Delegation methods for managers
-  getCurrentChallengeIndex() {
-    return this.challengeManager.getCurrentChallengeIndex();
+  get currentChallenge() {
+    return {
+      id: this.currentChallengeIndex,
+      ...challenges[this.currentChallengeIndex],
+    };
   }
 
   loadChallenge(index) {
+    this.currentChallengeIndex = index;
     this.dom.clearElements("feedback");
-    this.challengeManager.showChallenge(index, this);
+    presentChallenge(
+      this.dom.getElement("challenge"),
+      this.currentChallenge,
+      this,
+      this.worldManager,
+      this.currentChallenge.id + 1,
+    );
+    this.worldManager.initializeChallenge(this.currentChallenge);
   }
 
   setTimeScale(timeScale) {
@@ -155,7 +163,6 @@ export class ElevatorApp extends EventTarget {
     // Clean up all managers
     this.eventHandlers.cleanup();
     this.worldManager.cleanup();
-    this.challengeManager.cleanup();
     this.urlManager.cleanup();
     this.dom.cleanup();
     performanceMonitor.cleanup();
