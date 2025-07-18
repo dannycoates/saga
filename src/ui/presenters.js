@@ -9,13 +9,10 @@ import "./components/code-status.js";
 
 // Factory functions using web components
 export function presentStats(parentElem, world) {
-  // Clear existing content using modern method
-  parentElem.replaceChildren();
-
   // Create and append the web component
   const statsComponent = document.createElement("elevator-stats");
   statsComponent.world = world;
-  parentElem.appendChild(statsComponent);
+  parentElem.replaceChildren(statsComponent);
 
   return statsComponent;
 }
@@ -27,9 +24,6 @@ export function presentChallenge(
   worldManager,
   challengeNum,
 ) {
-  // Clear existing content using modern method
-  parentElem.replaceChildren();
-
   // Create and append the web component
   const challengeComponent = document.createElement("challenge-control");
   challengeComponent.setAttribute("challenge-num", challengeNum);
@@ -39,15 +33,12 @@ export function presentChallenge(
   );
   challengeComponent.app = app;
   challengeComponent.worldManager = worldManager;
-  parentElem.appendChild(challengeComponent);
+  parentElem.replaceChildren(challengeComponent);
 
   return challengeComponent;
 }
 
 export function presentFeedback(parentElem, title, message, url) {
-  // Clear existing content using modern method
-  parentElem.replaceChildren();
-
   // Create and append the web component
   const feedbackComponent = document.createElement("game-feedback");
   feedbackComponent.setAttribute("title", title);
@@ -55,19 +46,16 @@ export function presentFeedback(parentElem, title, message, url) {
   if (url) {
     feedbackComponent.setAttribute("next-url", url);
   }
-  parentElem.appendChild(feedbackComponent);
+  parentElem.replaceChildren(feedbackComponent);
 
   return feedbackComponent;
 }
 
 export function presentCodeStatus(parentElem, error) {
-  // Clear existing content using modern method
-  parentElem.replaceChildren();
-
   // Create and append the web component
   const codeStatusComponent = document.createElement("code-status");
   codeStatusComponent.setError(error);
-  parentElem.appendChild(codeStatusComponent);
+  parentElem.replaceChildren(codeStatusComponent);
 
   return codeStatusComponent;
 }

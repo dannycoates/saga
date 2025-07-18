@@ -15,11 +15,7 @@ export class ChallengeManager {
     return this.currentChallengeIndex;
   }
 
-  setCurrentChallengeIndex(index) {
-    this.currentChallengeIndex = index;
-  }
-
-  async startChallenge(challengeIndex, autoStart, editor, app) {
+  showChallenge(challengeIndex, app) {
     // Update current challenge
     this.currentChallengeIndex = challengeIndex;
 
@@ -36,14 +32,6 @@ export class ChallengeManager {
 
     // Setup challenge completion handler
     this.setupChallengeCompletionHandler(this.worldManager, challengeIndex);
-
-    // Start world if auto-starting
-    if (autoStart) {
-      const codeObj = await editor.getCodeObj(app);
-      if (codeObj) {
-        await this.worldManager.start(codeObj);
-      }
-    }
   }
 
   setupChallengeCompletionHandler(world, challengeIndex) {
@@ -63,7 +51,7 @@ export class ChallengeManager {
       );
 
       if (challengeStatus !== null) {
-        this.worldManager.setPaused(true);
+        this.worldManager.end();
 
         if (challengeStatus) {
           // Challenge succeeded

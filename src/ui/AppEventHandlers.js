@@ -14,7 +14,6 @@ export class AppEventHandlers {
   setupAllHandlers() {
     this.setupButtonHandlers();
     this.setupEditorHandlers();
-    this.setupworldManagerHandlers();
     this.setupLanguageHandler();
   }
 
@@ -87,25 +86,9 @@ export class AppEventHandlers {
     this.boundHandlers.editorError = (e) => {
       presentCodeStatus(this.dom.getElement("codeStatus"), e.detail);
     };
-    this.editor.addEventListener(
+    this.app.addEventListener(
       "usercode_error",
       this.boundHandlers.editorError,
-      { signal },
-    );
-  }
-
-  setupworldManagerHandlers() {
-    const { signal } = this.abortController;
-
-    // World controller error handling
-    this.boundHandlers.worldManagerError = (e) => {
-      this.editor.dispatchEvent(
-        new CustomEvent("usercode_error", { detail: e.detail }),
-      );
-    };
-    this.app.worldManager.addEventListener(
-      "usercode_error",
-      this.boundHandlers.worldManagerError,
       { signal },
     );
   }

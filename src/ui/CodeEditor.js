@@ -274,40 +274,4 @@ export class CodeEditor extends EventTarget {
       changes: { from: 0, to: this.view.state.doc.length, insert: code },
     });
   }
-
-  async getCodeObj(app) {
-    const code = this.getCode();
-
-    try {
-      // Show loading for language selection if needed
-      const currentRuntime = this.runtimeManager.getCurrentRuntime();
-      if (!currentRuntime || !currentRuntime.loaded) {
-        app.showRuntimeLoading(
-          true,
-          `Loading ${this.currentLanguage} runtime...`,
-        );
-      }
-
-      // Select the language and load the code
-      await this.runtimeManager.selectLanguage(this.currentLanguage);
-
-      // Show loading for code compilation/loading
-      app.showRuntimeLoading(true, `Compiling ${this.currentLanguage} code...`);
-      await this.runtimeManager.loadCode(code);
-
-      // Hide loading
-      app?.showRuntimeLoading(false);
-
-      // Return a wrapper object that calls the runtime manager
-      return {
-        tick: async (elevators, floors) => {
-          return await this.runtimeManager.execute(elevators, floors);
-        },
-      };
-    } catch (e) {
-      app.showRuntimeLoading(false);
-      this.dispatchEvent(new CustomEvent("usercode_error", { detail: e }));
-      return null;
-    }
-  }
 }
