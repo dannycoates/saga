@@ -101,10 +101,10 @@ function createJavaScriptLinter() {
 
 // CodeMirror editor wrapper
 export class CodeEditor extends EventTarget {
-  constructor(element, storageKey, runtimeManager, app = null) {
+  constructor(element, storageKey, defaultTemplates, app = null) {
     super();
     this.storageKey = storageKey;
-    this.runtimeManager = runtimeManager;
+    this.defaultTemplates = defaultTemplates;
     this.app = app;
     this.currentLanguage =
       localStorage.getItem(`${storageKey}_language`) || "javascript";
@@ -115,8 +115,7 @@ export class CodeEditor extends EventTarget {
     this.themeCompartment = new Compartment();
 
     // Get the appropriate default code based on language
-    const defaultCode =
-      this.runtimeManager.runtimes[this.currentLanguage].getDefaultTemplate();
+    const defaultCode = defaultTemplates[this.currentLanguage];
 
     const existingCode =
       localStorage.getItem(`${storageKey}_${this.currentLanguage}`) ||
@@ -209,8 +208,7 @@ export class CodeEditor extends EventTarget {
     localStorage.setItem(`${this.storageKey}_language`, language);
 
     // Load code for new language
-    const defaultCode =
-      this.runtimeManager.runtimes[language].getDefaultTemplate();
+    const defaultCode = this.defaultTemplates[language];
     const existingCode =
       localStorage.getItem(`${this.storageKey}_${language}`) || defaultCode;
 
@@ -247,8 +245,7 @@ export class CodeEditor extends EventTarget {
   }
 
   reset() {
-    const defaultCode =
-      this.runtimeManager.runtimes[this.currentLanguage].getDefaultTemplate();
+    const defaultCode = this.defaultTemplates[this.currentLanguage];
 
     this.view.dispatch({
       changes: { from: 0, to: this.view.state.doc.length, insert: defaultCode },

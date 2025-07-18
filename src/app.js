@@ -19,7 +19,7 @@ export class ElevatorApp extends EventTarget {
     this.editor = new CodeEditor(
       this.dom.getElement("codeArea"),
       APP_CONSTANTS.STORAGE_KEY,
-      this.runtimeManager,
+      this.runtimeManager.defaultTemplates,
       this,
     );
 
