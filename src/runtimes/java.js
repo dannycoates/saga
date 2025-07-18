@@ -246,12 +246,12 @@ export class JavaRuntime extends BaseRuntime {
       }
 
       this.ElevatorController = await this.lib[mainClassName];
-
       this.loadedCode = code;
     } catch (error) {
+      this.loadedCode = null;
       console.error(error);
       throw new Error(
-        `Failed to compile Java code: ${error.message}${this.getLogBufferString()}`,
+        `Failed to compile Java code: ${error.message ?? error}${this.getLogBufferString()}`,
       );
     }
   }
@@ -265,7 +265,6 @@ export class JavaRuntime extends BaseRuntime {
       throw new Error("Java runtime not loaded");
     }
     ELEVATORS = elevators;
-
     try {
       // Create Java wrapper objects for elevators and floors
       const javaElevators = [];
@@ -290,11 +289,11 @@ export class JavaRuntime extends BaseRuntime {
         javaFloor.buttons = buttons;
         javaFloors.push(javaFloor);
       }
-
       await this.controller.tick(javaElevators, javaFloors);
     } catch (error) {
+      console.error(error);
       throw new Error(
-        `Java execution failed: ${error.message}${this.getLogBufferString()}`,
+        `Java execution failed: ${error.message ?? error}${this.getLogBufferString()}`,
       );
     }
   }
