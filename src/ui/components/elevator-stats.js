@@ -22,10 +22,7 @@ export class ElevatorStats extends HTMLElement {
 
   disconnectedCallback() {
     if (this._world) {
-      this._world.removeEventListener(
-        "stats_display_changed",
-        this._updateHandler,
-      );
+      this._world.removeEventListener("stats_changed", this._updateHandler);
     }
   }
 
@@ -36,18 +33,15 @@ export class ElevatorStats extends HTMLElement {
   set world(world) {
     // Disconnect from previous world
     if (this._world) {
-      this._world.removeEventListener(
-        "stats_display_changed",
-        this._updateHandler,
-      );
+      this._world.removeEventListener("stats_changed", this._updateHandler);
     }
 
     this._world = world;
 
     if (world) {
       this._updateHandler = () => this.updateFromWorld(world.stats);
-      world.addEventListener("stats_display_changed", this._updateHandler);
-      world.dispatchEvent(new CustomEvent("stats_display_changed"));
+      world.addEventListener("stats_changed", this._updateHandler);
+      world.dispatchEvent(new CustomEvent("stats_changed"));
     }
   }
 

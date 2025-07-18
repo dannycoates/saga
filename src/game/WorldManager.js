@@ -31,19 +31,20 @@ export class WorldManager extends EventTarget {
     this.codeObj = null;
     this.lastT = null;
     this.runFrame = async (t) => {
-      if (!this.isPaused && !this.challengeEnded && this.lastT !== null) {
+      if (!this.isPaused && this.lastT !== null) {
+        const backend = this.backend;
         const dt = t - this.lastT;
         let scaledDt = dt * 0.001 * this.timeScale;
         scaledDt = Math.min(scaledDt, this.dtMax * 3 * this.timeScale);
-        await this.backend.callUserCode(this.codeObj, dt);
-        while (scaledDt > 0.0 && !this.challengeEnded) {
+        await backend.callUserCode(this.codeObj, dt);
+        while (scaledDt > 0.0) {
           const thisDt = Math.min(this.dtMax, scaledDt);
-          this.backend.tick(thisDt);
+          backend.tick(thisDt);
           scaledDt -= this.dtMax;
         }
       }
       this.lastT = t;
-      if (!this.challengeEnded && this.animationFrameId) {
+      if (this.animationFrameId) {
         this.animationFrameId = window.requestAnimationFrame(this.runFrame);
       }
     };
@@ -60,10 +61,6 @@ export class WorldManager extends EventTarget {
           moveCount: 0,
           elapsedTime: 0,
         };
-  }
-
-  get challengeEnded() {
-    return this.backend ? this.backend.hasEnded() : true;
   }
 
   end() {
@@ -112,6 +109,7 @@ export class WorldManager extends EventTarget {
       elevatorCapacities: options.elevatorCapacities,
       spawnRate: options.spawnRate,
       speedFloorsPerSec: options.speedFloorsPerSec,
+      endCondition: challenge.condition,
     });
 
     // Initialize displays with the world element
@@ -121,7 +119,7 @@ export class WorldManager extends EventTarget {
     this.displayManager.subscribeToBackend(this.backend);
 
     // Set up event forwarding
-    this.setupEventForwarding();
+    this.setupEventHandlers();
 
     // Present world and stats (passing this as the "world" object)
     if (clearStats) {
@@ -130,15 +128,25 @@ export class WorldManager extends EventTarget {
     presentWorld(this.dom.getElement("world"), this.displayManager);
   }
 
-  setupEventForwarding() {
+  setupEventHandlers() {
     const { signal } = this.abortController;
 
     // Forward backend events
     this.backend.addEventListener(
       "stats_changed",
-      (e) => {
-        this.dispatchEvent(new CustomEvent("stats_display_changed"));
+      () => {
         this.dispatchEvent(new CustomEvent("stats_changed"));
+      },
+      { signal },
+    );
+
+    this.backend.addEventListener(
+      "challenge_ended",
+      (e) => {
+        this.end();
+        this.dispatchEvent(
+          new CustomEvent("challenge_ended", { detail: e.detail }),
+        );
       },
       { signal },
     );
@@ -184,7 +192,6 @@ export class WorldManager extends EventTarget {
     // AbortController automatically removes all event listeners
     this.abortController.abort();
 
-    // Clean up backend and display manager
     if (this.backend) {
       this.backend.dispose();
       this.backend = null;

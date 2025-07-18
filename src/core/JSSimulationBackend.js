@@ -37,6 +37,9 @@ export class JSSimulationBackend extends SimulationBackend {
 
     // Throttled stats update
     this.throttledStats = throttle(() => {
+      if (this.challengeEnded) {
+        return;
+      }
       this.recalculateStats();
       this.dispatchEvent(
         new CustomEvent("stats_changed", { detail: this.getStats() }),
@@ -50,6 +53,7 @@ export class JSSimulationBackend extends SimulationBackend {
     this.elevatorCapacities = config.elevatorCapacities || [4];
     this.spawnRate = config.spawnRate;
     this.speedFloorsPerSec = config.speedFloorsPerSec || 2.6;
+    this.endCondition = config.endCondition;
 
     // Reset state
     this.transportedCounter = 0;
@@ -242,7 +246,15 @@ export class JSSimulationBackend extends SimulationBackend {
       }),
     );
 
-    this.throttledStats();
+    const succeeded = this.endCondition.evaluate(this.getStats());
+    if (succeeded !== null) {
+      this.challengeEnded = true;
+      this.dispatchEvent(
+        new CustomEvent("challenge_ended", { detail: succeeded }),
+      );
+    } else {
+      this.throttledStats();
+    }
   }
 
   recalculateStats() {
@@ -278,10 +290,6 @@ export class JSSimulationBackend extends SimulationBackend {
     const elevatorAPIs = this.elevators.map((elevator) => elevator.toAPI());
     const floorAPIs = this.floors.map((floor) => floor.toJSON());
     await codeObj.tick(elevatorAPIs, floorAPIs, dt);
-  }
-
-  hasEnded() {
-    return this.challengeEnded;
   }
 
   dispose() {
