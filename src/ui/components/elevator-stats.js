@@ -50,7 +50,7 @@ export class ElevatorStats extends HTMLElement {
     this.setAttribute("elapsed-time", stats.elapsedTime.toFixed(0) + "s");
     this.setAttribute(
       "transported-per-sec",
-      stats.transportedPerSec.toPrecision(3),
+      stats.transportedPerSec.toFixed(3),
     );
     this.setAttribute("avg-wait-time", stats.avgWaitTime.toFixed(1) + "s");
     this.setAttribute("max-wait-time", stats.maxWaitTime.toFixed(1) + "s");
@@ -69,8 +69,9 @@ export class ElevatorStats extends HTMLElement {
       <style>
         :host {
           display: flex;
-          flex-direction: column;
-          gap: 4px;
+          flex-direction: row;
+          justify-content: end;
+          gap: 1rem;
           font: 12px Consolas, Monaco, monospace;
           color: #999;
           width: 100%;
@@ -80,9 +81,6 @@ export class ElevatorStats extends HTMLElement {
         }
 
         .stat {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
           border-bottom: 1px solid #504945; /* Gruvbox gray */
         }
 
