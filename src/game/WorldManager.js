@@ -36,6 +36,9 @@ export class WorldManager extends EventTarget {
         const dt = t - this.lastT;
         let scaledDt = dt * 0.001 * this.timeScale;
         scaledDt = Math.min(scaledDt, this.dtMax * 3 * this.timeScale);
+        // This await is a little bit perilous since runFrame can't be awaited.
+        // `this.anything` after the await MAY HAVE CHANGED in the meantime,
+        // which is why we capture backend.
         await backend.callUserCode(this.codeObj, dt);
         while (scaledDt > 0.0) {
           const thisDt = Math.min(this.dtMax, scaledDt);
@@ -44,6 +47,8 @@ export class WorldManager extends EventTarget {
         }
       }
       this.lastT = t;
+      // this.animationFrameId will be null when the sim ends or is stopped.
+      // It's our signal to stop the loop.
       if (this.animationFrameId) {
         this.animationFrameId = window.requestAnimationFrame(this.runFrame);
       }

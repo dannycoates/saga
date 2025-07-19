@@ -15,6 +15,9 @@ describe("Modern Architecture", () => {
         elevatorCapacities: [4, 6],
         spawnRate: 0.5,
         speedFloorsPerSec: 2.0,
+        endCondition: {
+          evaluate: () => null, // Never end during tests
+        },
       });
     });
 
@@ -68,6 +71,9 @@ describe("Modern Architecture", () => {
         floorCount: 3,
         elevatorCount: 1,
         spawnRate: 1.0,
+        endCondition: {
+          evaluate: () => null,
+        },
       });
     });
 
@@ -120,6 +126,9 @@ describe("Modern Architecture", () => {
         floorCount: 2,
         elevatorCount: 1,
         spawnRate: 0.5,
+        endCondition: {
+          evaluate: () => null,
+        },
       });
     });
 
@@ -187,21 +196,19 @@ describe("Modern Architecture", () => {
       );
     });
 
-    it("should forward tick to backend", () => {
-      const tickSpy = vi.spyOn(worldManager.backend, "tick");
-
-      worldManager.tick(0.1);
-
-      expect(tickSpy).toHaveBeenCalledWith(0.1);
-    });
-
-    it("should forward user code to backend", async () => {
-      const callUserCodeSpy = vi.spyOn(worldManager.backend, "callUserCode");
-      const mockCode = { tick: vi.fn() };
-      const dt = 1;
-      await worldManager.callUserCode(mockCode, dt);
-
-      expect(callUserCodeSpy).toHaveBeenCalledWith(mockCode, dt);
+    it("should manage game state through start/stop", async () => {
+      const mockCode = { 
+        tick: vi.fn(),
+        start: vi.fn().mockResolvedValue(),
+      };
+      
+      expect(worldManager.isPaused).toBe(true);
+      
+      // Starting should unpause and set up code
+      await worldManager.start(mockCode);
+      expect(worldManager.isPaused).toBe(false);
+      expect(worldManager.codeObj).toBe(mockCode);
+      expect(mockCode.start).toHaveBeenCalled();
     });
   });
 
@@ -211,6 +218,9 @@ describe("Modern Architecture", () => {
       simulation.initialize({
         floorCount: 4,
         elevatorCount: 1,
+        endCondition: {
+          evaluate: () => null,
+        },
       });
 
       const elevator = simulation.elevators[0];
@@ -240,6 +250,9 @@ describe("Modern Architecture", () => {
         floorCount: 4,
         elevatorCount: 1,
         spawnRate: 10, // High rate to ensure spawn
+        endCondition: {
+          evaluate: () => null,
+        },
       });
 
       simulation.tick(0.1);

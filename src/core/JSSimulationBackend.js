@@ -287,6 +287,7 @@ export class JSSimulationBackend extends SimulationBackend {
   }
 
   async callUserCode(codeObj, dt) {
+    if (this.challengeEnded) return;
     const elevatorAPIs = this.elevators.map((elevator) => elevator.toAPI());
     const floorAPIs = this.floors.map((floor) => floor.toJSON());
     await codeObj.tick(elevatorAPIs, floorAPIs, dt);
