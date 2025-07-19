@@ -35,10 +35,11 @@ export class AppDOM {
     // Initialize theme manager
     themeManager.watchSystemTheme();
 
-    // Create and add theme switcher to header
+    // Create and add theme switcher to header-controls
     this.themeSwitcher = new ThemeSwitcher(themeManager);
-    if (this.elements.header) {
-      this.elements.header.appendChild(this.themeSwitcher.getElement());
+    const headerControls = document.querySelector('.header-controls');
+    if (headerControls) {
+      headerControls.appendChild(this.themeSwitcher.getElement());
     }
   }
 

@@ -240,9 +240,9 @@ export class AppEventHandlers {
     document.addEventListener('mousemove', this.boundHandlers.splitterMouseMove, { signal });
     document.addEventListener('mouseup', this.boundHandlers.splitterMouseUp, { signal });
 
-    // Load saved layout preference
+    // Load saved layout preference (default to side-by-side)
     const savedLayout = localStorage.getItem('layout-preference');
-    if (savedLayout === 'side-by-side') {
+    if (savedLayout === null || savedLayout === 'side-by-side') {
       this.boundHandlers.layoutToggle();
     }
   }
