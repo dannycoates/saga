@@ -18,9 +18,14 @@ describe("WorldManager", () => {
 
     // Create a world with the WorldManager
     worldManager.initializeChallenge({
-      floorCount: 3,
-      elevatorCount: 2,
-      renderingEnabled: false, // Disable for testing
+      options: {
+        floorCount: 3,
+        elevatorCount: 2,
+        renderingEnabled: false, // Disable for testing
+      },
+      condition: {
+        evaluate: () => null, // Never end during tests
+      },
     });
   });
 
@@ -29,17 +34,18 @@ describe("WorldManager", () => {
     expect(worldManager.displayManager).toBeDefined();
   });
 
-  it("should forward tick to backend", () => {
-    const tickSpy = vi.spyOn(worldManager.backend, "tick");
-    worldManager.tick(0.1);
-    expect(tickSpy).toHaveBeenCalledWith(0.1);
-  });
-
-  it("should forward user code to backend", async () => {
-    const callUserCodeSpy = vi.spyOn(worldManager.backend, "callUserCode");
-    const mockCode = { tick: vi.fn() };
-    const dt = 1;
-    await worldManager.callUserCode(mockCode, dt);
-    expect(callUserCodeSpy).toHaveBeenCalledWith(mockCode, dt);
+  it("should manage game state through start/stop", async () => {
+    const mockCode = { 
+      tick: vi.fn(),
+      start: vi.fn().mockResolvedValue(),
+    };
+    
+    expect(worldManager.isPaused).toBe(true);
+    
+    // Starting should unpause and set up code
+    await worldManager.start(mockCode);
+    expect(worldManager.isPaused).toBe(false);
+    expect(worldManager.codeObj).toBe(mockCode);
+    expect(mockCode.start).toHaveBeenCalled();
   });
 });
