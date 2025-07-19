@@ -1,5 +1,6 @@
 import { JSSimulationBackend } from "../core/JSSimulationBackend.js";
 import { DisplayManager } from "../ui/DisplayManager.js";
+import { ResponsiveScaling } from "../ui/ResponsiveScaling.js";
 import {
   presentPassenger,
   presentStats,
@@ -16,6 +17,7 @@ export class WorldManager extends EventTarget {
     this.dom = dom;
     this.backend = null;
     this.displayManager = null;
+    this.responsiveScaling = new ResponsiveScaling();
     this.challenge = null;
 
     // Event handling
@@ -122,6 +124,9 @@ export class WorldManager extends EventTarget {
 
     // Subscribe the display manager to backend events
     this.displayManager.subscribeToBackend(this.backend);
+    
+    // Set up responsive scaling recalculation when display changes
+    this.setupResponsiveScalingHandlers();
 
     // Set up event forwarding
     this.setupEventHandlers();
@@ -131,6 +136,9 @@ export class WorldManager extends EventTarget {
       presentStats(this.dom.getElement("stats"), this);
     }
     presentWorld(this.dom.getElement("world"), this.displayManager);
+    
+    // Initialize responsive scaling after world is presented
+    this.responsiveScaling.initialize();
   }
 
   setupEventHandlers() {
@@ -185,6 +193,24 @@ export class WorldManager extends EventTarget {
     this.animationFrameId = window.requestAnimationFrame(this.runFrame);
   }
 
+  setupResponsiveScalingHandlers() {
+    const { signal } = this.abortController;
+    
+    // Recalculate scaling when game state changes significantly
+    this.backend.addEventListener(
+      "state_changed", 
+      () => {
+        // Delay recalculation to ensure DOM updates are complete
+        requestAnimationFrame(() => {
+          if (this.responsiveScaling) {
+            this.responsiveScaling.recalculate();
+          }
+        });
+      },
+      { signal }
+    );
+  }
+
   cleanup() {
     // Cancel any running animation frame
     if (this.animationFrameId !== null) {
@@ -204,6 +230,9 @@ export class WorldManager extends EventTarget {
     if (this.displayManager) {
       this.displayManager.cleanup();
       this.displayManager = null;
+    }
+    if (this.responsiveScaling) {
+      this.responsiveScaling.cleanup();
     }
 
     // Create new AbortController for future use

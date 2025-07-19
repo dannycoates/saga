@@ -111,7 +111,6 @@ dl dd {
 .container {
     display: flex;
     flex-direction: column;
-    height: 100vh;
     max-width: 1220px;
     width: 100%;
     margin: 0 auto;
@@ -300,11 +299,22 @@ button:hover {
     margin-top: 4px;
 }
 
+.world-container {
+    resize: both;
+    overflow: hidden;
+    min-width: 300px;
+    min-height: 150px;
+    width: 100%;
+    background-color: var(--world-bg);
+}
+
 .world {
     display: flex;
     background-color: var(--world-bg);
     padding: 0;
     position: relative; /* Keep for feedbackcontainer */
+    width: 100%;
+    height: 100%;
 }
 
 .innerworld {
@@ -314,6 +324,8 @@ button:hover {
     border-right: 1px solid black;
     border-left: 1px solid black;
     font-family: Arial, Helvetica, sans-serif;
+    transform-origin: top left;
+    transition: transform 0.1s ease-out;
 }
 
 .statscontainer {
