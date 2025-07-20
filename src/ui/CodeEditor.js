@@ -244,6 +244,8 @@ export class CodeEditor extends EventTarget {
         return python();
       case "java":
         return java();
+      case "scala":
+        return java(); // Use Java syntax highlighting for Scala
       default:
         return javascript();
     }
