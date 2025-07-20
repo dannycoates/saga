@@ -45,7 +45,7 @@ object Floor {
 
 let ELEVATORS = [];
 
-async function Scala_Elevator_jsGoToFloor(lib, elevatorId, floor) {
+async function Java_Elevator_jsGoToFloor(lib, elevatorId, floor) {
   // Find the corresponding JavaScript elevator
   const jsElevator = ELEVATORS[elevatorId];
   if (jsElevator) {
@@ -55,7 +55,7 @@ async function Scala_Elevator_jsGoToFloor(lib, elevatorId, floor) {
 
 export class ScalaRuntime extends JVMRuntime {
   constructor() {
-    super("scala", { Scala_Elevator_jsGoToFloor });
+    super("scala", { Java_Elevator_jsGoToFloor });
     this.ElevatorController = null;
   }
 
@@ -166,6 +166,16 @@ export class ScalaRuntime extends JVMRuntime {
     }
     ELEVATORS = elevators;
     try {
+      const scalaFloors = [];
+      for (const floor of floors) {
+        const scalaFloor = await new this.Floor();
+        scalaFloor.level = floor.level;
+        const buttons = await new this.Buttons();
+        buttons.up = floor.buttons.up;
+        buttons.down = floor.buttons.down;
+        scalaFloor.buttons = buttons;
+        scalaFloors.push(scalaFloor);
+      }
       // Create Scala wrapper objects for elevators and floors
       const scalaElevators = [];
       let index = 0;
@@ -179,16 +189,6 @@ export class ScalaRuntime extends JVMRuntime {
         scalaElevators.push(scalaElevator);
       }
 
-      const scalaFloors = [];
-      for (const floor of floors) {
-        const scalaFloor = await new this.Floor();
-        scalaFloor.level = floor.level;
-        const buttons = await new this.Buttons();
-        buttons.up = floor.buttons.up;
-        buttons.down = floor.buttons.down;
-        scalaFloor.buttons = buttons;
-        scalaFloors.push(scalaFloor);
-      }
       await this.controller.tick(scalaElevators, scalaFloors);
     } catch (error) {
       console.error(error);
