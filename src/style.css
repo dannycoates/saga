@@ -118,7 +118,8 @@ dl dd {
     gap: 4px;
 }
 
-.container.full-width {
+/* Side-by-side layout container */
+.container.side-by-side {
     max-width: none;
     padding: 10px 20px 20px 20px;
     height: 100vh;
@@ -476,7 +477,7 @@ button:hover {
 }
 
 /* Side-by-side layout */
-.main-content.side-by-side {
+.container.side-by-side .main-content {
     flex-direction: row;
     gap: 0;
     height: 100%;
@@ -484,7 +485,7 @@ button:hover {
     overflow: hidden;
 }
 
-.main-content.side-by-side .code-section {
+.container.side-by-side .code-section {
     flex: 0 0 66.67%;
     min-width: 200px;
     display: flex;
@@ -494,7 +495,7 @@ button:hover {
     min-height: 0;
 }
 
-.main-content.side-by-side .world-container {
+.container.side-by-side .world-container {
     flex: 1;
     min-width: 200px;
     order: 3;
@@ -502,7 +503,7 @@ button:hover {
     min-height: 0;
 }
 
-.main-content.side-by-side .splitter {
+.container.side-by-side .splitter {
     display: block;
     order: 2;
 }
@@ -537,7 +538,7 @@ button:hover {
     gap: 4px;
 }
 
-.main-content.side-by-side .code-section .code {
+.container.side-by-side .code-section .code {
     flex: 1;
     height: 100%;
     min-height: 0;
