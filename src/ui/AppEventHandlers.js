@@ -167,25 +167,26 @@ export class AppEventHandlers {
   setupLayoutToggle() {
     const { signal } = this.abortController;
     const layoutToggle = document.getElementById('layout-toggle');
+    const container = document.querySelector('.container');
     const mainContent = document.querySelector('.main-content');
     const splitter = document.getElementById('layout-splitter');
     
-    if (!layoutToggle || !mainContent || !splitter) return;
+    if (!layoutToggle || !container || !mainContent || !splitter) return;
 
     // Initialize layout state
     let isResizing = false;
     let isSideBySide = false;
+    
+    // Load saved layout preference (default to side-by-side)
+    const savedLayout = localStorage.getItem('layout-preference');
+    const shouldUseSideBySide = savedLayout === null || savedLayout === 'side-by-side';
 
     // Layout toggle functionality
     this.boundHandlers.layoutToggle = () => {
       isSideBySide = !isSideBySide;
-      mainContent.classList.toggle('side-by-side', isSideBySide);
       
-      // Toggle full-width container for side-by-side layout
-      const container = document.querySelector('.container');
-      if (container) {
-        container.classList.toggle('full-width', isSideBySide);
-      }
+      // Toggle single class on container
+      container.classList.toggle('side-by-side', isSideBySide);
       
       // Update CodeMirror layout mode
       if (this.editor && this.editor.setLayoutMode) {
@@ -240,10 +241,21 @@ export class AppEventHandlers {
     document.addEventListener('mousemove', this.boundHandlers.splitterMouseMove, { signal });
     document.addEventListener('mouseup', this.boundHandlers.splitterMouseUp, { signal });
 
-    // Load saved layout preference (default to side-by-side)
-    const savedLayout = localStorage.getItem('layout-preference');
-    if (savedLayout === null || savedLayout === 'side-by-side') {
-      this.boundHandlers.layoutToggle();
+    // Initialize layout based on saved preference
+    isSideBySide = shouldUseSideBySide;
+    
+    // Set single class on container
+    container.classList.toggle('side-by-side', isSideBySide);
+    
+    // Update CodeMirror layout mode
+    if (this.editor && this.editor.setLayoutMode) {
+      this.editor.setLayoutMode(isSideBySide);
+    }
+    
+    // Update button icon
+    const icon = layoutToggle.querySelector('.layout-icon');
+    if (icon) {
+      icon.textContent = isSideBySide ? '⚎' : '⚏';
     }
   }
 
