@@ -138,7 +138,7 @@ export class AppEventHandlers {
   setupChallengeEndedHandler() {
     const { signal } = this.abortController;
     this.boundHandlers.challenge_ended = (e) => {
-      const succeeded = e.detail;
+      const { succeeded } = e.detail;
       if (succeeded) {
         presentFeedback(
           this.dom.getElement("feedback"),
@@ -166,96 +166,112 @@ export class AppEventHandlers {
 
   setupLayoutToggle() {
     const { signal } = this.abortController;
-    const layoutToggle = document.getElementById('layout-toggle');
-    const container = document.querySelector('.container');
-    const mainContent = document.querySelector('.main-content');
-    const splitter = document.getElementById('layout-splitter');
-    
+    const layoutToggle = document.getElementById("layout-toggle");
+    const container = document.querySelector(".container");
+    const mainContent = document.querySelector(".main-content");
+    const splitter = document.getElementById("layout-splitter");
+
     if (!layoutToggle || !container || !mainContent || !splitter) return;
 
     // Initialize layout state
     let isResizing = false;
     let isSideBySide = false;
-    
+
     // Load saved layout preference (default to side-by-side)
-    const savedLayout = localStorage.getItem('layout-preference');
-    const shouldUseSideBySide = savedLayout === null || savedLayout === 'side-by-side';
+    const savedLayout = localStorage.getItem("layout-preference");
+    const shouldUseSideBySide =
+      savedLayout === null || savedLayout === "side-by-side";
 
     // Layout toggle functionality
     this.boundHandlers.layoutToggle = () => {
       isSideBySide = !isSideBySide;
-      
+
       // Toggle single class on container
-      container.classList.toggle('side-by-side', isSideBySide);
-      
+      container.classList.toggle("side-by-side", isSideBySide);
+
       // Update CodeMirror layout mode
       if (this.editor && this.editor.setLayoutMode) {
         this.editor.setLayoutMode(isSideBySide);
       }
-      
+
       // Update button icon
-      const icon = layoutToggle.querySelector('.layout-icon');
+      const icon = layoutToggle.querySelector(".layout-icon");
       if (icon) {
-        icon.textContent = isSideBySide ? '⚎' : '⚏';
+        icon.textContent = isSideBySide ? "⚎" : "⚏";
       }
-      
+
       // Save layout preference
-      localStorage.setItem('layout-preference', isSideBySide ? 'side-by-side' : 'vertical');
+      localStorage.setItem(
+        "layout-preference",
+        isSideBySide ? "side-by-side" : "vertical",
+      );
     };
 
     // Splitter resize functionality
     this.boundHandlers.splitterMouseDown = (e) => {
       if (!isSideBySide) return;
-      
+
       isResizing = true;
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-      
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+
       e.preventDefault();
     };
 
     this.boundHandlers.splitterMouseMove = (e) => {
       if (!isResizing || !isSideBySide) return;
-      
+
       const container = mainContent.getBoundingClientRect();
-      const codeSection = mainContent.querySelector('.code-section');
+      const codeSection = mainContent.querySelector(".code-section");
       const newWidth = ((e.clientX - container.left) / container.width) * 100;
-      
+
       // Constrain between 20% and 80%
       const constrainedWidth = Math.max(20, Math.min(80, newWidth));
-      
+
       codeSection.style.flex = `0 0 ${constrainedWidth}%`;
-      
+
       e.preventDefault();
     };
 
     this.boundHandlers.splitterMouseUp = () => {
       isResizing = false;
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
     };
 
     // Add event listeners
-    layoutToggle.addEventListener('click', this.boundHandlers.layoutToggle, { signal });
-    splitter.addEventListener('mousedown', this.boundHandlers.splitterMouseDown, { signal });
-    document.addEventListener('mousemove', this.boundHandlers.splitterMouseMove, { signal });
-    document.addEventListener('mouseup', this.boundHandlers.splitterMouseUp, { signal });
+    layoutToggle.addEventListener("click", this.boundHandlers.layoutToggle, {
+      signal,
+    });
+    splitter.addEventListener(
+      "mousedown",
+      this.boundHandlers.splitterMouseDown,
+      { signal },
+    );
+    document.addEventListener(
+      "mousemove",
+      this.boundHandlers.splitterMouseMove,
+      { signal },
+    );
+    document.addEventListener("mouseup", this.boundHandlers.splitterMouseUp, {
+      signal,
+    });
 
     // Initialize layout based on saved preference
     isSideBySide = shouldUseSideBySide;
-    
+
     // Set single class on container
-    container.classList.toggle('side-by-side', isSideBySide);
-    
+    container.classList.toggle("side-by-side", isSideBySide);
+
     // Update CodeMirror layout mode
     if (this.editor && this.editor.setLayoutMode) {
       this.editor.setLayoutMode(isSideBySide);
     }
-    
+
     // Update button icon
-    const icon = layoutToggle.querySelector('.layout-icon');
+    const icon = layoutToggle.querySelector(".layout-icon");
     if (icon) {
-      icon.textContent = isSideBySide ? '⚎' : '⚏';
+      icon.textContent = isSideBySide ? "⚎" : "⚏";
     }
   }
 
