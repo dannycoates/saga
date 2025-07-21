@@ -144,8 +144,10 @@ export class WorldManager extends EventTarget {
     // Forward backend events
     this.backend.addEventListener(
       "stats_changed",
-      () => {
-        this.dispatchEvent(new CustomEvent("stats_changed"));
+      (e) => {
+        this.dispatchEvent(
+          new CustomEvent("stats_changed", { detail: e.detail }),
+        );
       },
       { signal },
     );

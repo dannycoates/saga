@@ -39,9 +39,9 @@ export class ElevatorStats extends HTMLElement {
     this._world = world;
 
     if (world) {
-      this._updateHandler = () => this.updateFromWorld(world.stats);
+      this._updateHandler = (e) => this.updateFromWorld(e.detail);
       world.addEventListener("stats_changed", this._updateHandler);
-      world.dispatchEvent(new CustomEvent("stats_changed"));
+      this.updateFromWorld(world.stats);
     }
   }
 

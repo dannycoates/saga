@@ -249,8 +249,18 @@ export class JSSimulationBackend extends SimulationBackend {
     const succeeded = this.endCondition.evaluate(this.getStats());
     if (succeeded !== null) {
       this.challengeEnded = true;
+      // Emit final stats update before challenge ends
+      this.recalculateStats();
       this.dispatchEvent(
-        new CustomEvent("challenge_ended", { detail: succeeded }),
+        new CustomEvent("stats_changed", { detail: this.getStats() }),
+      );
+      // Emit challenge ended with final stats included
+      this.dispatchEvent(
+        new CustomEvent("challenge_ended", {
+          detail: {
+            succeeded: succeeded,
+          },
+        }),
       );
     } else {
       this.throttledStats();
