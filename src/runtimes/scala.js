@@ -1,14 +1,47 @@
 import { JVMRuntime } from "./jvm.js";
 
+// const ELEVATOR_SOURCE = `import java.util.*;
+// /**
+//  * Elevator class representing an elevator in the simulation
+//  */
+// public class Elevator {
+//     public int id;
+//     public int currentFloor;
+//     public Integer destinationFloor;
+//     public int[] pressedFloorButtons;
+//     public double percentFull;
+
+//     public Elevator(int id, int currentFloor, Integer destinationFloor, int[] pressedFloorButtons, double percentFull) {
+//       this.id = id;
+//       this.currentFloor = currentFloor;
+//       this.destinationFloor = destinationFloor;
+//       this.pressedFloorButtons = pressedFloorButtons;
+//       this.precentFull = percentFull;
+//     }
+
+//     // Native method to call JavaScript
+//     public static native void jsGoToFloor(int elevator, int floor);
+
+//     /**
+//      * Command the elevator to go to a specific floor
+//      * @param floor The target floor number
+//      */
+//     public void goToFloor(int floor) {
+//         // This will be handled by JavaScript
+//         Elevator.jsGoToFloor(this.id, floor);
+//     }
+// }`;
+
 const ELEVATOR_SOURCE = `/**
  * Elevator class representing an elevator in the simulation
  */
-class Elevator {
-  var id: Int = 0
-  var currentFloor: Int = 0
-  var destinationFloor: Integer = null
-  var pressedFloorButtons: Array[Int] = Array.empty
-  var percentFull: Double = 0.0
+class Elevator(
+  var id: Int,
+  var currentFloor: Int,
+  var destinationFloor: Integer,
+  var pressedFloorButtons: Array[Int],
+  var percentFull: Double
+){
 
   /**
    * Command the elevator to go to a specific floor
@@ -16,41 +49,43 @@ class Elevator {
    */
   def goToFloor(floor: Int): Unit = {
     // This will be handled by JavaScript through JNI
-    Elevator.jsGoToFloor(this.id, floor)
+    JSNative.jsGoToFloor(this.id, floor)
   }
 }
 
-object Elevator {
-  // Native method to call JavaScript
-  @native def jsGoToFloor(elevator: Int, floor: Int): Unit = ???
-}`;
+//object Elevator {
+//  // Native method to call JavaScript
+//  @native def jsGoToFloor(elevator: Int, floor: Int): Unit
+//}`;
 
 const FLOOR_SOURCE = `/**
  * Floor class representing a floor in the building
  */
-class Floor {
-  var level: Int = 0
-  var buttons: Floor.Buttons = new Floor.Buttons()
-}
+class Floor(
+  var level: Int,
+  var buttons: Floor.Buttons
+)
+
 
 object Floor {
   /**
    * Class representing the up/down buttons on a floor
    */
-  class Buttons {
-    var up: Boolean = false
-    var down: Boolean = false
-  }
+  class Buttons(
+    var up: Boolean,
+    var down: Boolean
+  )
 }`;
 
 let ELEVATORS = [];
 
-async function Java_Elevator_jsGoToFloor(lib, elevatorId, floor) {
+async function Java_Elevator_jsGoToFloor(lib, self, elevatorId, floor) {
+  console.log(Array.from(arguments));
   // Find the corresponding JavaScript elevator
-  const jsElevator = ELEVATORS[elevatorId];
-  if (jsElevator) {
-    jsElevator.goToFloor(floor);
-  }
+  // const jsElevator = ELEVATORS[elevatorId];
+  // if (jsElevator) {
+  //   jsElevator.goToFloor(floor);
+  // }
 }
 
 export class ScalaRuntime extends JVMRuntime {
@@ -161,39 +196,32 @@ export class ScalaRuntime extends JVMRuntime {
   }
 
   async execute(elevators, floors) {
-    if (!this.loaded) {
-      throw new Error("Scala runtime not loaded");
-    }
-    ELEVATORS = elevators;
+    super.execute(elevators, floors);
     try {
       const scalaFloors = [];
       for (const floor of floors) {
-        const scalaFloor = await new this.Floor();
-        scalaFloor.level = floor.level;
-        const buttons = await new this.Buttons();
-        buttons.up = floor.buttons.up;
-        buttons.down = floor.buttons.down;
-        scalaFloor.buttons = buttons;
+        const buttons = await new this.Buttons(false, false);
+        const scalaFloor = await new this.Floor(floor.level, buttons);
         scalaFloors.push(scalaFloor);
       }
       // Create Scala wrapper objects for elevators and floors
       const scalaElevators = [];
       let index = 0;
       for (const elevator of elevators) {
-        const scalaElevator = await new this.Elevator();
-        scalaElevator.id = index++;
-        scalaElevator.currentFloor = elevator.currentFloor;
-        scalaElevator.destinationFloor = elevator.destinationFloor;
-        scalaElevator.pressedFloorButtons = elevator.pressedFloorButtons || [];
-        scalaElevator.percentFull = elevator.percentFull;
+        const scalaElevator = await new this.Elevator(
+          index++,
+          elevator.currentFloor,
+          elevator.destinationFloor,
+          elevator.pressedFloorButtons ?? [],
+          elevator.percentFull,
+        );
         scalaElevators.push(scalaElevator);
       }
 
       await this.controller.tick(scalaElevators, scalaFloors);
     } catch (error) {
-      console.error(error);
       throw new Error(
-        `Scala execution failed: ${error.message ?? error}${this.getLogBufferString()}`,
+        `Scala execution failed: ${await error.toString()}${this.getLogBufferString()}`,
       );
     }
   }

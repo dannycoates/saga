@@ -11,16 +11,15 @@ public class Elevator {
     public int[] pressedFloorButtons;
     public double percentFull;
 
-    // Native method to call JavaScript
-    public static native void jsGoToFloor(int elevator, int floor);
-
+    public static native void hello();
     /**
      * Command the elevator to go to a specific floor
      * @param floor The target floor number
      */
     public void goToFloor(int floor) {
+        // Elevator.hello();
         // This will be handled by JavaScript
-        Elevator.jsGoToFloor(this.id, floor);
+        JSNative.jsGoToFloor(this.id, floor);
     }
 }`;
 
@@ -55,12 +54,11 @@ export class JavaRuntime extends JVMRuntime {
     const javaPreloadResources = {
       "/lt/8/jre/lib/cheerpj-awt.jar": [0, 131072],
       "/lt/8/jre/lib/rt.jar": [
-        0, 131072, 10223616, 10878976, 11403264, 11665408, 11927552,
-        12189696, 12320768, 12582912, 14942208, 15073280, 15204352,
-        15335424, 15466496, 15597568, 17694720, 17956864, 18350080,
-        18612224, 19005440, 19136512, 20840448, 21102592, 21233664,
-        21757952, 22020096, 22806528, 23068672, 23592960, 23724032,
-        26869760,
+        0, 131072, 10223616, 10878976, 11403264, 11665408, 11927552, 12189696,
+        12320768, 12582912, 14942208, 15073280, 15204352, 15335424, 15466496,
+        15597568, 17694720, 17956864, 18350080, 18612224, 19005440, 19136512,
+        20840448, 21102592, 21233664, 21757952, 22020096, 22806528, 23068672,
+        23592960, 23724032, 26869760,
       ],
       "/lt/8/lib/ext/meta-index": [0, 131072],
       "/lt/8/lib/ext/localedata.jar": [0, 131072, 1048576, 1179648],
@@ -81,7 +79,11 @@ export class JavaRuntime extends JVMRuntime {
       "/lt/8/lib/ct.sym": [],
     };
 
-    super("java", { Java_Elevator_jsGoToFloor }, { preloadResources: javaPreloadResources });
+    super(
+      "java",
+      { Java_Elevator_jsGoToFloor },
+      { preloadResources: javaPreloadResources },
+    );
     this.ElevatorController = null;
   }
 
@@ -120,10 +122,7 @@ export class JavaRuntime extends JVMRuntime {
   }
 
   async execute(elevators, floors) {
-    if (!this.loaded) {
-      throw new Error("Java runtime not loaded");
-    }
-    ELEVATORS = elevators;
+    super.execute(elevators, floors);
     try {
       // Create Java wrapper objects for elevators and floors
       const javaElevators = [];

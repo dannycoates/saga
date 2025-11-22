@@ -1,6 +1,27 @@
 import { BaseRuntime } from "./base.js";
 import { loadExternalScript } from "../utils/AsyncUtils.js";
 
+let LIB = null;
+
+const JSNATIVE_SOURCE = `import java.util.*;
+  public class JSNative {
+    // Native method to call JavaScript
+    public static native void jsGoToFloor(int elevator, int floor);
+  }`;
+
+let ELEVATORS = [];
+async function Java_JSNative_jsGoToFloor(lib, elevatorId, floor) {
+  // Find the corresponding JavaScript elevator
+  const jsElevator = ELEVATORS[elevatorId];
+  if (jsElevator) {
+    jsElevator.goToFloor(floor);
+  }
+}
+
+async function Java_Elevator_hello() {
+  console.log("hello from cheerpj");
+}
+
 export class JVMRuntime extends BaseRuntime {
   constructor(language, natives = {}, cheerpjOptions = {}) {
     super(language);
@@ -13,7 +34,10 @@ export class JVMRuntime extends BaseRuntime {
     this.controller = null;
     this.logBuffer = [];
     this.originalConsoleLog = null;
-    this.natives = natives;
+    // this.natives = natives;
+    this.natives = {
+      Java_JSNative_jsGoToFloor,
+    };
     this.cheerpjOptions = cheerpjOptions;
   }
 
@@ -59,38 +83,55 @@ export class JVMRuntime extends BaseRuntime {
     this.captureConsoleLog();
 
     try {
-      // Load CheerpJ script with enhanced timeout handling
-      await loadExternalScript(
-        "https://cjrtnc.leaningtech.com/20250719_2613/loader.js",
-        60000,
+      if (typeof window.cheerpjInit === "undefined") {
+        await loadExternalScript(
+          "https://cjrtnc.leaningtech.com/20250719_2613/loader.js",
+          60000,
+        );
+        const defaultOptions = {
+          status: "none",
+          natives: {},
+          overrideDocumentBase: __BASE_URL__ ?? "/",
+        };
+
+        const initOptions = { ...defaultOptions, ...this.cheerpjOptions };
+        await window.cheerpjInit({ natives: this.natives });
+      }
+      const jsNativeFile = "/str/JSNative.java";
+      window.cheerpOSAddStringFile(jsNativeFile, JSNATIVE_SOURCE);
+      const classPath = `/app${__BASE_URL__}tools.jar:/files/`;
+      const compileResult = await window.cheerpjRunMain(
+        "com.sun.tools.javac.Main",
+        classPath,
+        jsNativeFile,
+        "-d",
+        "/files/",
+        "-Xlint:none",
       );
 
-      // Wait for cheerpjInit to be available
-      if (typeof window.cheerpjInit === "undefined") {
-        throw new Error("cheerpjInit is not defined after script load");
+      if (compileResult !== 0) {
+        throw new Error("Java base class compilation failed");
       }
-
-      const defaultOptions = {
-        status: "none",
-        natives: this.natives,
-        overrideDocumentBase: __BASE_URL__ ?? "/",
-      };
-
-      const initOptions = { ...defaultOptions, ...this.cheerpjOptions };
-      await window.cheerpjInit(initOptions);
 
       // Perform language-specific compilation (including base classes if needed)
       await this.compileLanguageSpecific();
 
+      if (!LIB) {
+        this.lib = await window.cheerpjRunLibrary(
+          "/app/scala-library.jar:/files/",
+        );
+        LIB = this.lib;
+      } else {
+        this.lib = LIB;
+      }
       // Load the compiled library
-      this.lib = await window.cheerpjRunLibrary("/files/");
       await this.loadCompiledClasses();
 
       this.loaded = true;
     } catch (error) {
       this.loading = false;
       throw new Error(
-        `Failed to load ${this.language} runtime: ${error.message}${this.getLogBufferString()}`,
+        `Failed to load ${this.language} runtime: ${error?.message ?? error}${this.getLogBufferString()}`,
       );
     } finally {
       this.loading = false;
@@ -110,8 +151,10 @@ export class JVMRuntime extends BaseRuntime {
   }
 
   async execute(elevators, floors) {
-    // Override in subclasses for language-specific execution
-    throw new Error("execute() must be implemented by subclass");
+    if (!this.loaded) {
+      throw new Error("JVM runtime not loaded");
+    }
+    ELEVATORS = elevators;
   }
 
   dispose() {
