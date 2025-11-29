@@ -1,4 +1,4 @@
-import { randomInt } from "./utils.js";
+import { randomInt } from "../utils/common.js";
 
 /** @type {number} Acceleration rate in floors per second squared */
 const ACCELERATION = 1.1;
