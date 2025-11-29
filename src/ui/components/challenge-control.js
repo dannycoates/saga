@@ -12,7 +12,7 @@ export class ChallengeControl extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     this._app = null;
-    this._worldManager = null;
+    this._gameController = null;
   }
 
   connectedCallback() {
@@ -30,8 +30,8 @@ export class ChallengeControl extends HTMLElement {
   }
 
   disconnectedCallback() {
-    if (this._worldManager) {
-      this._worldManager.removeEventListener(
+    if (this._gameController) {
+      this._gameController.removeEventListener(
         "timescale_changed",
         this._timescaleHandler,
       );
@@ -48,15 +48,15 @@ export class ChallengeControl extends HTMLElement {
     this._app = app;
   }
 
-  set worldManager(manager) {
-    if (this._worldManager) {
-      this._worldManager.removeEventListener(
+  set gameController(manager) {
+    if (this._gameController) {
+      this._gameController.removeEventListener(
         "timescale_changed",
         this._timescaleHandler,
       );
     }
 
-    this._worldManager = manager;
+    this._gameController = manager;
 
     if (manager) {
       this._timescaleHandler = () => {
@@ -84,15 +84,15 @@ export class ChallengeControl extends HTMLElement {
         }
       } else if (button.matches(".timescale_increase")) {
         e.preventDefault();
-        if (this._worldManager && this._worldManager.timeScale < 40) {
-          const timeScale = Math.round(this._worldManager.timeScale * 1.618);
-          this._worldManager.setTimeScale(timeScale);
+        if (this._gameController && this._gameController.timeScale < 40) {
+          const timeScale = Math.round(this._gameController.timeScale * 1.618);
+          this._gameController.setTimeScale(timeScale);
         }
       } else if (button.matches(".timescale_decrease")) {
         e.preventDefault();
-        if (this._worldManager) {
-          const timeScale = Math.round(this._worldManager.timeScale / 1.618);
-          this._worldManager.setTimeScale(timeScale);
+        if (this._gameController) {
+          const timeScale = Math.round(this._gameController.timeScale / 1.618);
+          this._gameController.setTimeScale(timeScale);
         }
       }
     });

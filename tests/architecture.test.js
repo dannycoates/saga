@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { JSSimulationBackend } from "../src/core/JSSimulationBackend.js";
 import { ViewModelManager } from "../src/ui/ViewModelManager.js";
-import { WorldManager } from "../src/game/WorldManager.js";
+import { GameController } from "../src/game/GameController.js";
 
 describe("Modern Architecture", () => {
   describe("JSSimulationBackend Core Functionality", () => {
@@ -164,12 +164,12 @@ describe("Modern Architecture", () => {
     });
   });
 
-  describe("WorldManager", () => {
-    let worldManager;
+  describe("GameController", () => {
+    let gameController;
 
     beforeEach(() => {
-      worldManager = new WorldManager();
-      worldManager.initializeChallenge({
+      gameController = new GameController();
+      gameController.initializeChallenge({
         options: {
           floorCount: 4,
           elevatorCount: 2,
@@ -181,16 +181,16 @@ describe("Modern Architecture", () => {
     });
 
     it("should use SimulationBackend internally", () => {
-      expect(worldManager.backend).toBeDefined();
-      expect(worldManager.backend.constructor.name).toBe("JSSimulationBackend");
+      expect(gameController.backend).toBeDefined();
+      expect(gameController.backend.constructor.name).toBe("JSSimulationBackend");
     });
 
     it("should emit challenge_initialized with backend reference", () => {
       const handler = vi.fn();
-      const newWorldManager = new WorldManager();
-      newWorldManager.addEventListener("challenge_initialized", handler);
+      const newGameController = new GameController();
+      newGameController.addEventListener("challenge_initialized", handler);
 
-      newWorldManager.initializeChallenge({
+      newGameController.initializeChallenge({
         options: { floorCount: 2 },
         condition: { evaluate: () => null },
       });
@@ -208,12 +208,12 @@ describe("Modern Architecture", () => {
         start: vi.fn().mockResolvedValue(),
       };
 
-      expect(worldManager.isPaused).toBe(true);
+      expect(gameController.isPaused).toBe(true);
 
       // Starting should unpause and set up code
-      await worldManager.start(mockCode);
-      expect(worldManager.isPaused).toBe(false);
-      expect(worldManager.codeObj).toBe(mockCode);
+      await gameController.start(mockCode);
+      expect(gameController.isPaused).toBe(false);
+      expect(gameController.codeObj).toBe(mockCode);
       expect(mockCode.start).toHaveBeenCalled();
     });
   });

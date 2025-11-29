@@ -1,5 +1,5 @@
 /**
- * @typedef {import('./WorldManager.js').ChallengeCondition} ChallengeCondition
+ * @typedef {import('./GameController.js').ChallengeCondition} ChallengeCondition
  * @typedef {import('../core/SimulationBackend.js').SimulationStats} SimulationStats
  */
 
@@ -153,7 +153,7 @@ export const requireDemo = function () {
 
 /**
  * Array of all game challenges in order of difficulty.
- * @type {Array<import('./WorldManager.js').Challenge>}
+ * @type {Array<import('./GameController.js').Challenge>}
  */
 export const challenges = [
   {

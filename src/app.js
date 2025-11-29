@@ -3,14 +3,14 @@ import { CodeEditor } from "./ui/CodeEditor.js";
 import { AppDOM } from "./ui/AppDOM.js";
 import { AppEventHandlers } from "./ui/AppEventHandlers.js";
 import { URLManager } from "./utils/URLManager.js";
-import { WorldManager } from "./game/WorldManager.js";
+import { GameController } from "./game/GameController.js";
 import { challenges } from "./game/challenges.js";
 import { APP_CONSTANTS } from "./config/constants.js";
 import { performanceMonitor } from "./ui/PerformanceMonitor.js";
 import { presentChallenge } from "./ui/presenters.js";
 
 /**
- * @typedef {import('./game/WorldManager.js').Challenge} Challenge
+ * @typedef {import('./game/GameController.js').Challenge} Challenge
  * @typedef {import('./core/SimulationBackend.js').UserCodeObject} UserCodeObject
  */
 
@@ -41,8 +41,8 @@ export class ElevatorApp extends EventTarget {
     );
     /** @type {number} Current challenge index */
     this.currentChallengeIndex = 0;
-    /** @type {WorldManager} Game world manager */
-    this.worldManager = new WorldManager();
+    /** @type {GameController} Game controller */
+    this.gameController = new GameController();
     /** @type {URLManager} URL state manager */
     this.urlManager = new URLManager(this);
     /** @type {AppEventHandlers} Event handler coordinator */
@@ -51,7 +51,7 @@ export class ElevatorApp extends EventTarget {
       this.dom,
       this.editor,
       this.runtimeManager,
-      this.worldManager,
+      this.gameController,
       this.urlManager,
     );
 
@@ -89,10 +89,10 @@ export class ElevatorApp extends EventTarget {
       this.dom.getElement("challenge"),
       this.currentChallenge,
       this,
-      this.worldManager,
+      this.gameController,
       this.currentChallenge.id + 1,
     );
-    this.worldManager.initializeChallenge(this.currentChallenge);
+    this.gameController.initializeChallenge(this.currentChallenge);
   }
 
   /**
@@ -101,7 +101,7 @@ export class ElevatorApp extends EventTarget {
    * @returns {void}
    */
   setTimeScale(timeScale) {
-    this.worldManager.setTimeScale(timeScale);
+    this.gameController.setTimeScale(timeScale);
   }
 
   /**
@@ -159,13 +159,13 @@ export class ElevatorApp extends EventTarget {
    * @returns {void}
    */
   startOrStop() {
-    if (this.worldManager.isPaused) {
+    if (this.gameController.isPaused) {
       // Start button clicked - start the challenge
       this.dom.clearElements("feedback");
       this.startChallenge();
     } else {
       // Stop button clicked - reset the game state
-      this.worldManager.end();
+      this.gameController.end();
     }
   }
 
@@ -197,7 +197,7 @@ export class ElevatorApp extends EventTarget {
           try {
             await this.runtimeManager.execute(elevators, floors);
           } catch (e) {
-            this.worldManager.setPaused(true);
+            this.gameController.setPaused(true);
             this.dispatchEvent(
               new CustomEvent("user_code_error", { detail: e }),
             );
@@ -225,7 +225,7 @@ export class ElevatorApp extends EventTarget {
 
     const codeObj = await this.getCodeObj();
     if (codeObj) {
-      await this.worldManager.start(codeObj);
+      await this.gameController.start(codeObj);
     }
   }
 
@@ -236,7 +236,7 @@ export class ElevatorApp extends EventTarget {
   cleanup() {
     // Clean up all managers
     this.eventHandlers.cleanup();
-    this.worldManager.cleanup();
+    this.gameController.cleanup();
     this.urlManager.cleanup();
     this.dom.cleanup();
     performanceMonitor.cleanup();

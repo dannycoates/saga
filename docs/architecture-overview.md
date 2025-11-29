@@ -25,7 +25,7 @@ Elevator Saga is a multi-language elevator programming game where users write Ja
 │   Runtime System  │     │    Game Logic     │     │       UI Layer        │
 │                   │     │                   │     │                       │
 │  ┌─────────────┐  │     │  ┌─────────────┐  │     │  ┌─────────────────┐  │
-│  │RuntimeManager│ │     │  │WorldManager │  │     │  │ DisplayManager  │  │
+│  │RuntimeManager│ │     │  │GameController │  │     │  │ DisplayManager  │  │
 │  └─────────────┘  │     │  └─────────────┘  │     │  └─────────────────┘  │
 │         │         │     │         │         │     │          │            │
 │  ┌──────┴──────┐  │     │  ┌──────┴──────┐  │     │  ┌───────┴────────┐   │
@@ -79,7 +79,7 @@ All runtimes expose an identical API to user code, enabling language-agnostic ga
 **Directory**: `src/game/`
 
 Manages game flow and rules:
-- **WorldManager**: Game loop controller, coordinates backend and display
+- **GameController**: Game loop controller, coordinates backend and display
 - **Challenges**: 16 progressive challenges with evaluation criteria
 
 ### 4. UI Layer
@@ -154,7 +154,7 @@ Backend ──(events)──► DisplayManager ──(events)──► Web Compo
 
 ### 2. Composition Over Inheritance
 Major systems are composed together rather than inherited:
-- WorldManager contains Backend + DisplayManager
+- GameController contains Backend + DisplayManager
 - ElevatorApp composes all subsystems
 - Easy to swap implementations
 
@@ -162,7 +162,7 @@ Major systems are composed together rather than inherited:
 The `SimulationBackend` interface enables pluggable implementations:
 - Current: JSSimulationBackend (JavaScript)
 - Future: WASM backend, Web Worker backend
-- No changes needed to WorldManager or UI
+- No changes needed to GameController or UI
 
 ### 4. Resource Cleanup with AbortController
 All event listeners use AbortController for proper cleanup:
@@ -206,7 +206,7 @@ User Code                  Simulation                    Display
 |-------------|---------|
 | `index.html` | Main HTML page, loads app.js |
 | `src/app.js` | Application initialization |
-| `src/game/WorldManager.js` | Game loop entry |
+| `src/game/GameController.js` | Game loop entry |
 | `src/runtimes/manager.js` | Code execution entry |
 
 ---

@@ -46,7 +46,7 @@ saga/
 
 | File | Purpose |
 |------|---------|
-| `app.js` | **ElevatorApp** class - Main application orchestrator. Composes RuntimeManager, CodeEditor, WorldManager, AppDOM, and AppEventHandlers. Manages application lifecycle, challenge loading, and user interactions. |
+| `app.js` | **ElevatorApp** class - Main application orchestrator. Composes RuntimeManager, CodeEditor, GameController, AppDOM, and AppEventHandlers. Manages application lifecycle, challenge loading, and user interactions. |
 | `style.css` | Global styles for the application layout, game world, and UI elements. |
 
 ---
@@ -86,7 +86,7 @@ Game flow, challenges, and world management.
 
 | File | Purpose |
 |------|---------|
-| `WorldManager.js` | **Game orchestrator**. Composes JSSimulationBackend and ViewModelManager. Manages game loop via `requestAnimationFrame`. Handles: challenge initialization, start/pause/resume, time scaling, user code execution coordination. Uses AbortController for event cleanup. |
+| `GameController.js` | **Game orchestrator**. Composes JSSimulationBackend and ViewModelManager. Manages game loop via `requestAnimationFrame`. Handles: challenge initialization, start/pause/resume, time scaling, user code execution coordination. Uses AbortController for event cleanup. |
 | `challenges.js` | **Challenge definitions**. Contains 16 progressive challenges with configurations (floors, elevators, spawn rates) and end conditions. Condition functions: `requirePassengerCountWithinTime()`, `requirePassengerCountWithMaxWaitTime()`, `requirePassengerCountWithinMoves()`, `requireDemo()`. |
 
 ---
@@ -194,7 +194,7 @@ Static files served directly.
 index.html
     └── loads src/app.js
               │
-              ├── imports src/game/WorldManager.js
+              ├── imports src/game/GameController.js
               │     ├── imports src/core/JSSimulationBackend.js
               │     │     ├── imports src/core/Elevator.js
               │     │     ├── imports src/core/Floor.js
