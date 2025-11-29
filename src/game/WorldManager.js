@@ -2,13 +2,13 @@ import { JSSimulationBackend } from "../core/JSSimulationBackend.js";
 import { APP_CONSTANTS } from "../config/constants.js";
 
 /**
- * @typedef {import('../ui/DisplayManager.js').DisplayManager} DisplayManager
- * @typedef {import('../ui/DisplayManager.js').DisplayManagerOptions} DisplayManagerOptions
+ * @typedef {import('../ui/ViewModelManager.js').ViewModelManager} ViewModelManager
+ * @typedef {import('../ui/ViewModelManager.js').ViewModelManagerOptions} ViewModelManagerOptions
  */
 
 /**
- * @typedef {Object} DisplayManagerClass
- * @property {(options?: DisplayManagerOptions) => DisplayManager} create - Factory method
+ * @typedef {Object} ViewModelManagerClass
+ * @property {(options?: ViewModelManagerOptions) => ViewModelManager} create - Factory method
  */
 
 /**
@@ -48,16 +48,16 @@ import { APP_CONSTANTS } from "../config/constants.js";
 export class WorldManager extends EventTarget {
   /**
    * Creates a new WorldManager instance.
-   * @param {DisplayManagerClass} DisplayManagerClass - Class with static create() method for creating display managers.
+   * @param {ViewModelManagerClass} ViewModelManagerClass - Class with static create() method for creating view model managers.
    */
-  constructor(DisplayManagerClass) {
+  constructor(ViewModelManagerClass) {
     super();
-    /** @type {DisplayManagerClass} Class for creating display managers */
-    this.DisplayManagerClass = DisplayManagerClass;
+    /** @type {ViewModelManagerClass} Class for creating view model managers */
+    this.ViewModelManagerClass = ViewModelManagerClass;
     /** @type {JSSimulationBackend | null} */
     this.backend = null;
-    /** @type {DisplayManager} */
-    this.displayManager = DisplayManagerClass.create();
+    /** @type {ViewModelManager} */
+    this.viewModelManager = ViewModelManagerClass.create();
     /** @type {Challenge | null} */
     this.challenge = null;
 
@@ -184,8 +184,8 @@ export class WorldManager extends EventTarget {
     // Create simulation backend
     this.backend = new JSSimulationBackend();
 
-    // Create display manager using class factory
-    this.displayManager = this.DisplayManagerClass.create({
+    // Create view model manager using class factory
+    this.viewModelManager = this.ViewModelManagerClass.create({
       isRenderingEnabled: options.isRenderingEnabled,
       floorHeight: options.floorHeight,
     });
@@ -200,9 +200,9 @@ export class WorldManager extends EventTarget {
       endCondition: challenge?.condition ?? { evaluate: () => null },
     });
 
-    // Initialize displays with the world element
-    this.displayManager.initialize(this.backend.getState());
-    this.displayManager.subscribeToBackend(this.backend);
+    // Initialize view models with the world element
+    this.viewModelManager.initialize(this.backend.getState());
+    this.viewModelManager.subscribeToBackend(this.backend);
 
     // Set up event forwarding
     this.setupEventHandlers();
@@ -289,7 +289,7 @@ export class WorldManager extends EventTarget {
       this.backend.cleanup();
       this.backend = null;
     }
-    this.displayManager.cleanup();
+    this.viewModelManager.cleanup();
 
     // Emit cleanup event for UI layer
     this.dispatchEvent(new CustomEvent("cleanup"));

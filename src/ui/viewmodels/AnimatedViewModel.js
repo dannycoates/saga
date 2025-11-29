@@ -1,4 +1,4 @@
-import { Display } from "./Display.js";
+import { ViewModel } from "./ViewModel.js";
 
 /**
  * Interpolation function type for animations.
@@ -38,13 +38,13 @@ const NOOP = function (_) {};
 const TMP_POS_STORAGE = [0, 0];
 
 /**
- * Display object with position, parenting, and animation capabilities.
+ * View model with position, parenting, and animation capabilities.
  * Supports smooth movement over time and hierarchical positioning.
  *
- * @extends Display
- * @fires Animated#new_display_state - Emitted when position changes
+ * @extends ViewModel
+ * @fires AnimatedViewModel#new_display_state - Emitted when position changes
  */
-export class Animated extends Display {
+export class AnimatedViewModel extends ViewModel {
   constructor() {
     super();
 
@@ -52,7 +52,7 @@ export class Animated extends Display {
     this.x = 0.0;
     /** @type {number} Local Y position */
     this.y = 0.0;
-    /** @type {Animated | null} Parent object for hierarchical positioning */
+    /** @type {AnimatedViewModel | null} Parent object for hierarchical positioning */
     this.parent = null;
     /** @type {number} Computed world X position */
     this.worldX = 0.0;
@@ -188,7 +188,7 @@ export class Animated extends Display {
   /**
    * Sets or clears the parent object for hierarchical positioning.
    * Automatically adjusts local position to maintain world position.
-   * @param {Animated | null} movableParent - New parent or null to clear
+   * @param {AnimatedViewModel | null} movableParent - New parent or null to clear
    * @returns {void}
    */
   setParent(movableParent) {

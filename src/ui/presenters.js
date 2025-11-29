@@ -17,10 +17,10 @@ import "./components/code-status.js";
  * @typedef {import('../game/WorldManager.js').WorldManager} WorldManager
  * @typedef {import('../app.js').ElevatorApp} ElevatorApp
  * @typedef {import('../game/WorldManager.js').Challenge} Challenge
- * @typedef {import('./DisplayManager.js').DisplayManager} DisplayManager
- * @typedef {import('./display/FloorDisplay.js').FloorDisplay} FloorDisplay
- * @typedef {import('./display/ElevatorDisplay.js').ElevatorDisplay} ElevatorDisplay
- * @typedef {import('./display/PassengerDisplay.js').PassengerDisplay} PassengerDisplay
+ * @typedef {import('./ViewModelManager.js').ViewModelManager} ViewModelManager
+ * @typedef {import('./viewmodels/FloorViewModel.js').FloorViewModel} FloorViewModel
+ * @typedef {import('./viewmodels/ElevatorViewModel.js').ElevatorViewModel} ElevatorViewModel
+ * @typedef {import('./viewmodels/PassengerViewModel.js').PassengerViewModel} PassengerViewModel
  */
 
 /**
@@ -107,16 +107,16 @@ export function presentCodeStatus(parentElem, error) {
 /**
  * Creates and attaches a floor component.
  * @param {HTMLElement} parentElem - Parent element
- * @param {FloorDisplay} display - Floor display object
+ * @param {FloorViewModel} viewModel - Floor view model object
  * @param {number} floorCount - Total number of floors
  * @returns {void}
  */
-export function presentFloor(parentElem, display, floorCount) {
+export function presentFloor(parentElem, viewModel, floorCount) {
   const floorComponent = /** @type {ElevatorFloorElement} */ (document.createElement("elevator-floor"));
-  floorComponent.floor = display;
-  if (display.level === 0) {
+  floorComponent.floor = viewModel;
+  if (viewModel.level === 0) {
     floorComponent.setAttribute("hide-down", "true");
-  } else if (display.level === floorCount - 1) {
+  } else if (viewModel.level === floorCount - 1) {
     floorComponent.setAttribute("hide-up", "true");
   }
   parentElem.appendChild(floorComponent);
@@ -125,40 +125,40 @@ export function presentFloor(parentElem, display, floorCount) {
 /**
  * Creates and attaches an elevator component.
  * @param {HTMLElement} parentElem - Parent element
- * @param {ElevatorDisplay} display - Elevator display object
+ * @param {ElevatorViewModel} viewModel - Elevator view model object
  * @returns {void}
  */
-export function presentElevator(parentElem, display) {
+export function presentElevator(parentElem, viewModel) {
   const elevatorComponent = /** @type {ElevatorCarElement} */ (document.createElement("elevator-car"));
-  elevatorComponent.elevator = display;
+  elevatorComponent.elevator = viewModel;
   parentElem.appendChild(elevatorComponent);
 }
 
 /**
  * Creates and attaches a passenger component.
  * @param {HTMLElement} parentElem - Parent element
- * @param {PassengerDisplay} display - Passenger display object
+ * @param {PassengerViewModel} viewModel - Passenger view model object
  * @returns {void}
  */
-export function presentPassenger(parentElem, display) {
+export function presentPassenger(parentElem, viewModel) {
   const passengerComponent = /** @type {ElevatorPassengerElement} */ (document.createElement("elevator-passenger"));
-  passengerComponent.passenger = display;
+  passengerComponent.passenger = viewModel;
   parentElem.appendChild(passengerComponent);
 }
 
 /**
  * Presents the entire world with floors and elevators.
  * @param {HTMLElement} element - Container element
- * @param {DisplayManager} displayManager - Display manager
+ * @param {ViewModelManager} viewModelManager - View model manager
  * @returns {void}
  */
-export function presentWorld(element, displayManager) {
-  const floorCount = displayManager.floorDisplays.size;
-  element.style.height = displayManager.floorHeight * floorCount + "px";
-  displayManager.floorDisplays.forEach((floorDisplay) => {
-    presentFloor(element, floorDisplay, floorCount);
+export function presentWorld(element, viewModelManager) {
+  const floorCount = viewModelManager.floorViewModels.size;
+  element.style.height = viewModelManager.floorHeight * floorCount + "px";
+  viewModelManager.floorViewModels.forEach((floorViewModel) => {
+    presentFloor(element, floorViewModel, floorCount);
   });
-  displayManager.elevatorDisplays.forEach((elevatorDisplay) => {
-    presentElevator(element, elevatorDisplay);
+  viewModelManager.elevatorViewModels.forEach((elevatorViewModel) => {
+    presentElevator(element, elevatorViewModel);
   });
 }

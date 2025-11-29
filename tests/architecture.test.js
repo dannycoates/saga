@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { JSSimulationBackend } from "../src/core/JSSimulationBackend.js";
-import { DisplayManager } from "../src/ui/DisplayManager.js";
-import { NullDisplayManager } from "../src/ui/NullDisplayManager.js";
+import { ViewModelManager } from "../src/ui/ViewModelManager.js";
+import { NullViewModelManager } from "../src/ui/NullViewModelManager.js";
 import { WorldManager } from "../src/game/WorldManager.js";
 
 describe("Modern Architecture", () => {
@@ -112,12 +112,12 @@ describe("Modern Architecture", () => {
     });
   });
 
-  describe("DisplayManager", () => {
-    let displayManager;
+  describe("ViewModelManager", () => {
+    let viewModelManager;
     let backend;
 
     beforeEach(() => {
-      displayManager = new DisplayManager({
+      viewModelManager = new ViewModelManager({
         isRenderingEnabled: true,
         floorHeight: 50,
       });
@@ -133,35 +133,35 @@ describe("Modern Architecture", () => {
       });
     });
 
-    it("should initialize displays from state", () => {
+    it("should initialize view models from state", () => {
       const mockElement = document.createElement("div");
       const initialState = backend.getState();
 
-      displayManager.initialize(initialState, mockElement);
+      viewModelManager.initialize(initialState, mockElement);
 
-      expect(displayManager.floorDisplays.size).toBe(2);
-      expect(displayManager.elevatorDisplays.size).toBe(1);
+      expect(viewModelManager.floorViewModels.size).toBe(2);
+      expect(viewModelManager.elevatorViewModels.size).toBe(1);
     });
 
     it("should subscribe to backend events", () => {
-      displayManager.subscribeToBackend(backend);
+      viewModelManager.subscribeToBackend(backend);
 
-      const updateSpy = vi.spyOn(displayManager, "updateDisplays");
+      const updateSpy = vi.spyOn(viewModelManager, "updateViewModels");
       backend.tick(0.1);
 
       expect(updateSpy).toHaveBeenCalled();
     });
 
-    it("should not create displays when rendering disabled", () => {
-      const noRenderManager = new DisplayManager({
+    it("should not create view models when rendering disabled", () => {
+      const noRenderManager = new ViewModelManager({
         isRenderingEnabled: false,
       });
 
       const initialState = backend.getState();
       noRenderManager.initialize(initialState, document.createElement("div"));
 
-      expect(noRenderManager.floorDisplays.size).toBe(0);
-      expect(noRenderManager.elevatorDisplays.size).toBe(0);
+      expect(noRenderManager.floorViewModels.size).toBe(0);
+      expect(noRenderManager.elevatorViewModels.size).toBe(0);
     });
   });
 
@@ -169,8 +169,8 @@ describe("Modern Architecture", () => {
     let worldManager;
 
     beforeEach(() => {
-      // Pass NullDisplayManager class for headless testing
-      worldManager = new WorldManager(NullDisplayManager);
+      // Pass NullViewModelManager class for headless testing
+      worldManager = new WorldManager(NullViewModelManager);
       worldManager.initializeChallenge({
         floorCount: 4,
         elevatorCount: 2,
@@ -184,21 +184,21 @@ describe("Modern Architecture", () => {
       expect(worldManager.backend.constructor.name).toBe("JSSimulationBackend");
     });
 
-    it("should use NullDisplayManager by default for headless operation", () => {
-      expect(worldManager.displayManager).toBeDefined();
-      expect(worldManager.displayManager.constructor.name).toBe(
-        "NullDisplayManager",
+    it("should use NullViewModelManager by default for headless operation", () => {
+      expect(worldManager.viewModelManager).toBeDefined();
+      expect(worldManager.viewModelManager.constructor.name).toBe(
+        "NullViewModelManager",
       );
     });
 
     it("should manage game state through start/stop", async () => {
-      const mockCode = { 
+      const mockCode = {
         tick: vi.fn(),
         start: vi.fn().mockResolvedValue(),
       };
-      
+
       expect(worldManager.isPaused).toBe(true);
-      
+
       // Starting should unpause and set up code
       await worldManager.start(mockCode);
       expect(worldManager.isPaused).toBe(false);

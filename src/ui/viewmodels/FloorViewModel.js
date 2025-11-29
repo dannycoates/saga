@@ -1,4 +1,4 @@
-import { Display } from "./Display.js";
+import { ViewModel } from "./ViewModel.js";
 
 /**
  * @typedef {Object} FloorState
@@ -7,13 +7,13 @@ import { Display } from "./Display.js";
  */
 
 /**
- * Display representation of a floor.
+ * View model for a floor.
  * Tracks button states and emits events on changes.
  *
- * @extends Display
- * @fires FloorDisplay#button_state_change - Emitted when call buttons change state
+ * @extends ViewModel
+ * @fires FloorViewModel#button_state_change - Emitted when call buttons change state
  */
-export class FloorDisplay extends Display {
+export class FloorViewModel extends ViewModel {
   /**
    * Creates a floor display.
    * @param {FloorState} floorState - Initial floor state

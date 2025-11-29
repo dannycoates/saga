@@ -1,4 +1,4 @@
-import { Animated } from "./Animated.js";
+import { AnimatedViewModel } from "./AnimatedViewModel.js";
 import { randomInt } from "../../utils/common.js";
 
 /**
@@ -22,20 +22,20 @@ const LINEAR_INTERPOLATE = function (value0, value1, x) {
 };
 
 /**
- * Display representation of a passenger.
+ * View model for a passenger.
  * Handles visual animations for waiting, boarding, and exiting.
  *
- * @extends Animated
- * @fires PassengerDisplay#removed - Emitted when passenger exit animation completes
+ * @extends AnimatedViewModel
+ * @fires PassengerViewModel#removed - Emitted when passenger exit animation completes
  */
-export class PassengerDisplay extends Animated {
+export class PassengerViewModel extends AnimatedViewModel {
   /**
    * Creates a passenger display.
    * @param {PassengerStateData} passengerState - Initial passenger state
    * @param {number} [startingY=0] - Starting Y position on floor
-   * @param {Map<number, import('./ElevatorDisplay.js').ElevatorDisplay> | null} [elevatorDisplays=null] - Map of elevator displays for parenting
+   * @param {Map<number, import('./ElevatorViewModel.js').ElevatorViewModel> | null} [elevatorViewModels=null] - Map of elevator view models for parenting
    */
-  constructor(passengerState, startingY = 0, elevatorDisplays = null) {
+  constructor(passengerState, startingY = 0, elevatorViewModels = null) {
     super();
 
     /** @type {PassengerStateData} Current passenger state from simulation */
@@ -44,8 +44,8 @@ export class PassengerDisplay extends Animated {
     this.state = "new";
     /** @type {number} Starting Y position on floor */
     this.startingY = startingY;
-    /** @type {Map<number, import('./ElevatorDisplay.js').ElevatorDisplay> | null} Reference to elevator displays for parenting */
-    this.elevatorDisplays = elevatorDisplays;
+    /** @type {Map<number, import('./ElevatorViewModel.js').ElevatorViewModel> | null} Reference to elevator view models for parenting */
+    this.elevatorViewModels = elevatorViewModels;
     /** @type {boolean} Whether display is still active (false after exit animation completes) */
     this.isActive = true;
     /** @type {DisplayType} Visual display type for rendering */
@@ -93,8 +93,8 @@ export class PassengerDisplay extends Animated {
    * @returns {void}
    */
   animateBoarding() {
-    if (this.elevatorDisplays && this.passengerState.elevatorIndex !== null) {
-      const parent = this.elevatorDisplays.get(
+    if (this.elevatorViewModels && this.passengerState.elevatorIndex !== null) {
+      const parent = this.elevatorViewModels.get(
         this.passengerState.elevatorIndex,
       );
       if (parent) {

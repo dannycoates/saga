@@ -17,7 +17,7 @@ saga/
 │   ├── runtimes/            # Multi-language support
 │   ├── ui/                  # User interface
 │   │   ├── components/      # Web components
-│   │   └── display/         # Display objects
+│   │   └── viewmodels/      # View model objects
 │   └── utils/               # Utility functions
 ├── tests/                   # Test files
 ├── index.html               # Entry point
@@ -86,7 +86,7 @@ Game flow, challenges, and world management.
 
 | File | Purpose |
 |------|---------|
-| `WorldManager.js` | **Game orchestrator**. Composes JSSimulationBackend and DisplayManager. Manages game loop via `requestAnimationFrame`. Handles: challenge initialization, start/pause/resume, time scaling, user code execution coordination. Uses AbortController for event cleanup. |
+| `WorldManager.js` | **Game orchestrator**. Composes JSSimulationBackend and ViewModelManager. Manages game loop via `requestAnimationFrame`. Handles: challenge initialization, start/pause/resume, time scaling, user code execution coordination. Uses AbortController for event cleanup. |
 | `challenges.js` | **Challenge definitions**. Contains 16 progressive challenges with configurations (floors, elevators, spawn rates) and end conditions. Condition functions: `requirePassengerCountWithinTime()`, `requirePassengerCountWithMaxWaitTime()`, `requirePassengerCountWithinMoves()`, `requireDemo()`. |
 
 ---
@@ -111,7 +111,7 @@ Presentation layer and user interaction handling.
 
 | File | Purpose |
 |------|---------|
-| `DisplayManager.js` | **Display orchestrator**. Manages Maps of FloorDisplay, ElevatorDisplay, PassengerDisplay. Subscribes to backend events and updates displays. Can be disabled for headless operation. Uses AbortController for cleanup. |
+| `ViewModelManager.js` | **View model orchestrator**. Manages Maps of FloorViewModel, ElevatorViewModel, PassengerViewModel. Subscribes to backend events and updates view models. Can be disabled for headless operation. Uses AbortController for cleanup. |
 | `CodeEditor.js` | **CodeMirror integration**. Multi-language editor with syntax highlighting (JavaScript, Python, Java). Features: ESLint linting (JS only), Gruvbox themes, auto-save to localStorage, keyboard shortcuts (Tab indent, Ctrl+S start). Uses Compartments for dynamic reconfiguration. |
 | `AppDOM.js` | **DOM element cache**. Central reference to DOM elements. Methods for showing/hiding runtime loading indicator, clearing feedback. |
 | `AppEventHandlers.js` | **Event coordination**. Attaches UI event listeners for buttons, language selector, theme changes. Delegates to ElevatorApp methods. |
@@ -120,18 +120,18 @@ Presentation layer and user interaction handling.
 | `ResponsiveScaling.js` | **Layout management**. Handles responsive scaling and layout adjustments for different screen sizes. |
 | `theme-manager.js` | **Theme handling**. Watches system theme preference (prefers-color-scheme). Provides `onThemeChange()` callback for subscribers. |
 
-#### Display Objects (`src/ui/display/`)
+#### View Models (`src/ui/viewmodels/`)
 
-Classes representing visual game elements.
+Classes representing visual game elements as view models.
 
 | File | Purpose |
 |------|---------|
-| `Display.js` | **Base display class**. Extends EventTarget. Properties: `element`, `disposed`. Methods: `tick()`, `syncUIComponent()`, `dispose()`. |
-| `Animated.js` | **Animation support**. Extends Display. Handles smooth interpolated movement. Properties: `x`, `y`, `parent`. Methods: `moveToOverTime()`, `getWorldX/Y()`. Uses custom interpolation functions. |
-| `ElevatorDisplay.js` | **Elevator visual**. Extends Animated. Converts simulation position to screen Y. Calculates passenger slot positions. Emits: `new_current_floor`, `floor_buttons_changed`, `new_display_state`. |
-| `FloorDisplay.js` | **Floor visual**. Extends Display. Tracks button state. Emits: `buttonstate_change`. |
-| `PassengerDisplay.js` | **Passenger visual**. Extends Animated. State machine: new → waiting → riding → exited. Random types (child, female, male). Methods: `animateBoarding()`, `animateExit()`. |
-| `NullDisplay.js` | **No-op display**. Used for headless operation when rendering is disabled. |
+| `ViewModel.js` | **Base view model class**. Extends EventTarget. Methods: `tick()`, `syncUIComponent()`. |
+| `AnimatedViewModel.js` | **Animation support**. Extends ViewModel. Handles smooth interpolated movement. Properties: `x`, `y`, `parent`. Methods: `moveToOverTime()`, `getWorldX/Y()`. Uses custom interpolation functions. |
+| `ElevatorViewModel.js` | **Elevator view model**. Extends AnimatedViewModel. Converts simulation position to screen Y. Calculates passenger slot positions. Emits: `new_current_floor`, `floor_buttons_changed`, `new_display_state`. |
+| `FloorViewModel.js` | **Floor view model**. Extends ViewModel. Tracks button state. Emits: `buttonstate_change`. |
+| `PassengerViewModel.js` | **Passenger view model**. Extends AnimatedViewModel. State machine: new → waiting → riding → exited. Random types (child, female, male). Methods: `animateBoarding()`, `animateExit()`. |
+| `NullViewModel.js` | **No-op view model**. Used for headless operation when rendering is disabled. |
 
 #### Web Components (`src/ui/components/`)
 
@@ -174,7 +174,7 @@ Test files mirroring source structure.
 | `core/Passenger.test.js` | Passenger lifecycle tests. |
 | `core/utils.test.js` | Utility function tests. |
 | `core/World.test.js` | Simulation integration tests. |
-| `ui/display/Animated.test.js` | Animation utility tests. |
+| `ui/viewmodels/AnimatedViewModel.test.js` | Animation utility tests. |
 
 ---
 
@@ -200,10 +200,10 @@ index.html
               │     │     ├── imports src/core/Floor.js
               │     │     └── imports src/core/Passenger.js
               │     │
-              │     └── imports src/ui/DisplayManager.js
-              │           ├── imports src/ui/display/ElevatorDisplay.js
-              │           ├── imports src/ui/display/FloorDisplay.js
-              │           └── imports src/ui/display/PassengerDisplay.js
+              │     └── imports src/ui/ViewModelManager.js
+              │           ├── imports src/ui/viewmodels/ElevatorViewModel.js
+              │           ├── imports src/ui/viewmodels/FloorViewModel.js
+              │           └── imports src/ui/viewmodels/PassengerViewModel.js
               │
               ├── imports src/runtimes/manager.js
               │     ├── imports src/runtimes/javascript.js
@@ -231,7 +231,7 @@ index.html
 | `src/runtimes/` | 4 | Language runtimes |
 | `src/ui/` | 7 | UI management |
 | `src/ui/components/` | 8 | Web components |
-| `src/ui/display/` | 5 | Display objects |
+| `src/ui/viewmodels/` | 6 | View model objects |
 | `src/utils/` | 2 | Utilities |
 | `tests/` | 7 | Test files |
 | **Total** | **45** | Source + tests |

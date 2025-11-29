@@ -1,4 +1,4 @@
-import { Animated } from "./Animated.js";
+import { AnimatedViewModel } from "./AnimatedViewModel.js";
 
 /**
  * @typedef {Object} ElevatorState
@@ -17,14 +17,14 @@ import { Animated } from "./Animated.js";
  */
 
 /**
- * Display representation of an elevator.
+ * View model for an elevator.
  * Tracks position and emits events for UI updates.
  *
- * @extends Animated
- * @fires ElevatorDisplay#new_current_floor - Emitted when elevator reaches a new floor
- * @fires ElevatorDisplay#floor_buttons_changed - Emitted when floor buttons change
+ * @extends AnimatedViewModel
+ * @fires ElevatorViewModel#new_current_floor - Emitted when elevator reaches a new floor
+ * @fires ElevatorViewModel#floor_buttons_changed - Emitted when floor buttons change
  */
-export class ElevatorDisplay extends Animated {
+export class ElevatorViewModel extends AnimatedViewModel {
   /**
    * Creates an elevator display.
    * @param {ElevatorState} elevatorState - Initial elevator state

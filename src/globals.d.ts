@@ -59,13 +59,13 @@ interface CodeStatusElement extends HTMLElement {
 }
 
 interface ElevatorFloorElement extends HTMLElement {
-  floor: import('./ui/display/FloorDisplay.js').FloorDisplay;
+  floor: import('./ui/viewmodels/FloorViewModel.js').FloorViewModel;
 }
 
 interface ElevatorCarElement extends HTMLElement {
-  elevator: import('./ui/display/ElevatorDisplay.js').ElevatorDisplay;
+  elevator: import('./ui/viewmodels/ElevatorViewModel.js').ElevatorViewModel;
 }
 
 interface ElevatorPassengerElement extends HTMLElement {
-  passenger: import('./ui/display/PassengerDisplay.js').PassengerDisplay;
+  passenger: import('./ui/viewmodels/PassengerViewModel.js').PassengerViewModel;
 }
