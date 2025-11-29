@@ -92,4 +92,43 @@ describe("Animated class", () => {
     expect(m.x).toBe(5.0);
     expect(m.y).toBe(5.0);
   });
+
+  it("cancels animation without invoking callback", () => {
+    m.moveToOverTime(10.0, 10.0, 5.0, undefined, handlers.someHandler);
+    expect(m.isBusy()).toBe(true);
+
+    m.cancelAnimation(false);
+
+    expect(m.isBusy()).toBe(false);
+    expect(handlers.someHandler).not.toHaveBeenCalled();
+  });
+
+  it("cancels animation and invokes callback when requested", () => {
+    m.moveToOverTime(10.0, 10.0, 5.0, undefined, handlers.someHandler);
+    expect(m.isBusy()).toBe(true);
+
+    m.cancelAnimation(true);
+
+    expect(m.isBusy()).toBe(false);
+    expect(handlers.someHandler).toHaveBeenCalledTimes(1);
+  });
+
+  it("does nothing when cancelling with no active animation", () => {
+    expect(m.isBusy()).toBe(false);
+
+    // Should not throw
+    m.cancelAnimation(true);
+
+    expect(m.isBusy()).toBe(false);
+  });
+
+  it("invokes previous callback when starting new animation", () => {
+    m.moveToOverTime(10.0, 10.0, 5.0, undefined, handlers.someHandler);
+    m.moveToOverTime(20.0, 20.0, 5.0, undefined, handlers.someOtherHandler);
+
+    // First callback should have been invoked
+    expect(handlers.someHandler).toHaveBeenCalledTimes(1);
+    // Second callback not yet
+    expect(handlers.someOtherHandler).not.toHaveBeenCalled();
+  });
 });
