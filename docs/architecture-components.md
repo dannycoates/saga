@@ -179,7 +179,7 @@ JSSimulationBackend                                   Subscribers
        │                                    ┌──────────────┼──────────────┐
        │                                    │              │              │
        │                                    ▼              ▼              ▼
-       │                             DisplayManager   GameController    ElevatorApp
+       │                             ViewModelManager   GameController    ElevatorApp
        │                                    │              │              │
        ├── state_changed ──────────────────►│              │              │
        │    (every tick)                    │              │              │
@@ -190,7 +190,7 @@ JSSimulationBackend                                   Subscribers
        │                                    │        UI presenter         │
        │                                    │              │              │
        ├── passenger_spawned ──────────────►│              │              │
-       │                          createPassengerDisplay() │              │
+       │                          createPassengerViewModel() │              │
        │                                    │              │              │
        ├── passengers_exited ──────────────►│              │              │
        │                          animateExit()            │              │
@@ -341,23 +341,18 @@ All runtimes expose identical API to user code:
 
 ## 4. UI Layer
 
-### Display Object Hierarchy
+### View Model Object Hierarchy
 
 ```
 EventTarget (Browser API)
        │
-       └── Display (Base)
-              │
-              │  Properties:
-              │  ├── element: HTMLElement
-              │  └── disposed: boolean
+       └── ViewModel (Base)
               │
               │  Methods:
               │  ├── tick(dt): void
-              │  ├── syncUIComponent(): void
-              │  └── dispose(): void
+              │  └── syncUIComponent(): void
               │
-              ├── FloorDisplay
+              ├── FloorViewModel
               │      │
               │      │  Properties:
               │      │  ├── level: number
@@ -367,19 +362,21 @@ EventTarget (Browser API)
               │      │  └── buttonstate_change
               │      │
               │
-              └── Animated (extends Display)
+              └── AnimatedViewModel (extends ViewModel)
                      │
                      │  Properties:
-                     │  ├── x, y: number (current position)
-                     │  ├── parent: Animated | null
-                     │  └── interpolations: Animation[]
+                     │  ├── x, y: number (local position)
+                     │  ├── worldX, worldY: number (computed)
+                     │  └── parent: AnimatedViewModel | null
                      │
                      │  Methods:
+                     │  ├── moveTo(x, y): void
                      │  ├── moveToOverTime(x, y, time, interp, cb)
-                     │  ├── getWorldX/Y(): number
-                     │  └── tick(dt): void (updates interpolations)
+                     │  ├── getWorldPosition(storage): void
+                     │  ├── setParent(parent): void
+                     │  └── tick(dt): void (advances animation)
                      │
-                     ├── ElevatorDisplay
+                     ├── ElevatorViewModel
                      │      │
                      │      │  Properties:
                      │      │  ├── index: number
@@ -395,7 +392,7 @@ EventTarget (Browser API)
                      │      │  └── new_display_state
                      │      │
                      │
-                     └── PassengerDisplay
+                     └── PassengerViewModel
                             │
                             │  Properties:
                             │  ├── id: number
@@ -451,34 +448,34 @@ EventTarget (Browser API)
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### DisplayManager Structure
+### ViewModelManager Structure
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                          DisplayManager                                      │
+│                          ViewModelManager                                      │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  State Maps:                                                                │
-│  ├── floorDisplays: Map<number, FloorDisplay>                               │
-│  ├── elevatorDisplays: Map<number, ElevatorDisplay>                         │
-│  └── passengerDisplays: Map<number, PassengerDisplay>                       │
+│  ├── floorViewModels: Map<number, FloorViewModel>                             │
+│  ├── elevatorViewModels: Map<number, ElevatorViewModel>                       │
+│  └── passengerViewModels: Map<number, PassengerViewModel>                     │
 │                                                                             │
 │  Configuration:                                                             │
-│  ├── container: HTMLElement                                                 │
 │  ├── isRenderingEnabled: boolean                                            │
+│  ├── floorHeight: number                                                    │
 │  └── abortController: AbortController                                       │
 │                                                                             │
 │  Lifecycle Methods:                                                         │
-│  ├── initialize(initialState)    // Create displays from state             │
+│  ├── initialize(initialState)    // Create view models from state          │
 │  ├── subscribeToBackend(backend) // Attach event listeners                 │
 │  ├── tick(dt)                    // Advance animations                     │
-│  └── cleanup()                   // Remove displays, abort events          │
+│  └── cleanup()                   // Remove view models, abort events       │
 │                                                                             │
 │  Update Methods:                                                            │
-│  ├── updateDisplays(state, dt)   // Main update from state_changed         │
-│  ├── updateFloor(floorData)      // Sync floor display                     │
-│  ├── updateElevator(elevData)    // Sync elevator display                  │
-│  └── updatePassenger(paxData)    // Sync passenger display                 │
+│  ├── updateViewModels(state, dt) // Main update from state_changed         │
+│  ├── updateFloor(floorData)      // Sync floor view model                  │
+│  ├── updateElevator(elevData)    // Sync elevator view model               │
+│  └── updatePassenger(paxData)    // Sync passenger view model              │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -496,7 +493,7 @@ EventTarget (Browser API)
 │                                                                             │
 │  Composed Systems:                                                          │
 │  ├── backend: JSSimulationBackend                                           │
-│  └── displayManager: DisplayManager                                         │
+│  └── displayManager: ViewModelManager                                         │
 │                                                                             │
 │  Game State:                                                                │
 │  ├── isPaused: boolean                                                      │

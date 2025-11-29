@@ -30,7 +30,7 @@ Browser loads index.html
 │                                │
 │  3. Create GameController        │
 │     ├── Create Backend         │
-│     └── Create DisplayManager  │
+│     └── Create ViewModelManager  │
 │                                │
 │  4. Create AppDOM              │
 │     └── Cache DOM elements     │
@@ -73,14 +73,13 @@ ElevatorApp.loadChallenge(index)
                     │         ├── Reset statistics
                     │         └── Set endCondition
                     │
-                    ├──► displayManager.initialize(backend.getState())
+                    ├──► viewModelManager.initialize(backend.getState())
                     │         │
-                    │         ├── Clear existing displays
-                    │         ├── Create FloorDisplay for each floor
-                    │         ├── Create ElevatorDisplay for each elevator
-                    │         └── Position displays in container
+                    │         ├── Clear existing view models
+                    │         ├── Create FloorViewModel for each floor
+                    │         └── Create ElevatorViewModel for each elevator
                     │
-                    └──► displayManager.subscribeToBackend(backend)
+                    └──► viewModelManager.subscribeToBackend(backend)
                               │
                               └── Attach event listeners:
                                   ├── state_changed
@@ -425,23 +424,23 @@ handleElevatorArrival(elevator)
 
 ---
 
-## 8. Display Update Sequence
+## 8. View Model Update Sequence
 
 ```
 backend emits state_changed
          │
          ▼
-DisplayManager event listener
+ViewModelManager event listener
          │
-         └──► updateDisplays(state, dt)
+         └──► updateViewModels(state, dt)
                     │
                     ├──► Update floors
                     │         │
                     │         └── for (floorData of state.floors):
                     │                   │
-                    │                   ├── display = floorDisplays.get(level)
-                    │                   ├── display.buttons = floorData.buttons
-                    │                   └── display.syncUIComponent()
+                    │                   ├── viewModel = floorViewModels.get(level)
+                    │                   ├── viewModel.buttons = floorData.buttons
+                    │                   └── viewModel.syncUIComponent()
                     │                             │
                     │                             └── <elevator-floor>
                     │                                 updates attributes
@@ -450,12 +449,12 @@ DisplayManager event listener
                     │         │
                     │         └── for (elevData of state.elevators):
                     │                   │
-                    │                   ├── display = elevatorDisplays.get(index)
-                    │                   ├── Calculate display Y position
-                    │                   ├── display.moveTo(x, y)
-                    │                   ├── display.currentFloor = floor
-                    │                   ├── display.buttons = elevData.buttons
-                    │                   └── display.syncUIComponent()
+                    │                   ├── viewModel = elevatorViewModels.get(index)
+                    │                   ├── Calculate Y position
+                    │                   ├── viewModel.moveTo(x, y)
+                    │                   ├── viewModel.currentFloor = floor
+                    │                   ├── viewModel.buttons = elevData.buttons
+                    │                   └── viewModel.syncUIComponent()
                     │                             │
                     │                             └── <elevator-car>
                     │                                 ├── Update position CSS
@@ -466,7 +465,7 @@ DisplayManager event listener
                     │         │
                     │         └── for (paxData of state.passengers):
                     │                   │
-                    │                   ├── display = passengerDisplays.get(id)
+                    │                   ├── viewModel = passengerViewModels.get(id)
                     │                   │
                     │                   ├── if (state === "waiting"):
                     │                   │     └── Position at floor
@@ -474,14 +473,14 @@ DisplayManager event listener
                     │                   ├── if (state === "riding"):
                     │                   │     └── Position in elevator slot
                     │                   │
-                    │                   └── display.syncUIComponent()
+                    │                   └── viewModel.syncUIComponent()
                     │                             │
                     │                             └── <elevator-passenger>
                     │                                 └── Update position CSS
                     │
                     └──► Advance animations
                               │
-                              └── display.tick(dt)
+                              └── viewModel.tick(dt)
                                         │
                                         └── Process interpolations
                                             (smooth movement)
@@ -621,12 +620,11 @@ GameController.cleanup()
          │         │
          │         └── All event listeners removed at once
          │
-         ├──► displayManager.cleanup()
+         ├──► viewModelManager.cleanup()
          │         │
-         │         ├── Remove all display elements from DOM
-         │         ├── Clear floorDisplays map
-         │         ├── Clear elevatorDisplays map
-         │         └── Clear passengerDisplays map
+         │         ├── Clear floorViewModels map
+         │         ├── Clear elevatorViewModels map
+         │         └── Clear passengerViewModels map
          │
          └──► backend.cleanup()
                     │

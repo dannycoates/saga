@@ -25,12 +25,12 @@ Elevator Saga is a multi-language elevator programming game where users write Ja
 │   Runtime System  │     │    Game Logic     │     │       UI Layer        │
 │                   │     │                   │     │                       │
 │  ┌─────────────┐  │     │  ┌─────────────┐  │     │  ┌─────────────────┐  │
-│  │RuntimeManager│ │     │  │GameController │  │     │  │ DisplayManager  │  │
+│  │RuntimeManager│ │     │  │GameController │  │     │  │ ViewModelManager  │  │
 │  └─────────────┘  │     │  └─────────────┘  │     │  └─────────────────┘  │
 │         │         │     │         │         │     │          │            │
 │  ┌──────┴──────┐  │     │  ┌──────┴──────┐  │     │  ┌───────┴────────┐   │
 │  │  Runtimes   │  │     │  │ Challenges  │  │     │  │ Web Components │   │
-│  │ JS/Py/Java  │  │     │  │ Evaluation  │  │     │  │ Display Objects│   │
+│  │ JS/Py/Java  │  │     │  │ Evaluation  │  │     │  │ View Models   │   │
 │  └─────────────┘  │     │  └─────────────┘  │     │  └────────────────┘   │
 └───────────────────┘     └─────────┬─────────┘     └───────────────────────┘
                                     │
@@ -86,8 +86,8 @@ Manages game flow and rules:
 **Directory**: `src/ui/`
 
 Pure presentation layer:
-- **DisplayManager**: Manages visual game objects
-- **Display Objects**: ElevatorDisplay, FloorDisplay, PassengerDisplay
+- **ViewModelManager**: Manages view model objects for visual representation
+- **View Models**: ElevatorViewModel, FloorViewModel, PassengerViewModel
 - **Web Components**: Custom elements for elevator, floor, passenger, stats
 - **CodeEditor**: CodeMirror-based multi-language editor
 
@@ -149,12 +149,12 @@ Components communicate through custom events rather than direct method calls:
 - Clean separation of concerns
 
 ```
-Backend ──(events)──► DisplayManager ──(events)──► Web Components
+Backend ──(events)──► ViewModelManager ──(events)──► Web Components
 ```
 
 ### 2. Composition Over Inheritance
 Major systems are composed together rather than inherited:
-- GameController contains Backend + DisplayManager
+- GameController coordinates Backend and ViewModelManager
 - ElevatorApp composes all subsystems
 - Easy to swap implementations
 
@@ -172,7 +172,7 @@ All event listeners use AbortController for proper cleanup:
 
 ### 5. Separation of Simulation and Presentation
 - Core simulation has no knowledge of rendering
-- DisplayManager can be completely disabled (headless mode)
+- ViewModelManager can be completely disabled (headless mode)
 - Enables fast automated testing
 
 ---
