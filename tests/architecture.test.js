@@ -167,17 +167,10 @@ describe("Modern Architecture", () => {
 
   describe("WorldManager", () => {
     let worldManager;
-    let mockDom;
 
     beforeEach(() => {
-      mockDom = {
-        clearElements: vi.fn(),
-        getElement: vi.fn().mockReturnValue(document.createElement("div")),
-        isRuntimeLoading: vi.fn().mockReturnValue(false),
-      };
-
       // Pass NullDisplayManager class for headless testing
-      worldManager = new WorldManager(mockDom, NullDisplayManager);
+      worldManager = new WorldManager(NullDisplayManager);
       worldManager.initializeChallenge({
         floorCount: 4,
         elevatorCount: 2,

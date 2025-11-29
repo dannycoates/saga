@@ -43,7 +43,7 @@ export class ElevatorApp extends EventTarget {
     /** @type {number} Current challenge index */
     this.currentChallengeIndex = 0;
     /** @type {WorldManager} Game world manager */
-    this.worldManager = new WorldManager(this.dom, DisplayManager);
+    this.worldManager = new WorldManager(DisplayManager);
     /** @type {URLManager} URL state manager */
     this.urlManager = new URLManager(this);
     /** @type {AppEventHandlers} Event handler coordinator */
@@ -218,6 +218,12 @@ export class ElevatorApp extends EventTarget {
    * @returns {Promise<void>}
    */
   async startChallenge() {
+    // Don't start if runtime is still loading
+    if (this.dom.isRuntimeLoading()) {
+      console.log(APP_CONSTANTS.MESSAGES.RUNTIME_LOADING);
+      return;
+    }
+
     const codeObj = await this.getCodeObj();
     if (codeObj) {
       await this.worldManager.start(codeObj);

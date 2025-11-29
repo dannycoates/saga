@@ -1,10 +1,4 @@
 import { JSSimulationBackend } from "../core/JSSimulationBackend.js";
-import { ResponsiveScaling } from "../ui/ResponsiveScaling.js";
-import {
-  presentPassenger,
-  presentStats,
-  presentWorld,
-} from "../ui/presenters.js";
 import { APP_CONSTANTS } from "../config/constants.js";
 
 /**
@@ -54,21 +48,16 @@ import { APP_CONSTANTS } from "../config/constants.js";
 export class WorldManager extends EventTarget {
   /**
    * Creates a new WorldManager instance.
-   * @param {import('../ui/AppDOM.js').AppDOM} dom - DOM manager for element access
    * @param {DisplayManagerClass} DisplayManagerClass - Class with static create() method for creating display managers.
    */
-  constructor(dom, DisplayManagerClass) {
+  constructor(DisplayManagerClass) {
     super();
-    /** @type {import('../ui/AppDOM.js').AppDOM} */
-    this.dom = dom;
     /** @type {DisplayManagerClass} Class for creating display managers */
     this.DisplayManagerClass = DisplayManagerClass;
     /** @type {JSSimulationBackend | null} */
     this.backend = null;
     /** @type {DisplayManager} */
     this.displayManager = DisplayManagerClass.create();
-    /** @type {ResponsiveScaling} */
-    this.responsiveScaling = new ResponsiveScaling();
     /** @type {Challenge | null} */
     this.challenge = null;
 
@@ -218,14 +207,8 @@ export class WorldManager extends EventTarget {
     // Set up event forwarding
     this.setupEventHandlers();
 
-    // Present world and stats (passing this as the "world" object)
-    if (clearStats) {
-      presentStats(this.dom.getElement("stats"), this);
-    }
-    presentWorld(this.dom.getElement("world"), this.displayManager);
-
-    // Initialize responsive scaling after world is presented
-    this.responsiveScaling.initialize();
+    // Emit event for UI layer to handle presentation
+    this.dispatchEvent(new CustomEvent("challenge_initialized", { detail: { clearStats } }));
   }
 
   /**
@@ -261,10 +244,8 @@ export class WorldManager extends EventTarget {
     this.backend?.addEventListener(
       "passenger_spawned",
       (e) => {
-        const detail = /** @type {CustomEvent} */ (e).detail;
-        presentPassenger(
-          this.dom.getElement("world"),
-          this.displayManager.passengerDisplays.get(detail.passenger.id),
+        this.dispatchEvent(
+          new CustomEvent("passenger_spawned", { detail: /** @type {CustomEvent} */ (e).detail }),
         );
       },
       { signal },
@@ -282,12 +263,7 @@ export class WorldManager extends EventTarget {
       throw new Error("World not created. Call initializeChallenge() first.");
     }
 
-    // Check if runtime is still loading
-    if (this.dom.isRuntimeLoading()) {
-      console.log(APP_CONSTANTS.MESSAGES.RUNTIME_LOADING);
-      return;
-    }
-    presentStats(this.dom.getElement("stats"), this);
+    this.dispatchEvent(new CustomEvent("simulation_started"));
     this.codeObj = codeObj;
     await this.codeObj.start?.();
     this.setPaused(false);
@@ -305,7 +281,6 @@ export class WorldManager extends EventTarget {
       this.animationFrameId = null;
     }
     this.lastTickTime = null;
-    this.dom.clearElements("world");
 
     // AbortController automatically removes all event listeners
     this.abortController.abort();
@@ -315,7 +290,9 @@ export class WorldManager extends EventTarget {
       this.backend = null;
     }
     this.displayManager.cleanup();
-    this.responsiveScaling.cleanup();
+
+    // Emit cleanup event for UI layer
+    this.dispatchEvent(new CustomEvent("cleanup"));
 
     // Create new AbortController for future use
     this.abortController = new AbortController();

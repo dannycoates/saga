@@ -1,5 +1,12 @@
 import { APP_CONSTANTS } from "../config/constants.js";
-import { presentCodeStatus, presentFeedback } from "./presenters.js";
+import {
+  presentCodeStatus,
+  presentFeedback,
+  presentPassenger,
+  presentStats,
+  presentWorld,
+} from "./presenters.js";
+import { ResponsiveScaling } from "./ResponsiveScaling.js";
 
 /**
  * @typedef {import('../app.js').ElevatorApp} ElevatorApp
@@ -41,6 +48,8 @@ export class AppEventHandlers {
     this.abortController = new AbortController();
     /** @type {Record<string, EventListener>} Bound handler functions for cleanup */
     this.boundHandlers = {};
+    /** @type {ResponsiveScaling} Handles responsive scaling of the game world */
+    this.responsiveScaling = new ResponsiveScaling();
   }
 
   /**
@@ -51,7 +60,7 @@ export class AppEventHandlers {
     this.setupButtonHandlers();
     this.setupEditorHandlers();
     this.setupLanguageHandler();
-    this.setupChallengeEndedHandler();
+    this.setupWorldManagerHandlers();
     this.setupLayoutToggle();
   }
 
@@ -185,12 +194,49 @@ export class AppEventHandlers {
   }
 
   /**
-   * Sets up challenge end handler for success/failure feedback.
+   * Sets up WorldManager event handlers for presentation.
+   * Handles challenge initialization, simulation start, passenger spawning, and cleanup.
    * @private
    * @returns {void}
    */
-  setupChallengeEndedHandler() {
+  setupWorldManagerHandlers() {
     const { signal } = this.abortController;
+
+    // Challenge initialized - present stats, world, and initialize scaling
+    this.worldManager.addEventListener(
+      "challenge_initialized",
+      (e) => {
+        const { clearStats } = /** @type {CustomEvent<{clearStats: boolean}>} */ (e).detail;
+        if (clearStats) {
+          presentStats(this.dom.getElement("stats"), this.worldManager);
+        }
+        presentWorld(this.dom.getElement("world"), this.worldManager.displayManager);
+        this.responsiveScaling.initialize();
+      },
+      { signal },
+    );
+
+    // Simulation started - refresh stats
+    this.worldManager.addEventListener(
+      "simulation_started",
+      () => {
+        presentStats(this.dom.getElement("stats"), this.worldManager);
+      },
+      { signal },
+    );
+
+    // Passenger spawned - present new passenger
+    this.worldManager.addEventListener(
+      "passenger_spawned",
+      (e) => {
+        const { passenger } = /** @type {CustomEvent<{passenger: {id: string}}>} */ (e).detail;
+        const display = this.worldManager.displayManager.passengerDisplays.get(passenger.id);
+        presentPassenger(this.dom.getElement("world"), display);
+      },
+      { signal },
+    );
+
+    // Challenge ended - show success/failure feedback
     this.boundHandlers.challenge_ended = /** @type {EventListener} */ ((e) => {
       const { succeeded } = /** @type {CustomEvent<{succeeded: boolean}>} */ (e).detail;
       if (succeeded) {
@@ -214,6 +260,16 @@ export class AppEventHandlers {
     this.worldManager.addEventListener(
       "challenge_ended",
       this.boundHandlers.challenge_ended,
+      { signal },
+    );
+
+    // Cleanup - clear world elements and clean up responsive scaling
+    this.worldManager.addEventListener(
+      "cleanup",
+      () => {
+        this.dom.clearElements("world");
+        this.responsiveScaling.cleanup();
+      },
       { signal },
     );
   }
