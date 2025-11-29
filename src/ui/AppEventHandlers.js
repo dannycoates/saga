@@ -7,6 +7,7 @@ import {
   presentWorld,
 } from "./presenters.js";
 import { ResponsiveScaling } from "./ResponsiveScaling.js";
+import { ViewModelManager } from "./ViewModelManager.js";
 
 /**
  * @typedef {import('../app.js').ElevatorApp} ElevatorApp
@@ -50,6 +51,8 @@ export class AppEventHandlers {
     this.boundHandlers = {};
     /** @type {ResponsiveScaling} Handles responsive scaling of the game world */
     this.responsiveScaling = new ResponsiveScaling();
+    /** @type {ViewModelManager} View model manager for UI rendering */
+    this.viewModelManager = ViewModelManager.create();
   }
 
   /**
@@ -202,15 +205,27 @@ export class AppEventHandlers {
   setupWorldManagerHandlers() {
     const { signal } = this.abortController;
 
-    // Challenge initialized - present stats, world, and initialize scaling
+    // Challenge initialized - reinitialize ViewModelManager, present stats and world, initialize scaling
     this.worldManager.addEventListener(
       "challenge_initialized",
       (e) => {
-        const { clearStats } = /** @type {CustomEvent<{clearStats: boolean}>} */ (e).detail;
+        const { clearStats, backend, options } =
+          /** @type {CustomEvent<{clearStats: boolean, backend: import('../core/SimulationBackend.js').SimulationBackend, options: {isRenderingEnabled?: boolean, floorHeight?: number}}>} */ (
+            e
+          ).detail;
+
+        // Clean up previous and create new ViewModelManager with challenge options
+        this.viewModelManager.cleanup();
+        this.viewModelManager = ViewModelManager.create({
+          isRenderingEnabled: options.isRenderingEnabled,
+          floorHeight: options.floorHeight,
+          backend,
+        });
+
         if (clearStats) {
           presentStats(this.dom.getElement("stats"), this.worldManager);
         }
-        presentWorld(this.dom.getElement("world"), this.worldManager.viewModelManager);
+        presentWorld(this.dom.getElement("world"), this.viewModelManager);
         this.responsiveScaling.initialize();
       },
       { signal },
@@ -230,8 +245,10 @@ export class AppEventHandlers {
       "passenger_spawned",
       (e) => {
         const { passenger } = /** @type {CustomEvent<{passenger: {id: string}}>} */ (e).detail;
-        const viewModel = this.worldManager.viewModelManager.passengerViewModels.get(passenger.id);
-        presentPassenger(this.dom.getElement("world"), viewModel);
+        const viewModel = this.viewModelManager.passengerViewModels.get(passenger.id);
+        if (viewModel) {
+          presentPassenger(this.dom.getElement("world"), viewModel);
+        }
       },
       { signal },
     );
@@ -263,10 +280,11 @@ export class AppEventHandlers {
       { signal },
     );
 
-    // Cleanup - clear world elements and clean up responsive scaling
+    // Cleanup - clean up ViewModelManager, clear world elements, and clean up responsive scaling
     this.worldManager.addEventListener(
       "cleanup",
       () => {
+        this.viewModelManager.cleanup();
         this.dom.clearElements("world");
         this.responsiveScaling.cleanup();
       },

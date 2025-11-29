@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { JSSimulationBackend } from "../src/core/JSSimulationBackend.js";
 import { ViewModelManager } from "../src/ui/ViewModelManager.js";
-import { NullViewModelManager } from "../src/ui/NullViewModelManager.js";
 import { WorldManager } from "../src/game/WorldManager.js";
 
 describe("Modern Architecture", () => {
@@ -169,13 +168,15 @@ describe("Modern Architecture", () => {
     let worldManager;
 
     beforeEach(() => {
-      // Pass NullViewModelManager class for headless testing
-      worldManager = new WorldManager(NullViewModelManager);
+      worldManager = new WorldManager();
       worldManager.initializeChallenge({
-        floorCount: 4,
-        elevatorCount: 2,
-        spawnRate: 0.5,
-        isRenderingEnabled: false, // Disable for testing
+        options: {
+          floorCount: 4,
+          elevatorCount: 2,
+          spawnRate: 0.5,
+          isRenderingEnabled: false,
+        },
+        condition: { evaluate: () => null },
       });
     });
 
@@ -184,11 +185,21 @@ describe("Modern Architecture", () => {
       expect(worldManager.backend.constructor.name).toBe("JSSimulationBackend");
     });
 
-    it("should use NullViewModelManager by default for headless operation", () => {
-      expect(worldManager.viewModelManager).toBeDefined();
-      expect(worldManager.viewModelManager.constructor.name).toBe(
-        "NullViewModelManager",
-      );
+    it("should emit challenge_initialized with backend reference", () => {
+      const handler = vi.fn();
+      const newWorldManager = new WorldManager();
+      newWorldManager.addEventListener("challenge_initialized", handler);
+
+      newWorldManager.initializeChallenge({
+        options: { floorCount: 2 },
+        condition: { evaluate: () => null },
+      });
+
+      expect(handler).toHaveBeenCalled();
+      const detail = handler.mock.calls[0][0].detail;
+      expect(detail.backend).toBeDefined();
+      expect(detail.options).toBeDefined();
+      expect(detail.options.floorHeight).toBeDefined();
     });
 
     it("should manage game state through start/stop", async () => {

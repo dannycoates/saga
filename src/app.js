@@ -4,7 +4,6 @@ import { AppDOM } from "./ui/AppDOM.js";
 import { AppEventHandlers } from "./ui/AppEventHandlers.js";
 import { URLManager } from "./utils/URLManager.js";
 import { WorldManager } from "./game/WorldManager.js";
-import { ViewModelManager } from "./ui/ViewModelManager.js";
 import { challenges } from "./game/challenges.js";
 import { APP_CONSTANTS } from "./config/constants.js";
 import { performanceMonitor } from "./ui/PerformanceMonitor.js";
@@ -43,7 +42,7 @@ export class ElevatorApp extends EventTarget {
     /** @type {number} Current challenge index */
     this.currentChallengeIndex = 0;
     /** @type {WorldManager} Game world manager */
-    this.worldManager = new WorldManager(ViewModelManager);
+    this.worldManager = new WorldManager();
     /** @type {URLManager} URL state manager */
     this.urlManager = new URLManager(this);
     /** @type {AppEventHandlers} Event handler coordinator */

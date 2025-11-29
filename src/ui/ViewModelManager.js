@@ -11,6 +11,7 @@ import { PassengerViewModel } from "./viewmodels/PassengerViewModel.js";
  * @typedef {Object} ViewModelManagerOptions
  * @property {boolean} [isRenderingEnabled=true] - Whether to create and update view models
  * @property {number} [floorHeight=50] - Height of each floor in pixels
+ * @property {import('../core/SimulationBackend.js').SimulationBackend} [backend] - Backend to subscribe to
  */
 
 /**
@@ -21,11 +22,17 @@ import { PassengerViewModel } from "./viewmodels/PassengerViewModel.js";
 export class ViewModelManager {
   /**
    * Factory method for creating ViewModelManager instances.
+   * If backend is provided, initializes view models and subscribes to backend events.
    * @param {ViewModelManagerOptions} [options={}] - Configuration options
    * @returns {ViewModelManager} A new ViewModelManager instance
    */
   static create(options = {}) {
-    return new ViewModelManager(options);
+    const instance = new ViewModelManager(options);
+    if (options.backend) {
+      instance.initialize(options.backend.getState());
+      instance.subscribeToBackend(options.backend);
+    }
+    return instance;
   }
 
   /**

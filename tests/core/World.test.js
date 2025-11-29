@@ -1,20 +1,18 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { WorldManager } from "../../src/game/WorldManager.js";
-import { NullViewModelManager } from "../../src/ui/NullViewModelManager.js";
 
 describe("WorldManager", () => {
   let worldManager;
 
   beforeEach(() => {
-    // Pass NullViewModelManager class for headless testing
-    worldManager = new WorldManager(NullViewModelManager);
+    worldManager = new WorldManager();
 
     // Create a world with the WorldManager
     worldManager.initializeChallenge({
       options: {
         floorCount: 3,
         elevatorCount: 2,
-        isRenderingEnabled: false, // Disable for testing
+        isRenderingEnabled: false,
       },
       condition: {
         evaluate: () => null, // Never end during tests
@@ -24,7 +22,6 @@ describe("WorldManager", () => {
 
   it("should create world with correct configuration", () => {
     expect(worldManager.backend).toBeDefined();
-    expect(worldManager.viewModelManager).toBeDefined();
   });
 
   it("should manage game state through start/stop", async () => {
