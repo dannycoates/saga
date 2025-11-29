@@ -73,7 +73,8 @@ export class ChallengeControl extends HTMLElement {
   attachEventListeners() {
     // Use event delegation for better performance and cleaner code
     this.shadowRoot.addEventListener("click", (e) => {
-      const button = e.target.closest("button");
+      const target = /** @type {Element} */ (e.target);
+      const button = target.closest("button");
       if (!button) return;
 
       // Use matches() for efficient button identification

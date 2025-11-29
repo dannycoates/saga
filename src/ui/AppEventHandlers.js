@@ -1,18 +1,52 @@
 import { APP_CONSTANTS } from "../config/constants.js";
 import { presentCodeStatus, presentFeedback } from "./presenters.js";
 
+/**
+ * @typedef {import('../app.js').ElevatorApp} ElevatorApp
+ * @typedef {import('./AppDOM.js').AppDOM} AppDOM
+ * @typedef {import('./CodeEditor.js').CodeEditor} CodeEditor
+ * @typedef {import('../runtimes/RuntimeManager.js').RuntimeManager} RuntimeManager
+ * @typedef {import('../game/WorldManager.js').WorldManager} WorldManager
+ * @typedef {import('../utils/URLManager.js').URLManager} URLManager
+ */
+
+/**
+ * Coordinates event handling for the application.
+ * Uses AbortController for automatic cleanup of all event listeners.
+ */
 export class AppEventHandlers {
+  /**
+   * Creates event handlers coordinator.
+   * @param {ElevatorApp} app - Application instance
+   * @param {AppDOM} dom - DOM manager
+   * @param {CodeEditor} editor - Code editor
+   * @param {RuntimeManager} runtimeManager - Runtime manager
+   * @param {WorldManager} worldManager - World manager
+   * @param {URLManager} urlManager - URL manager
+   */
   constructor(app, dom, editor, runtimeManager, worldManager, urlManager) {
+    /** @type {ElevatorApp} */
     this.app = app;
+    /** @type {AppDOM} */
     this.dom = dom;
+    /** @type {CodeEditor} */
     this.editor = editor;
+    /** @type {RuntimeManager} */
     this.runtimeManager = runtimeManager;
+    /** @type {WorldManager} */
     this.worldManager = worldManager;
+    /** @type {URLManager} */
     this.urlManager = urlManager;
+    /** @type {AbortController} Controller for event listener cleanup */
     this.abortController = new AbortController();
+    /** @type {Record<string, EventListener>} Bound handler functions for cleanup */
     this.boundHandlers = {};
   }
 
+  /**
+   * Sets up all event handlers.
+   * @returns {void}
+   */
   setupAllHandlers() {
     this.setupButtonHandlers();
     this.setupEditorHandlers();
@@ -21,6 +55,11 @@ export class AppEventHandlers {
     this.setupLayoutToggle();
   }
 
+  /**
+   * Sets up button click handlers.
+   * @private
+   * @returns {void}
+   */
   setupButtonHandlers() {
     const { signal } = this.abortController;
 
@@ -74,6 +113,11 @@ export class AppEventHandlers {
     }
   }
 
+  /**
+   * Sets up code editor event handlers.
+   * @private
+   * @returns {void}
+   */
   setupEditorHandlers() {
     const { signal } = this.abortController;
 
@@ -87,9 +131,9 @@ export class AppEventHandlers {
     );
 
     // User code error event
-    this.boundHandlers.editorError = (e) => {
-      presentCodeStatus(this.dom.getElement("codeStatus"), e.detail);
-    };
+    this.boundHandlers.editorError = /** @type {EventListener} */ ((e) => {
+      presentCodeStatus(this.dom.getElement("codeStatus"), /** @type {CustomEvent} */ (e).detail);
+    });
     this.app.addEventListener(
       "user_code_error",
       this.boundHandlers.editorError,
@@ -97,14 +141,19 @@ export class AppEventHandlers {
     );
   }
 
+  /**
+   * Sets up language selection handler.
+   * @private
+   * @returns {void}
+   */
   setupLanguageHandler() {
     const { signal } = this.abortController;
-    const languageSelect = this.dom.getElement("languageSelect");
+    const languageSelect = /** @type {HTMLSelectElement | null} */ (this.dom.getElement("languageSelect"));
     if (languageSelect) {
       languageSelect.value = this.editor.currentLanguage;
 
-      this.boundHandlers.languageChange = async (e) => {
-        const newLanguage = e.target.value;
+      this.boundHandlers.languageChange = /** @type {EventListener} */ (async (e) => {
+        const newLanguage = /** @type {HTMLSelectElement} */ (e.target).value;
 
         try {
           // Show loading state
@@ -113,19 +162,19 @@ export class AppEventHandlers {
           this.editor.setLanguage(newLanguage);
           // Select the language in runtime manager
           // Note: not using withStatusIfSlow because pyodide blocks the event loop
-          await this.runtimeManager.selectLanguage(newLanguage);
+          await this.runtimeManager.selectLanguage(/** @type {import('../runtimes/BaseRuntime.js').LanguageId} */ (newLanguage));
 
           // Clear status
           presentCodeStatus(this.dom.getElement("codeStatus"));
         } catch (error) {
-          presentCodeStatus(this.dom.getElement("codeStatus"), error);
+          presentCodeStatus(this.dom.getElement("codeStatus"), /** @type {Error} */ (error));
           // Revert language selector
           languageSelect.value = this.editor.currentLanguage;
         } finally {
           // Hide loading state
           this.dom.showRuntimeStatus(false);
         }
-      };
+      });
 
       languageSelect.addEventListener(
         "change",
@@ -135,10 +184,15 @@ export class AppEventHandlers {
     }
   }
 
+  /**
+   * Sets up challenge end handler for success/failure feedback.
+   * @private
+   * @returns {void}
+   */
   setupChallengeEndedHandler() {
     const { signal } = this.abortController;
-    this.boundHandlers.challenge_ended = (e) => {
-      const { succeeded } = e.detail;
+    this.boundHandlers.challenge_ended = /** @type {EventListener} */ ((e) => {
+      const { succeeded } = /** @type {CustomEvent<{succeeded: boolean}>} */ (e).detail;
       if (succeeded) {
         presentFeedback(
           this.dom.getElement("feedback"),
@@ -156,7 +210,7 @@ export class AppEventHandlers {
           "",
         );
       }
-    };
+    });
     this.worldManager.addEventListener(
       "challenge_ended",
       this.boundHandlers.challenge_ended,
@@ -164,6 +218,11 @@ export class AppEventHandlers {
     );
   }
 
+  /**
+   * Sets up layout toggle (vertical/side-by-side) and splitter resize.
+   * @private
+   * @returns {void}
+   */
   setupLayoutToggle() {
     const { signal } = this.abortController;
     const layoutToggle = document.getElementById("layout-toggle");
@@ -183,7 +242,7 @@ export class AppEventHandlers {
       savedLayout === null || savedLayout === "side-by-side";
 
     // Layout toggle functionality
-    this.boundHandlers.layoutToggle = () => {
+    this.boundHandlers.layoutToggle = /** @type {EventListener} */ (() => {
       isSideBySide = !isSideBySide;
 
       // Toggle single class on container
@@ -205,10 +264,10 @@ export class AppEventHandlers {
         "layout-preference",
         isSideBySide ? "side-by-side" : "vertical",
       );
-    };
+    });
 
     // Splitter resize functionality
-    this.boundHandlers.splitterMouseDown = (e) => {
+    this.boundHandlers.splitterMouseDown = /** @type {EventListener} */ ((e) => {
       if (!isSideBySide) return;
 
       isResizing = true;
@@ -216,28 +275,31 @@ export class AppEventHandlers {
       document.body.style.userSelect = "none";
 
       e.preventDefault();
-    };
+    });
 
-    this.boundHandlers.splitterMouseMove = (e) => {
+    this.boundHandlers.splitterMouseMove = /** @type {EventListener} */ ((e) => {
       if (!isResizing || !isSideBySide) return;
 
-      const container = mainContent.getBoundingClientRect();
-      const codeSection = mainContent.querySelector(".code-section");
-      const newWidth = ((e.clientX - container.left) / container.width) * 100;
+      const containerRect = mainContent.getBoundingClientRect();
+      const codeSection = /** @type {HTMLElement | null} */ (mainContent.querySelector(".code-section"));
+      const mouseEvent = /** @type {MouseEvent} */ (e);
+      const newWidth = ((mouseEvent.clientX - containerRect.left) / containerRect.width) * 100;
 
       // Constrain between 20% and 80%
       const constrainedWidth = Math.max(20, Math.min(80, newWidth));
 
-      codeSection.style.flex = `0 0 ${constrainedWidth}%`;
+      if (codeSection) {
+        codeSection.style.flex = `0 0 ${constrainedWidth}%`;
+      }
 
       e.preventDefault();
-    };
+    });
 
-    this.boundHandlers.splitterMouseUp = () => {
+    this.boundHandlers.splitterMouseUp = /** @type {EventListener} */ (() => {
       isResizing = false;
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
-    };
+    });
 
     // Add event listeners
     layoutToggle.addEventListener("click", this.boundHandlers.layoutToggle, {
@@ -275,6 +337,10 @@ export class AppEventHandlers {
     }
   }
 
+  /**
+   * Cleans up all event listeners via AbortController.
+   * @returns {void}
+   */
   cleanup() {
     // AbortController automatically removes all event listeners
     this.abortController.abort();

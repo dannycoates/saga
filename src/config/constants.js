@@ -1,4 +1,8 @@
-// Application constants
+/**
+ * Application configuration constants.
+ * Central location for all magic numbers and strings.
+ * @type {Object}
+ */
 export const APP_CONSTANTS = {
   // Frame rate and timing
   FRAME_RATE: 1.0 / 60.0,

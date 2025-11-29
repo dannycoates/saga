@@ -19,6 +19,7 @@ function createJavaScriptLinter() {
     const eslintLinter = new eslint.Linter();
 
     return linter((view) => {
+      /** @type {import('@codemirror/lint').Diagnostic[]} */
       const diagnostics = [];
       const code = view.state.doc.toString();
 
@@ -71,7 +72,7 @@ function createJavaScriptLinter() {
           diagnostics.push({
             from,
             to,
-            severity: message.severity === 2 ? "error" : "warning",
+            severity: /** @type {"error" | "warning"} */ (message.severity === 2 ? "error" : "warning"),
             message: message.message,
           });
         });
@@ -99,13 +100,32 @@ function createJavaScriptLinter() {
   }
 }
 
-// CodeMirror editor wrapper
+/**
+ * @typedef {import('../runtimes/RuntimeManager.js').RuntimeManager} RuntimeManager
+ * @typedef {import('../app.js').ElevatorApp} ElevatorApp
+ */
+
+/**
+ * CodeMirror editor wrapper.
+ * @extends EventTarget
+ */
 export class CodeEditor extends EventTarget {
+  /**
+   * Creates a code editor instance.
+   * @param {HTMLElement} element - Parent element for the editor
+   * @param {string} storageKey - LocalStorage key prefix
+   * @param {Record<string, string>} defaultTemplates - Default code templates by language
+   * @param {ElevatorApp | null} [app=null] - Application instance
+   */
   constructor(element, storageKey, defaultTemplates, app = null) {
     super();
+    /** @type {string} LocalStorage key prefix */
     this.storageKey = storageKey;
+    /** @type {Record<string, string>} Default code templates by language */
     this.defaultTemplates = defaultTemplates;
+    /** @type {ElevatorApp | null} Application instance */
     this.app = app;
+    /** @type {string} Current language */
     this.currentLanguage =
       localStorage.getItem(`${storageKey}_language`) || "javascript";
 
@@ -287,41 +307,5 @@ export class CodeEditor extends EventTarget {
     this.view.dispatch({
       effects: this.layoutCompartment.reconfigure(layoutTheme),
     });
-  }
-
-  async getCodeObj(app) {
-    const code = this.getCode();
-
-    try {
-      // Show loading for language selection if needed
-      const currentRuntime = this.runtimeManager.getCurrentRuntime();
-      if (!currentRuntime || !currentRuntime.isLoaded) {
-        app.showRuntimeLoading(
-          true,
-          `Loading ${this.currentLanguage} runtime...`,
-        );
-      }
-
-      // Select the language and load the code
-      await this.runtimeManager.selectLanguage(this.currentLanguage);
-
-      // Show loading for code compilation/loading
-      app.showRuntimeLoading(true, `Compiling ${this.currentLanguage} code...`);
-      await this.runtimeManager.loadCode(code);
-
-      // Hide loading
-      app?.showRuntimeLoading(false);
-
-      // Return a wrapper object that calls the runtime manager
-      return {
-        tick: async (elevators, floors) => {
-          return await this.runtimeManager.execute(elevators, floors);
-        },
-      };
-    } catch (e) {
-      app.showRuntimeLoading(false);
-      this.dispatchEvent(new CustomEvent("user_code_error", { detail: e }));
-      return null;
-    }
   }
 }

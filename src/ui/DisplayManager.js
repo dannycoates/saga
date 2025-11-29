@@ -3,34 +3,75 @@ import { ElevatorDisplay } from "./display/ElevatorDisplay.js";
 import { PassengerDisplay } from "./display/PassengerDisplay.js";
 
 /**
- * Manages all display objects and updates them based on simulation state
+ * @typedef {import('../core/SimulationBackend.js').SimulationState} SimulationState
+ * @typedef {import('../core/Passenger.js').PassengerStateData} PassengerStateData
+ */
+
+/**
+ * @typedef {Object} DisplayManagerOptions
+ * @property {boolean} [isRenderingEnabled=true] - Whether to create and update displays
+ * @property {number} [floorHeight=50] - Height of each floor in pixels
+ */
+
+/**
+ * Manages all display objects and updates them based on simulation state.
+ * Subscribes to backend events and maintains display object lifecycle.
+ * Can be disabled for headless operation.
  */
 export class DisplayManager {
+  /**
+   * Creates a display manager.
+   * @param {DisplayManagerOptions} [options={}] - Configuration options
+   */
   constructor(options = {}) {
+    /** @type {boolean} Whether rendering is enabled */
     this.isRenderingEnabled = options.isRenderingEnabled !== false;
+    /** @type {number} Height of each floor in pixels */
     this.floorHeight = options.floorHeight || 50;
 
+    /** @type {Map<number, FloorDisplay>} Floor displays keyed by level */
     this.floorDisplays = new Map();
+    /** @type {Map<number, ElevatorDisplay>} Elevator displays keyed by index */
     this.elevatorDisplays = new Map();
+    /** @type {Map<string, PassengerDisplay>} Passenger displays keyed by ID */
     this.passengerDisplays = new Map();
 
+    /** @type {AbortController} Controller for event listener cleanup */
     this.abortController = new AbortController();
   }
 
+  /**
+   * Floor displays map (alias for floorDisplays).
+   * @type {Map<number, FloorDisplay>}
+   * @readonly
+   */
   get floors() {
     return this.floorDisplays;
   }
 
+  /**
+   * Elevator displays map (alias for elevatorDisplays).
+   * @type {Map<number, ElevatorDisplay>}
+   * @readonly
+   */
   get elevators() {
     return this.elevatorDisplays;
   }
 
+  /**
+   * Passenger displays map (alias for passengerDisplays).
+   * @type {Map<string, PassengerDisplay>}
+   * @readonly
+   */
   get passengers() {
     return this.passengerDisplays;
   }
 
   /**
-   * Initialize displays based on initial simulation state
+   * Initializes displays based on initial simulation state.
+   * Creates floor and elevator displays positioned for the world.
+   * @param {SimulationState} initialState - Initial simulation state
+   * @returns {void}
    */
   initialize(initialState) {
     if (!this.isRenderingEnabled) return;
@@ -56,7 +97,7 @@ export class DisplayManager {
       return sum + display.width + elevatorGutter;
     }, 0);
 
-    const innerWorld = document.querySelector(".innerworld");
+    const innerWorld = /** @type {HTMLElement | null} */ (document.querySelector(".innerworld"));
     if (innerWorld) {
       innerWorld.style.minWidth = `${totalElevatorWidth + initialXOffset}px`;
     }
@@ -73,7 +114,10 @@ export class DisplayManager {
   }
 
   /**
-   * Subscribe to simulation backend events
+   * Subscribes to simulation backend events for state updates.
+   * Uses AbortController for proper cleanup on dispose.
+   * @param {import('../core/SimulationBackend.js').SimulationBackend} backend - Backend to subscribe to
+   * @returns {void}
    */
   subscribeToBackend(backend) {
     const { signal } = this.abortController;
@@ -81,8 +125,9 @@ export class DisplayManager {
     backend.addEventListener(
       "state_changed",
       (e) => {
-        const dt = e.detail.dt ?? 0;
-        this.updateDisplays(e.detail, dt);
+        const detail = /** @type {CustomEvent<SimulationState & {dt?: number}>} */ (e).detail;
+        const dt = detail.dt ?? 0;
+        this.updateDisplays(detail, dt);
       },
       { signal },
     );
@@ -90,7 +135,8 @@ export class DisplayManager {
     backend.addEventListener(
       "passenger_spawned",
       (e) => {
-        this.handlePassengerSpawned(e.detail.passenger);
+        const detail = /** @type {CustomEvent<{passenger: PassengerStateData}>} */ (e).detail;
+        this.handlePassengerSpawned(detail.passenger);
       },
       { signal },
     );
@@ -98,14 +144,19 @@ export class DisplayManager {
     backend.addEventListener(
       "passengers_exited",
       (e) => {
-        this.handlePassengersExited(e.detail.passengers);
+        const detail = /** @type {CustomEvent<{passengers: PassengerStateData[]}>} */ (e).detail;
+        this.handlePassengersExited(detail.passengers);
       },
       { signal },
     );
   }
 
   /**
-   * Update all displays based on current state
+   * Updates all displays based on current simulation state.
+   * Called on each state change event from the backend.
+   * @param {SimulationState} state - Current simulation state
+   * @param {number} [dt=0] - Time delta in seconds
+   * @returns {void}
    */
   updateDisplays(state, dt = 0) {
     if (!this.isRenderingEnabled) return;
@@ -149,7 +200,10 @@ export class DisplayManager {
   }
 
   /**
-   * Handle new passenger spawn
+   * Handles new passenger spawn event.
+   * Creates a new passenger display at the appropriate floor position.
+   * @param {PassengerStateData} passengerState - Spawned passenger state
+   * @returns {void}
    */
   handlePassengerSpawned(passengerState) {
     if (!this.isRenderingEnabled) return;
@@ -168,7 +222,10 @@ export class DisplayManager {
   }
 
   /**
-   * Handle passengers exiting elevators
+   * Handles passengers exiting elevators.
+   * Updates passenger displays to trigger exit animations.
+   * @param {PassengerStateData[]} passengers - Array of exited passenger states
+   * @returns {void}
    */
   handlePassengersExited(passengers) {
     if (!this.isRenderingEnabled) return;
@@ -182,7 +239,10 @@ export class DisplayManager {
   }
 
   /**
-   * Clean up displays for exited passengers
+   * Cleans up displays for passengers that have completed exit animations.
+   * Removes inactive passenger displays from the map.
+   * @private
+   * @returns {void}
    */
   cleanupExitedPassengers() {
     for (const [id, display] of this.passengerDisplays) {
@@ -195,7 +255,9 @@ export class DisplayManager {
   }
 
   /**
-   * Clean up all displays
+   * Cleans up all displays and event subscriptions.
+   * Aborts all event listeners and clears display maps.
+   * @returns {void}
    */
   cleanup() {
     this.abortController.abort();

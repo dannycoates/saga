@@ -5,37 +5,67 @@ import { Elevator } from "./Elevator.js";
 import { Passenger } from "./Passenger.js";
 
 /**
- * JavaScript implementation of the simulation backend
+ * JavaScript implementation of the simulation backend.
+ * Handles elevator physics, passenger spawning, and game logic.
+ *
+ * @extends SimulationBackend
+ *
+ * @fires JSSimulationBackend#state_changed - Emitted each tick with current state
+ * @fires JSSimulationBackend#stats_changed - Emitted periodically with updated statistics
+ * @fires JSSimulationBackend#passenger_spawned - Emitted when a new passenger spawns
+ * @fires JSSimulationBackend#passengers_exited - Emitted when passengers exit an elevator
+ * @fires JSSimulationBackend#passengers_boarded - Emitted when passengers board an elevator
+ * @fires JSSimulationBackend#challenge_ended - Emitted when the challenge ends (win or lose)
  */
 export class JSSimulationBackend extends SimulationBackend {
   constructor() {
     super();
 
     // Configuration
+    /** @type {number} Number of floors in building */
     this.floorCount = 0;
+    /** @type {number} Number of elevators */
     this.elevatorCount = 0;
+    /** @type {number[]} Capacity for each elevator */
     this.elevatorCapacities = [];
+    /** @type {number} Passenger spawn rate per second */
     this.spawnRate = 0;
+    /** @type {number} Elevator speed in floors per second */
     this.speedFloorsPerSec = 2.6;
 
     // Stats
+    /** @type {number} Total passengers successfully transported */
     this.transportedCount = 0;
+    /** @type {number} Transport rate (passengers per second) */
     this.transportedPerSec = 0.0;
+    /** @type {number} Total elevator move commands issued */
     this.moveCount = 0;
+    /** @type {number} Elapsed simulation time in seconds */
     this.elapsedTime = 0.0;
+    /** @type {number} Maximum passenger wait time in seconds */
     this.maxWaitTime = 0.0;
+    /** @type {number} Average passenger wait time in seconds */
     this.avgWaitTime = 0.0;
+    /** @type {boolean} Whether the challenge has ended */
     this.isChallengeEnded = false;
 
     // Internal state
+    /** @type {number} Time since last passenger spawn */
     this.elapsedSinceSpawn = 0;
 
     // Simulation entities
+    /** @type {Floor[]} All floors in building */
     this.floors = [];
+    /** @type {Elevator[]} All elevators */
     this.elevators = [];
+    /** @type {Passenger[]} Active passengers (waiting or riding) */
     this.passengers = [];
 
-    // Throttled stats update
+    /** @type {{evaluate: (stats: import('./SimulationBackend.js').SimulationStats) => boolean | null} | undefined} */
+    this.endCondition = undefined;
+
+    // Throttled stats update (30 FPS max)
+    /** @type {() => void} */
     this.throttledStats = throttle(() => {
       if (this.isChallengeEnded) {
         return;
@@ -47,6 +77,13 @@ export class JSSimulationBackend extends SimulationBackend {
     }, 1000 / 30);
   }
 
+  /**
+   * Initialize the simulation with the given configuration.
+   * Creates floors, elevators, and resets all state.
+   * @override
+   * @param {import('./SimulationBackend.js').SimulationConfig} config - Configuration object
+   * @returns {void}
+   */
   initialize(config) {
     this.floorCount = config.floorCount;
     this.elevatorCount = config.elevatorCount;
@@ -84,6 +121,12 @@ export class JSSimulationBackend extends SimulationBackend {
     });
   }
 
+  /**
+   * Spawns a new passenger at a random floor with a random destination.
+   * Emits passenger_spawned event.
+   * @private
+   * @returns {void}
+   */
   spawnPassenger() {
     const { currentFloor, destinationFloor } = this.randomStartAndDestination();
     const weight = randomInt(55, 100);
@@ -111,6 +154,12 @@ export class JSSimulationBackend extends SimulationBackend {
     );
   }
 
+  /**
+   * Generates random start and destination floors for a new passenger.
+   * Biased toward ground floor (lobby pattern).
+   * @private
+   * @returns {{currentFloor: number, destinationFloor: number}}
+   */
   randomStartAndDestination() {
     const currentFloor =
       randomInt(0, 1) === 0 ? 0 : randomInt(0, this.floorCount - 1);
@@ -132,10 +181,18 @@ export class JSSimulationBackend extends SimulationBackend {
     return { currentFloor, destinationFloor };
   }
 
+  /**
+   * Handles passenger boarding and exiting when an elevator arrives at a floor.
+   * Updates statistics and emits passengers_exited/passengers_boarded events.
+   * @private
+   * @param {Elevator} elevator - The elevator that has arrived
+   * @returns {void}
+   */
   handleElevatorArrival(elevator) {
     const currentFloor = elevator.currentFloor;
 
     // Handle passengers exiting
+    /** @type {Passenger[]} */
     const exitingPassengers = [];
     elevator.passengers.forEach((passenger) => {
       if (passenger && passenger.shouldExitAt(currentFloor)) {
@@ -162,6 +219,7 @@ export class JSSimulationBackend extends SimulationBackend {
     const goingUp = floor.buttons.up && elevator.goingUpIndicator;
     const goingDown = floor.buttons.down && elevator.goingDownIndicator;
 
+    /** @type {Passenger[]} */
     const boardingPassengers = [];
     waitingPassengers.forEach((passenger) => {
       if (elevator.isFull) return;
@@ -213,6 +271,14 @@ export class JSSimulationBackend extends SimulationBackend {
     this.recalculateStats();
   }
 
+  /**
+   * Advances the simulation by the given time delta.
+   * Spawns passengers, updates elevator physics, handles arrivals,
+   * and checks end conditions.
+   * @override
+   * @param {number} dt - Time delta in seconds
+   * @returns {void}
+   */
   tick(dt) {
     if (this.isChallengeEnded) return;
 
@@ -246,7 +312,7 @@ export class JSSimulationBackend extends SimulationBackend {
       }),
     );
 
-    const succeeded = this.endCondition.evaluate(this.getStats());
+    const succeeded = this.endCondition?.evaluate(this.getStats()) ?? null;
     if (succeeded !== null) {
       this.isChallengeEnded = true;
       // Emit final stats update before challenge ends
@@ -267,6 +333,11 @@ export class JSSimulationBackend extends SimulationBackend {
     }
   }
 
+  /**
+   * Recalculates derived statistics (transport rate, move count).
+   * @private
+   * @returns {void}
+   */
   recalculateStats() {
     this.transportedPerSec = this.transportedCount / this.elapsedTime;
     this.moveCount = this.elevators.reduce(
@@ -275,6 +346,11 @@ export class JSSimulationBackend extends SimulationBackend {
     );
   }
 
+  /**
+   * Returns current simulation statistics.
+   * @override
+   * @returns {import('./SimulationBackend.js').SimulationStats}
+   */
   getStats() {
     return {
       transportedCount: this.transportedCount,
@@ -286,6 +362,11 @@ export class JSSimulationBackend extends SimulationBackend {
     };
   }
 
+  /**
+   * Returns current simulation state snapshot.
+   * @override
+   * @returns {import('./SimulationBackend.js').SimulationState}
+   */
   getState() {
     return {
       floors: this.floors.map((floor) => floor.toJSON()),
@@ -296,6 +377,13 @@ export class JSSimulationBackend extends SimulationBackend {
     };
   }
 
+  /**
+   * Executes user code with current elevator and floor APIs.
+   * @override
+   * @param {import('./SimulationBackend.js').UserCodeObject} codeObj - User code object
+   * @param {number} dt - Time delta in seconds
+   * @returns {Promise<void>}
+   */
   async callUserCode(codeObj, dt) {
     if (this.isChallengeEnded) return;
     const elevatorAPIs = this.elevators.map((elevator) => elevator.toAPI());
@@ -303,6 +391,11 @@ export class JSSimulationBackend extends SimulationBackend {
     await codeObj.tick(elevatorAPIs, floorAPIs, dt);
   }
 
+  /**
+   * Cleans up simulation resources.
+   * @override
+   * @returns {void}
+   */
   cleanup() {
     this.isChallengeEnded = true;
     this.passengers = [];

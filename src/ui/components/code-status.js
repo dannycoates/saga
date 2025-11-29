@@ -53,7 +53,7 @@ export class CodeStatus extends HTMLElement {
         try {
           this.dialog.showModal();
           // Focus the close button for accessibility
-          const closeButton = this.shadowRoot.querySelector('.close-button');
+          const closeButton = /** @type {HTMLButtonElement | null} */ (this.shadowRoot.querySelector('.close-button'));
           if (closeButton) {
             closeButton.focus();
           }
@@ -233,14 +233,16 @@ export class CodeStatus extends HTMLElement {
   setupEventHandlers() {
     // Handle close button click and dismiss button click
     this.shadowRoot.addEventListener('click', (e) => {
-      if (e.target.classList.contains('close-button')) {
+      const target = /** @type {Element} */ (e.target);
+      if (target.classList.contains('close-button')) {
         this.closeDialog();
       }
     });
 
     // Handle dialog backdrop click (click outside modal content)
     this.shadowRoot.addEventListener('click', (e) => {
-      if (e.target.tagName === 'DIALOG') {
+      const target = /** @type {Element} */ (e.target);
+      if (target.tagName === 'DIALOG') {
         this.closeDialog();
       }
     });
