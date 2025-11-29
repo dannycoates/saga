@@ -1,20 +1,20 @@
 import { Display } from "./Display.js";
 
-const powInterpolate = function (value0, value1, x, a) {
+const POW_INTERPOLATE = function (value0, value1, x, a) {
   return (
     value0 +
     ((value1 - value0) * Math.pow(x, a)) / (Math.pow(x, a) + Math.pow(1 - x, a))
   );
 };
 
-const coolInterpolate = function (value0, value1, x) {
-  return powInterpolate(value0, value1, x, 1.3);
+const COOL_INTERPOLATE = function (value0, value1, x) {
+  return POW_INTERPOLATE(value0, value1, x, 1.3);
 };
 
-const DEFAULT_INTERPOLATOR = coolInterpolate;
+const DEFAULT_INTERPOLATOR = COOL_INTERPOLATE;
 const NOOP = function (_) {};
 
-const _tmpPosStorage = [0, 0];
+const TMP_POS_STORAGE = [0, 0];
 
 export class Animated extends Display {
   constructor() {
@@ -29,11 +29,11 @@ export class Animated extends Display {
   }
 
   syncUIComponent(forceTrigger) {
-    this.getWorldPosition(_tmpPosStorage);
+    this.getWorldPosition(TMP_POS_STORAGE);
     const oldX = this.worldX;
     const oldY = this.worldY;
-    this.worldX = _tmpPosStorage[0];
-    this.worldY = _tmpPosStorage[1];
+    this.worldX = TMP_POS_STORAGE[0];
+    this.worldY = TMP_POS_STORAGE[1];
     if (oldX !== this.worldX || oldY !== this.worldY || forceTrigger === true) {
       // UI components listen for this to update visual positions
       this.dispatchEvent(

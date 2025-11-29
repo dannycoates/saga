@@ -131,7 +131,7 @@ export class WASMSimulationBackend extends SimulationBackend {
     }
 
     return {
-      transportedCounter: this.wasmModule.exports.getTransportedCounter(),
+      transportedCount: this.wasmModule.exports.getTransportedCount(),
       transportedPerSec: this.wasmModule.exports.getTransportedPerSec(),
       avgWaitTime: this.wasmModule.exports.getAvgWaitTime(),
       maxWaitTime: this.wasmModule.exports.getMaxWaitTime(),
@@ -148,9 +148,9 @@ export class WASMSimulationBackend extends SimulationBackend {
     return this.wasmModule.exports.hasEnded() === 1;
   }
 
-  dispose() {
+  cleanup() {
     if (this.initialized && this.wasmModule) {
-      this.wasmModule.exports.dispose();
+      this.wasmModule.exports.cleanup();
       this.wasmModule = null;
       this.memory = null;
       this.initialized = false;

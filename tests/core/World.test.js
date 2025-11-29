@@ -21,7 +21,7 @@ describe("WorldManager", () => {
       options: {
         floorCount: 3,
         elevatorCount: 2,
-        renderingEnabled: false, // Disable for testing
+        isRenderingEnabled: false, // Disable for testing
       },
       condition: {
         evaluate: () => null, // Never end during tests

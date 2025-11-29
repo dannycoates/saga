@@ -82,7 +82,7 @@ describe("Modern Architecture", () => {
       expect(backend.tick).toBeDefined();
       expect(backend.getState).toBeDefined();
       expect(backend.callUserCode).toBeDefined();
-      expect(backend.dispose).toBeDefined();
+      expect(backend.cleanup).toBeDefined();
       expect(backend.getStats).toBeDefined();
       expect(backend.hasEnded).toBeDefined();
     });
@@ -117,7 +117,7 @@ describe("Modern Architecture", () => {
 
     beforeEach(() => {
       displayManager = new DisplayManager({
-        renderingEnabled: true,
+        isRenderingEnabled: true,
         floorHeight: 50,
       });
 
@@ -153,7 +153,7 @@ describe("Modern Architecture", () => {
 
     it("should not create displays when rendering disabled", () => {
       const noRenderManager = new DisplayManager({
-        renderingEnabled: false,
+        isRenderingEnabled: false,
       });
 
       const initialState = backend.getState();
@@ -180,7 +180,7 @@ describe("Modern Architecture", () => {
         floorCount: 4,
         elevatorCount: 2,
         spawnRate: 0.5,
-        renderingEnabled: false, // Disable for testing
+        isRenderingEnabled: false, // Disable for testing
       });
     });
 

@@ -7,11 +7,11 @@ export const requirePassengerCountWithinTime = function (
     evaluate: function (world) {
       if (
         world.elapsedTime >= timeLimit ||
-        world.transportedCounter >= passengerCount
+        world.transportedCount >= passengerCount
       ) {
         return (
           world.elapsedTime <= timeLimit &&
-          world.transportedCounter >= passengerCount
+          world.transportedCount >= passengerCount
         );
       } else {
         return null;
@@ -29,11 +29,11 @@ export const requirePassengerCountWithMaxWaitTime = function (
     evaluate: function (world) {
       if (
         world.maxWaitTime >= maxWaitTime ||
-        world.transportedCounter >= passengerCount
+        world.transportedCount >= passengerCount
       ) {
         return (
           world.maxWaitTime <= maxWaitTime &&
-          world.transportedCounter >= passengerCount
+          world.transportedCount >= passengerCount
         );
       } else {
         return null;
@@ -53,12 +53,12 @@ export const requirePassengerCountWithinTimeWithMaxWaitTime = function (
       if (
         world.elapsedTime >= timeLimit ||
         world.maxWaitTime >= maxWaitTime ||
-        world.transportedCounter >= passengerCount
+        world.transportedCount >= passengerCount
       ) {
         return (
           world.elapsedTime <= timeLimit &&
           world.maxWaitTime <= maxWaitTime &&
-          world.transportedCounter >= passengerCount
+          world.transportedCount >= passengerCount
         );
       } else {
         return null;
@@ -76,11 +76,11 @@ export const requirePassengerCountWithinMoves = function (
     evaluate: function (world) {
       if (
         world.moveCount >= moveLimit ||
-        world.transportedCounter >= passengerCount
+        world.transportedCount >= passengerCount
       ) {
         return (
           world.moveCount <= moveLimit &&
-          world.transportedCounter >= passengerCount
+          world.transportedCount >= passengerCount
         );
       } else {
         return null;

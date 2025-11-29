@@ -1,4 +1,4 @@
-import { BaseRuntime } from "./base.js";
+import { BaseRuntime } from "./BaseRuntime.js";
 import { loadExternalScript } from "../utils/AsyncUtils.js";
 
 const ELEVATOR_SOURCE = `import java.util.*;
@@ -101,9 +101,9 @@ export class JavaRuntime extends BaseRuntime {
   }
 
   async loadRuntime() {
-    if (this.loading || this.loaded) return;
+    if (this.isLoading || this.isLoaded) return;
 
-    this.loading = true;
+    this.isLoading = true;
     this.resetLogBuffer();
     this.captureConsoleLog();
 
@@ -179,19 +179,19 @@ export class JavaRuntime extends BaseRuntime {
       this.Floor = await this.lib.Floor;
       this.Buttons = await this.lib.Floor$Buttons;
 
-      this.loaded = true;
+      this.isLoaded = true;
     } catch (error) {
-      this.loading = false;
+      this.isLoading = false;
       throw new Error(
         `Failed to load Java runtime: ${error.message}${this.getLogBufferString()}`,
       );
     } finally {
-      this.loading = false;
+      this.isLoading = false;
     }
   }
 
   async loadCode(code) {
-    if (!this.loaded) {
+    if (!this.isLoaded) {
       throw new Error("Java runtime not loaded");
     }
     if (this.loadedCode === code) {
@@ -261,7 +261,7 @@ export class JavaRuntime extends BaseRuntime {
   }
 
   async execute(elevators, floors) {
-    if (!this.loaded) {
+    if (!this.isLoaded) {
       throw new Error("Java runtime not loaded");
     }
     ELEVATORS = elevators;
@@ -339,8 +339,8 @@ class ElevatorController {
 }`;
   }
 
-  dispose() {
-    this.loaded = false;
+  cleanup() {
+    this.isLoaded = false;
     this.loadedCode = null;
     this.lib = null;
     this.Elevator = null;

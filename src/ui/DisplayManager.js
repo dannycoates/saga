@@ -7,7 +7,7 @@ import { PassengerDisplay } from "./display/PassengerDisplay.js";
  */
 export class DisplayManager {
   constructor(options = {}) {
-    this.renderingEnabled = options.renderingEnabled !== false;
+    this.isRenderingEnabled = options.isRenderingEnabled !== false;
     this.floorHeight = options.floorHeight || 50;
 
     this.floorDisplays = new Map();
@@ -33,7 +33,7 @@ export class DisplayManager {
    * Initialize displays based on initial simulation state
    */
   initialize(initialState) {
-    if (!this.renderingEnabled) return;
+    if (!this.isRenderingEnabled) return;
 
     // Clear existing displays
     this.cleanup();
@@ -108,7 +108,7 @@ export class DisplayManager {
    * Update all displays based on current state
    */
   updateDisplays(state, dt = 0) {
-    if (!this.renderingEnabled) return;
+    if (!this.isRenderingEnabled) return;
 
     // Update floor displays
     state.floors.forEach((floor) => {
@@ -139,7 +139,7 @@ export class DisplayManager {
     // Tick all passenger displays, including those not in simulation anymore
     // This allows exit animations to continue running
     for (const [id, display] of this.passengerDisplays) {
-      if (display.active) {
+      if (display.isActive) {
         display.tick(dt);
       }
     }
@@ -152,7 +152,7 @@ export class DisplayManager {
    * Handle new passenger spawn
    */
   handlePassengerSpawned(passengerState) {
-    if (!this.renderingEnabled) return;
+    if (!this.isRenderingEnabled) return;
 
     const startingY =
       (this.floorDisplays.size - 1 - passengerState.currentFloor) *
@@ -171,7 +171,7 @@ export class DisplayManager {
    * Handle passengers exiting elevators
    */
   handlePassengersExited(passengers) {
-    if (!this.renderingEnabled) return;
+    if (!this.isRenderingEnabled) return;
 
     passengers.forEach((passenger) => {
       const display = this.passengerDisplays.get(passenger.id);
@@ -186,7 +186,7 @@ export class DisplayManager {
    */
   cleanupExitedPassengers() {
     for (const [id, display] of this.passengerDisplays) {
-      if (!display.active) {
+      if (!display.isActive) {
         // Force DOM cleanup for inactive displays
         display.dispatchEvent(new CustomEvent("removed"));
         this.passengerDisplays.delete(id);

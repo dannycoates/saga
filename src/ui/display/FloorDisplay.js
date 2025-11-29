@@ -30,7 +30,7 @@ export class FloorDisplay extends Display {
     ) {
       this._prevButtonState = { ...this.state.buttons };
       this.dispatchEvent(
-        new CustomEvent("buttonstate_change", { detail: this.state.buttons }),
+        new CustomEvent("button_state_change", { detail: this.state.buttons }),
       );
     }
   }

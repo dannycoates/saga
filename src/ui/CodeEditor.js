@@ -11,7 +11,7 @@ import { Compartment } from "@codemirror/state";
 import { indentUnit } from "@codemirror/language";
 import { linter, lintGutter } from "@codemirror/lint";
 import * as eslint from "eslint-linter-browserify";
-import { themeManager } from "./theme-manager.js";
+import { themeManager } from "./ThemeManager.js";
 
 // Enhanced JavaScript linter using ESLint
 function createJavaScriptLinter() {
@@ -295,7 +295,7 @@ export class CodeEditor extends EventTarget {
     try {
       // Show loading for language selection if needed
       const currentRuntime = this.runtimeManager.getCurrentRuntime();
-      if (!currentRuntime || !currentRuntime.loaded) {
+      if (!currentRuntime || !currentRuntime.isLoaded) {
         app.showRuntimeLoading(
           true,
           `Loading ${this.currentLanguage} runtime...`,
@@ -320,7 +320,7 @@ export class CodeEditor extends EventTarget {
       };
     } catch (e) {
       app.showRuntimeLoading(false);
-      this.dispatchEvent(new CustomEvent("usercode_error", { detail: e }));
+      this.dispatchEvent(new CustomEvent("user_code_error", { detail: e }));
       return null;
     }
   }

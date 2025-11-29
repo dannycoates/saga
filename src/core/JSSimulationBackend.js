@@ -19,13 +19,13 @@ export class JSSimulationBackend extends SimulationBackend {
     this.speedFloorsPerSec = 2.6;
 
     // Stats
-    this.transportedCounter = 0;
+    this.transportedCount = 0;
     this.transportedPerSec = 0.0;
     this.moveCount = 0;
     this.elapsedTime = 0.0;
     this.maxWaitTime = 0.0;
     this.avgWaitTime = 0.0;
-    this.challengeEnded = false;
+    this.isChallengeEnded = false;
 
     // Internal state
     this.elapsedSinceSpawn = 0;
@@ -37,7 +37,7 @@ export class JSSimulationBackend extends SimulationBackend {
 
     // Throttled stats update
     this.throttledStats = throttle(() => {
-      if (this.challengeEnded) {
+      if (this.isChallengeEnded) {
         return;
       }
       this.recalculateStats();
@@ -56,13 +56,13 @@ export class JSSimulationBackend extends SimulationBackend {
     this.endCondition = config.endCondition;
 
     // Reset state
-    this.transportedCounter = 0;
+    this.transportedCount = 0;
     this.transportedPerSec = 0.0;
     this.moveCount = 0;
     this.elapsedTime = 0.0;
     this.maxWaitTime = 0.0;
     this.avgWaitTime = 0.0;
-    this.challengeEnded = false;
+    this.isChallengeEnded = false;
 
     this.elapsedSinceSpawn = 1.001 / this.spawnRate;
 
@@ -144,12 +144,12 @@ export class JSSimulationBackend extends SimulationBackend {
         exitingPassengers.push(passenger);
 
         // Update stats
-        this.transportedCounter++;
+        this.transportedCount++;
         const waitTime = this.elapsedTime - passenger.spawnTimestamp;
         this.maxWaitTime = Math.max(this.maxWaitTime, waitTime);
         this.avgWaitTime =
-          (this.avgWaitTime * (this.transportedCounter - 1) + waitTime) /
-          this.transportedCounter;
+          (this.avgWaitTime * (this.transportedCount - 1) + waitTime) /
+          this.transportedCount;
       }
     });
 
@@ -214,7 +214,7 @@ export class JSSimulationBackend extends SimulationBackend {
   }
 
   tick(dt) {
-    if (this.challengeEnded) return;
+    if (this.isChallengeEnded) return;
 
     this.elapsedTime += dt;
     this.elapsedSinceSpawn += dt;
@@ -248,7 +248,7 @@ export class JSSimulationBackend extends SimulationBackend {
 
     const succeeded = this.endCondition.evaluate(this.getStats());
     if (succeeded !== null) {
-      this.challengeEnded = true;
+      this.isChallengeEnded = true;
       // Emit final stats update before challenge ends
       this.recalculateStats();
       this.dispatchEvent(
@@ -268,7 +268,7 @@ export class JSSimulationBackend extends SimulationBackend {
   }
 
   recalculateStats() {
-    this.transportedPerSec = this.transportedCounter / this.elapsedTime;
+    this.transportedPerSec = this.transportedCount / this.elapsedTime;
     this.moveCount = this.elevators.reduce(
       (sum, elevator) => sum + elevator.moves,
       0,
@@ -277,7 +277,7 @@ export class JSSimulationBackend extends SimulationBackend {
 
   getStats() {
     return {
-      transportedCounter: this.transportedCounter,
+      transportedCount: this.transportedCount,
       transportedPerSec: this.transportedPerSec,
       avgWaitTime: this.avgWaitTime,
       maxWaitTime: this.maxWaitTime,
@@ -292,19 +292,19 @@ export class JSSimulationBackend extends SimulationBackend {
       elevators: this.elevators.map((elevator) => elevator.toJSON()),
       passengers: this.passengers.map((passenger) => passenger.toJSON()),
       stats: this.getStats(),
-      challengeEnded: this.challengeEnded,
+      isChallengeEnded: this.isChallengeEnded,
     };
   }
 
   async callUserCode(codeObj, dt) {
-    if (this.challengeEnded) return;
+    if (this.isChallengeEnded) return;
     const elevatorAPIs = this.elevators.map((elevator) => elevator.toAPI());
     const floorAPIs = this.floors.map((floor) => floor.toJSON());
     await codeObj.tick(elevatorAPIs, floorAPIs, dt);
   }
 
-  dispose() {
-    this.challengeEnded = true;
+  cleanup() {
+    this.isChallengeEnded = true;
     this.passengers = [];
     this.elevators = [];
     this.floors = [];
