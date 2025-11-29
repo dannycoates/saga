@@ -2,16 +2,6 @@ import { JSSimulationBackend } from "../core/JSSimulationBackend.js";
 import { APP_CONSTANTS } from "../config/constants.js";
 
 /**
- * @typedef {import('../ui/ViewModelManager.js').ViewModelManager} ViewModelManager
- * @typedef {import('../ui/ViewModelManager.js').ViewModelManagerOptions} ViewModelManagerOptions
- */
-
-/**
- * @typedef {Object} ViewModelManagerClass
- * @property {(options?: ViewModelManagerOptions) => ViewModelManager} create - Factory method
- */
-
-/**
  * @typedef {Object} Challenge
  * @property {ChallengeOptions} options - Challenge configuration
  * @property {ChallengeCondition} condition - Win/lose condition
@@ -36,7 +26,7 @@ import { APP_CONSTANTS } from "../config/constants.js";
  */
 
 /**
- * Main game orchestrator that manages simulation backend and display.
+ * Main game orchestrator that manages simulation backend.
  * Handles game loop, challenge lifecycle, and event forwarding.
  *
  * @extends EventTarget
@@ -44,20 +34,16 @@ import { APP_CONSTANTS } from "../config/constants.js";
  * @fires WorldManager#stats_changed - Forwarded from backend when stats update
  * @fires WorldManager#challenge_ended - Forwarded from backend when challenge ends
  * @fires WorldManager#timescale_changed - Emitted when time scale or pause state changes
+ * @fires WorldManager#challenge_initialized - Emitted when a challenge is initialized (includes backend reference)
  */
 export class WorldManager extends EventTarget {
   /**
    * Creates a new WorldManager instance.
-   * @param {ViewModelManagerClass} ViewModelManagerClass - Class with static create() method for creating view model managers.
    */
-  constructor(ViewModelManagerClass) {
+  constructor() {
     super();
-    /** @type {ViewModelManagerClass} Class for creating view model managers */
-    this.ViewModelManagerClass = ViewModelManagerClass;
     /** @type {JSSimulationBackend | null} */
     this.backend = null;
-    /** @type {ViewModelManager} */
-    this.viewModelManager = ViewModelManagerClass.create();
     /** @type {Challenge | null} */
     this.challenge = null;
 
@@ -162,7 +148,7 @@ export class WorldManager extends EventTarget {
 
   /**
    * Initializes or reinitializes a challenge.
-   * Creates backend, display manager, and sets up event handlers.
+   * Creates backend and sets up event handlers.
    * @param {Challenge | null} challenge - Challenge configuration
    * @param {boolean} [clearStats=true] - Whether to clear statistics display
    * @returns {void}
@@ -184,12 +170,6 @@ export class WorldManager extends EventTarget {
     // Create simulation backend
     this.backend = new JSSimulationBackend();
 
-    // Create view model manager using class factory
-    this.viewModelManager = this.ViewModelManagerClass.create({
-      isRenderingEnabled: options.isRenderingEnabled,
-      floorHeight: options.floorHeight,
-    });
-
     // Initialize simulation
     this.backend.initialize({
       floorCount: options.floorCount ?? 3,
@@ -200,15 +180,23 @@ export class WorldManager extends EventTarget {
       endCondition: challenge?.condition ?? { evaluate: () => null },
     });
 
-    // Initialize view models with the world element
-    this.viewModelManager.initialize(this.backend.getState());
-    this.viewModelManager.subscribeToBackend(this.backend);
+    // Emit event for UI layer FIRST so ViewModelManager subscribes to backend
+    // before WorldManager's event forwarding (ensures correct handler order)
+    this.dispatchEvent(
+      new CustomEvent("challenge_initialized", {
+        detail: {
+          clearStats,
+          backend: this.backend,
+          options: {
+            isRenderingEnabled: options.isRenderingEnabled,
+            floorHeight: options.floorHeight,
+          },
+        },
+      }),
+    );
 
-    // Set up event forwarding
+    // Set up event forwarding AFTER UI layer has subscribed
     this.setupEventHandlers();
-
-    // Emit event for UI layer to handle presentation
-    this.dispatchEvent(new CustomEvent("challenge_initialized", { detail: { clearStats } }));
   }
 
   /**
@@ -289,9 +277,8 @@ export class WorldManager extends EventTarget {
       this.backend.cleanup();
       this.backend = null;
     }
-    this.viewModelManager.cleanup();
 
-    // Emit cleanup event for UI layer
+    // Emit cleanup event for UI layer (ViewModelManager cleanup handled there)
     this.dispatchEvent(new CustomEvent("cleanup"));
 
     // Create new AbortController for future use
