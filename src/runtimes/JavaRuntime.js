@@ -1,6 +1,16 @@
 import { BaseRuntime } from "./BaseRuntime.js";
 import { loadExternalScript } from "../utils/AsyncUtils.js";
 
+/**
+ * @typedef {import('./BaseRuntime.js').ElevatorAPI} ElevatorAPI
+ * @typedef {import('./BaseRuntime.js').FloorAPI} FloorAPI
+ */
+
+/**
+ * Java source code for the Elevator class.
+ * Compiled by CheerpJ and used as a wrapper for JS elevator objects.
+ * @type {string}
+ */
 const ELEVATOR_SOURCE = `import java.util.*;
 /**
  * Elevator class representing an elevator in the simulation
@@ -25,6 +35,11 @@ public class Elevator {
     }
 }`;
 
+/**
+ * Java source code for the Floor class.
+ * Compiled by CheerpJ and used as a wrapper for JS floor objects.
+ * @type {string}
+ */
 const FLOOR_SOURCE = `/**
  * Floor class representing a floor in the building
  */
@@ -41,8 +56,20 @@ public class Floor {
     }
 }`;
 
+/**
+ * Global reference to elevator objects for JNI callbacks.
+ * @type {ElevatorAPI[]}
+ */
 let ELEVATORS = [];
 
+/**
+ * JNI callback function for Java's Elevator.goToFloor() method.
+ * Called by CheerpJ when Java code invokes goToFloor.
+ * @param {any} lib - CheerpJ library reference
+ * @param {number} elevatorId - Elevator index
+ * @param {number} floor - Target floor number
+ * @returns {Promise<void>}
+ */
 async function Java_Elevator_jsGoToFloor(lib, elevatorId, floor) {
   // Find the corresponding JavaScript elevator
   const jsElevator = ELEVATORS[elevatorId];
@@ -51,21 +78,45 @@ async function Java_Elevator_jsGoToFloor(lib, elevatorId, floor) {
   }
 }
 
+/**
+ * Java runtime using CheerpJ for in-browser Java execution.
+ * Compiles Java code on-the-fly and executes via JNI callbacks.
+ *
+ * @extends BaseRuntime
+ */
 export class JavaRuntime extends BaseRuntime {
+  /**
+   * Creates a Java runtime instance.
+   */
   constructor() {
     super("java");
+    /** @type {string | null} Currently loaded user code */
     this.loadedCode = null;
+    /** @type {number} Code iteration counter for class versioning */
     this.iteration = 0;
+    /** @type {any} CheerpJ library reference */
     this.lib = null;
+    /** @type {any} Java Elevator class constructor */
     this.Elevator = null;
+    /** @type {any} Java Floor class constructor */
     this.Floor = null;
+    /** @type {any} Java Floor.Buttons class constructor */
     this.Buttons = null;
+    /** @type {any} User's ElevatorController class constructor */
     this.ElevatorController = null;
+    /** @type {any} User's controller instance */
     this.controller = null;
+    /** @type {string[]} Buffer for CheerpJ log messages */
     this.logBuffer = [];
+    /** @type {((...args: any[]) => void) | null} Original console.log for restoration */
     this.originalConsoleLog = null;
   }
 
+  /**
+   * Captures console.log output from CheerpJ for error reporting.
+   * @private
+   * @returns {void}
+   */
   captureConsoleLog() {
     if (this.originalConsoleLog) return; // Already capturing
 
@@ -84,6 +135,11 @@ export class JavaRuntime extends BaseRuntime {
     };
   }
 
+  /**
+   * Restores original console.log function.
+   * @private
+   * @returns {void}
+   */
   restoreConsoleLog() {
     if (this.originalConsoleLog) {
       console.log = this.originalConsoleLog;
@@ -91,15 +147,31 @@ export class JavaRuntime extends BaseRuntime {
     }
   }
 
+  /**
+   * Clears the log buffer.
+   * @private
+   * @returns {void}
+   */
   resetLogBuffer() {
     this.logBuffer = [];
   }
 
+  /**
+   * Gets accumulated CheerpJ logs as a formatted string.
+   * @private
+   * @returns {string} Formatted log string or empty string
+   */
   getLogBufferString() {
     if (this.logBuffer.length === 0) return "";
     return "\n\nCheerpJ logs:\n" + this.logBuffer.join("\n");
   }
 
+  /**
+   * Loads the CheerpJ runtime and compiles base elevator/floor classes.
+   * @override
+   * @returns {Promise<void>}
+   * @throws {Error} If CheerpJ fails to load or compilation fails
+   */
   async loadRuntime() {
     if (this.isLoading || this.isLoaded) return;
 
@@ -190,6 +262,14 @@ export class JavaRuntime extends BaseRuntime {
     }
   }
 
+  /**
+   * Loads and compiles user Java code.
+   * Versions class names to allow code reloading without conflicts.
+   * @override
+   * @param {string} code - Java code to compile
+   * @returns {Promise<void>}
+   * @throws {Error} If runtime not loaded or compilation fails
+   */
   async loadCode(code) {
     if (!this.isLoaded) {
       throw new Error("Java runtime not loaded");
@@ -256,10 +336,23 @@ export class JavaRuntime extends BaseRuntime {
     }
   }
 
+  /**
+   * Creates a new controller instance before execution begins.
+   * @override
+   * @returns {Promise<void>}
+   */
   async start() {
     this.controller = await new this.ElevatorController();
   }
 
+  /**
+   * Executes the user's tick method with Java wrapper objects.
+   * @override
+   * @param {ElevatorAPI[]} elevators - Array of elevator API objects
+   * @param {FloorAPI[]} floors - Array of floor API objects
+   * @returns {Promise<void>}
+   * @throws {Error} If runtime not loaded or execution fails
+   */
   async execute(elevators, floors) {
     if (!this.isLoaded) {
       throw new Error("Java runtime not loaded");
@@ -298,6 +391,11 @@ export class JavaRuntime extends BaseRuntime {
     }
   }
 
+  /**
+   * Gets the default Java code template.
+   * @override
+   * @returns {string} Default template code
+   */
   getDefaultTemplate() {
     return `import java.util.*;
 /**
@@ -339,6 +437,11 @@ class ElevatorController {
 }`;
   }
 
+  /**
+   * Cleans up the runtime by clearing all CheerpJ references.
+   * @override
+   * @returns {void}
+   */
   cleanup() {
     this.isLoaded = false;
     this.loadedCode = null;

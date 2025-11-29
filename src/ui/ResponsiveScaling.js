@@ -1,23 +1,30 @@
 /**
- * Responsive scaling utility for the innerworld area
- * Scales the game world to fit within available container space
+ * Responsive scaling utility for the innerworld area.
+ * Scales the game world to fit within available container space.
  */
 export class ResponsiveScaling {
   constructor() {
+    /** @type {HTMLElement | null} Inner world element */
     this.innerWorld = null;
+    /** @type {HTMLElement | null} World container element */
     this.worldContainer = null;
+    /** @type {ResizeObserver | null} Resize observer */
     this.resizeObserver = null;
+    /** @type {number} Natural (unscaled) width */
     this.naturalWidth = 0;
+    /** @type {number} Natural (unscaled) height */
     this.naturalHeight = 0;
+    /** @type {boolean} Whether scaling is initialized */
     this.isInitialized = false;
   }
 
   /**
-   * Initialize responsive scaling
+   * Initialize responsive scaling.
+   * @returns {void}
    */
   initialize() {
-    this.innerWorld = document.querySelector(".innerworld");
-    this.worldContainer = document.querySelector(".world-container");
+    this.innerWorld = /** @type {HTMLElement | null} */ (document.querySelector(".innerworld"));
+    this.worldContainer = /** @type {HTMLElement | null} */ (document.querySelector(".world-container"));
 
     if (!this.innerWorld || !this.worldContainer) {
       console.warn("ResponsiveScaling: Required DOM elements not found");

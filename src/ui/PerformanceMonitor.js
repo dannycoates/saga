@@ -1,14 +1,39 @@
 /**
- * Performance Monitor - Uses modern Performance Observer API to track metrics
+ * @typedef {Object} MetricEntry
+ * @property {number | {duration: number, startTime: number}} value - Metric value
+ * @property {number} timestamp - Recording timestamp
  */
 
+/**
+ * @typedef {Object} MetricSummary
+ * @property {number} count - Number of entries
+ * @property {number} average - Average value
+ * @property {number} max - Maximum value
+ * @property {number} min - Minimum value
+ * @property {MetricEntry} latest - Most recent entry
+ */
+
+/**
+ * Performance monitor using modern Performance Observer API.
+ * Tracks layout shifts, long tasks, and paint timing.
+ */
 export class PerformanceMonitor {
+  /**
+   * Creates a performance monitor and sets up observers.
+   */
   constructor() {
+    /** @type {Map<string, MetricEntry[]>} Recorded metrics by name */
     this.metrics = new Map();
+    /** @type {PerformanceObserver[]} Active observers */
     this.observers = [];
     this.setupObservers();
   }
 
+  /**
+   * Sets up performance observers for various metric types.
+   * @private
+   * @returns {void}
+   */
   setupObservers() {
     if (!('PerformanceObserver' in window)) {
       console.warn('PerformanceObserver not supported');
@@ -20,6 +45,7 @@ export class PerformanceMonitor {
       const layoutObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
           if (entry.entryType === 'layout-shift') {
+            // @ts-ignore - LayoutShift entries have a value property
             this.recordMetric('layoutShift', entry.value);
           }
         }
@@ -62,6 +88,13 @@ export class PerformanceMonitor {
     }
   }
 
+  /**
+   * Records a metric value with timestamp.
+   * Keeps only last 100 entries per metric.
+   * @param {string} name - Metric name
+   * @param {number | {duration: number, startTime: number}} value - Metric value
+   * @returns {void}
+   */
   recordMetric(name, value) {
     if (!this.metrics.has(name)) {
       this.metrics.set(name, []);
@@ -78,11 +111,21 @@ export class PerformanceMonitor {
     }
   }
 
+  /**
+   * Gets all entries for a specific metric.
+   * @param {string} name - Metric name
+   * @returns {MetricEntry[]} Metric entries
+   */
   getMetrics(name) {
     return this.metrics.get(name) || [];
   }
 
+  /**
+   * Gets all recorded metrics.
+   * @returns {Record<string, MetricEntry[]>} All metrics by name
+   */
   getAllMetrics() {
+    /** @type {Record<string, MetricEntry[]>} */
     const result = {};
     for (const [name, values] of this.metrics) {
       result[name] = values;
@@ -90,17 +133,21 @@ export class PerformanceMonitor {
     return result;
   }
 
-  // Get performance summary
+  /**
+   * Gets summary statistics for all metrics.
+   * @returns {Record<string, MetricSummary>} Summary by metric name
+   */
   getSummary() {
+    /** @type {Record<string, MetricSummary>} */
     const summary = {};
-    
+
     for (const [name, values] of this.metrics) {
       if (values.length === 0) continue;
-      
-      const numericValues = values.map(v => 
+
+      const numericValues = values.map(v =>
         typeof v.value === 'number' ? v.value : v.value.duration || 0
       );
-      
+
       summary[name] = {
         count: values.length,
         average: numericValues.reduce((a, b) => a + b, 0) / numericValues.length,
@@ -109,17 +156,27 @@ export class PerformanceMonitor {
         latest: values[values.length - 1]
       };
     }
-    
+
     return summary;
   }
 
-  // Mark custom performance events
+  /**
+   * Marks a custom performance event.
+   * @param {string} name - Mark name
+   * @returns {void}
+   */
   mark(name) {
     performance.mark(name);
     this.recordMetric(`mark-${name}`, performance.now());
   }
 
-  // Measure between two marks
+  /**
+   * Measures duration between two marks.
+   * @param {string} name - Measure name
+   * @param {string} startMark - Start mark name
+   * @param {string} endMark - End mark name
+   * @returns {void}
+   */
   measure(name, startMark, endMark) {
     try {
       performance.measure(name, startMark, endMark);
@@ -132,6 +189,10 @@ export class PerformanceMonitor {
     }
   }
 
+  /**
+   * Cleans up observers and clears metrics.
+   * @returns {void}
+   */
   cleanup() {
     this.observers.forEach(observer => observer.disconnect());
     this.observers = [];

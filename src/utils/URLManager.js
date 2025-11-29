@@ -1,20 +1,46 @@
 import { challenges } from "../game/challenges.js";
 import { APP_CONSTANTS } from "../config/constants.js";
 
+/**
+ * @typedef {import('../app.js').ElevatorApp} ElevatorApp
+ */
+
+/**
+ * Manages URL hash state for challenge selection and settings.
+ * Syncs app state with URL for shareable links.
+ */
 export class URLManager {
+  /**
+   * Creates a URL manager.
+   * @param {ElevatorApp} app - Application instance
+   */
   constructor(app) {
+    /** @type {ElevatorApp} Application reference */
     this.app = app;
+    /** @type {AbortController} Controller for event listener cleanup */
     this.abortController = new AbortController();
+    /** @type {(() => void) | null} Bound handler for cleanup */
+    this.boundLoadFromUrl = null;
     this.setupHashChangeListener();
   }
 
+  /**
+   * Sets up listener for URL hash changes.
+   * @private
+   * @returns {void}
+   */
   setupHashChangeListener() {
     const { signal } = this.abortController;
     this.boundLoadFromUrl = () => this.loadFromUrl();
     window.addEventListener("hashchange", this.boundLoadFromUrl, { signal });
   }
 
+  /**
+   * Parses URL hash parameters.
+   * @returns {Record<string, string>} Parsed parameters
+   */
   parseParams() {
+    /** @type {Record<string, string>} */
     const params = {};
     const hashParams = window.location.hash.replace(/^#/, "").split(",");
 
@@ -26,6 +52,11 @@ export class URLManager {
     return params;
   }
 
+  /**
+   * Creates a URL hash string with merged parameters.
+   * @param {Record<string, string | number>} overrides - Parameters to add/override
+   * @returns {string} URL hash string (e.g., "#challenge=2,timescale=1")
+   */
   createParamsUrl(overrides) {
     const current = this.parseParams();
     const merged = { ...current, ...overrides };
@@ -39,12 +70,16 @@ export class URLManager {
     );
   }
 
+  /**
+   * Loads challenge and settings from current URL hash.
+   * @returns {void}
+   */
   loadFromUrl() {
     const params = this.parseParams();
 
     // Parse challenge index
     const challengeIndex = Math.min(
-      Math.max(0, (params.challenge | 0) - 1),
+      Math.max(0, (parseInt(params.challenge, 10) || 0) - 1),
       challenges.length - 1,
     );
 
@@ -59,6 +94,10 @@ export class URLManager {
     this.app.setTimeScale(timeScale);
   }
 
+  /**
+   * Cleans up event listeners.
+   * @returns {void}
+   */
   cleanup() {
     // AbortController automatically removes all event listeners
     this.abortController.abort();

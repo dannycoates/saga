@@ -9,29 +9,82 @@ import {
 import { APP_CONSTANTS } from "../config/constants.js";
 
 /**
- * WorldManager that directly manages simulation backend and display manager
+ * @typedef {Object} Challenge
+ * @property {ChallengeOptions} options - Challenge configuration
+ * @property {ChallengeCondition} condition - Win/lose condition
+ * @property {number} [id] - Challenge index (added at runtime)
+ */
+
+/**
+ * @typedef {Object} ChallengeOptions
+ * @property {number} [floorCount] - Number of floors
+ * @property {number} [elevatorCount] - Number of elevators
+ * @property {number} [spawnRate] - Passenger spawn rate per second
+ * @property {number[]} [elevatorCapacities] - Capacity for each elevator
+ * @property {number} [speedFloorsPerSec] - Elevator speed
+ * @property {number} [floorHeight] - Floor height in pixels
+ * @property {boolean} [isRenderingEnabled] - Whether to render visuals
+ */
+
+/**
+ * @typedef {Object} ChallengeCondition
+ * @property {string} description - Human-readable condition description (HTML)
+ * @property {(stats: import('../core/SimulationBackend.js').SimulationStats) => boolean | null} evaluate - Returns true (win), false (lose), or null (in progress)
+ */
+
+/**
+ * Main game orchestrator that manages simulation backend and display.
+ * Handles game loop, challenge lifecycle, and event forwarding.
+ *
+ * @extends EventTarget
+ *
+ * @fires WorldManager#stats_changed - Forwarded from backend when stats update
+ * @fires WorldManager#challenge_ended - Forwarded from backend when challenge ends
+ * @fires WorldManager#timescale_changed - Emitted when time scale or pause state changes
  */
 export class WorldManager extends EventTarget {
+  /**
+   * Creates a new WorldManager instance.
+   * @param {import('../ui/AppDOM.js').AppDOM} dom - DOM manager for element access
+   */
   constructor(dom) {
     super();
+    /** @type {import('../ui/AppDOM.js').AppDOM} */
     this.dom = dom;
+    /** @type {JSSimulationBackend | null} */
     this.backend = null;
+    /** @type {DisplayManager | null} */
     this.displayManager = null;
+    /** @type {ResponsiveScaling} */
     this.responsiveScaling = new ResponsiveScaling();
+    /** @type {Challenge | null} */
     this.challenge = null;
 
     // Event handling
+    /** @type {AbortController} */
     this.abortController = new AbortController();
 
     // World controller properties
+    /** @type {number} Maximum time delta per physics step */
     this.dtMax = APP_CONSTANTS.FRAME_RATE;
+    /** @type {number} Simulation speed multiplier */
     this.timeScale = 1.0;
+    /** @type {boolean} Whether simulation is paused */
     this.isPaused = true;
 
     // Animation frame tracking
+    /** @type {number | null} Current animation frame ID */
     this.animationFrameId = null;
+    /** @type {import('../core/SimulationBackend.js').UserCodeObject | null} */
     this.codeObj = null;
+    /** @type {number | null} Last tick timestamp */
     this.lastTickTime = null;
+
+    /**
+     * Animation frame callback. Updates simulation state each frame.
+     * @param {number} t - Current timestamp from requestAnimationFrame
+     * @returns {Promise<void>}
+     */
     this.runFrame = async (t) => {
       if (!this.isPaused && this.lastTickTime !== null) {
         const backend = this.backend;
@@ -41,10 +94,10 @@ export class WorldManager extends EventTarget {
         // This await is a little bit perilous since runFrame can't be awaited.
         // `this.anything` after the await MAY HAVE CHANGED in the meantime,
         // which is why we capture backend.
-        await backend.callUserCode(this.codeObj, dt);
+        await backend?.callUserCode(this.codeObj, dt);
         while (scaledDt > 0.0) {
           const thisDt = Math.min(this.dtMax, scaledDt);
-          backend.tick(thisDt);
+          backend?.tick(thisDt);
           scaledDt -= this.dtMax;
         }
       }
@@ -57,6 +110,11 @@ export class WorldManager extends EventTarget {
     };
   }
 
+  /**
+   * Current simulation statistics.
+   * @type {import('../core/SimulationBackend.js').SimulationStats}
+   * @readonly
+   */
   get stats() {
     return this.backend
       ? this.backend.getStats()
@@ -70,22 +128,44 @@ export class WorldManager extends EventTarget {
         };
   }
 
+  /**
+   * Stops the current simulation and reinitializes the challenge.
+   * @returns {void}
+   */
   end() {
     this.setPaused(true);
     this.initializeChallenge(this.challenge, false);
   }
 
+  /**
+   * Sets the simulation time scale (speed multiplier).
+   * Persists to localStorage and emits timescale_changed event.
+   * @param {number} timeScale - Speed multiplier (1.0 = normal speed)
+   * @returns {void}
+   */
   setTimeScale(timeScale) {
     this.timeScale = timeScale;
     this.dispatchEvent(new CustomEvent("timescale_changed"));
-    localStorage.setItem(APP_CONSTANTS.TIME_SCALE_KEY, this.timeScale);
+    localStorage.setItem(APP_CONSTANTS.TIME_SCALE_KEY, String(this.timeScale));
   }
 
+  /**
+   * Sets the pause state and emits timescale_changed event.
+   * @param {boolean} paused - Whether to pause the simulation
+   * @returns {void}
+   */
   setPaused(paused) {
     this.isPaused = paused;
     this.dispatchEvent(new CustomEvent("timescale_changed"));
   }
 
+  /**
+   * Initializes or reinitializes a challenge.
+   * Creates backend, display manager, and sets up event handlers.
+   * @param {Challenge | null} challenge - Challenge configuration
+   * @param {boolean} [clearStats=true] - Whether to clear statistics display
+   * @returns {void}
+   */
   initializeChallenge(challenge, clearStats = true) {
     // Clean up previous world
     this.cleanup();
@@ -97,7 +177,7 @@ export class WorldManager extends EventTarget {
       spawnRate: 0.5,
       isRenderingEnabled: true,
     };
-    const challengeOptions = challenge.options;
+    const challengeOptions = challenge?.options ?? {};
     const options = { ...defaultOptions, ...challengeOptions };
 
     // Create simulation backend
@@ -111,12 +191,12 @@ export class WorldManager extends EventTarget {
 
     // Initialize simulation
     this.backend.initialize({
-      floorCount: options.floorCount,
-      elevatorCount: options.elevatorCount,
-      elevatorCapacities: options.elevatorCapacities,
+      floorCount: options.floorCount ?? 3,
+      elevatorCount: options.elevatorCount ?? 1,
+      elevatorCapacities: options.elevatorCapacities ?? [4],
       spawnRate: options.spawnRate,
-      speedFloorsPerSec: options.speedFloorsPerSec,
-      endCondition: challenge.condition,
+      speedFloorsPerSec: options.speedFloorsPerSec ?? 2.6,
+      endCondition: challenge?.condition ?? { evaluate: () => null },
     });
 
     // Initialize displays with the world element
@@ -138,43 +218,55 @@ export class WorldManager extends EventTarget {
     this.responsiveScaling.initialize();
   }
 
+  /**
+   * Sets up event handlers to forward backend events.
+   * @private
+   * @returns {void}
+   */
   setupEventHandlers() {
     const { signal } = this.abortController;
 
     // Forward backend events
-    this.backend.addEventListener(
+    this.backend?.addEventListener(
       "stats_changed",
       (e) => {
         this.dispatchEvent(
-          new CustomEvent("stats_changed", { detail: e.detail }),
+          new CustomEvent("stats_changed", { detail: /** @type {CustomEvent} */ (e).detail }),
         );
       },
       { signal },
     );
 
-    this.backend.addEventListener(
+    this.backend?.addEventListener(
       "challenge_ended",
       (e) => {
         this.end();
         this.dispatchEvent(
-          new CustomEvent("challenge_ended", { detail: e.detail }),
+          new CustomEvent("challenge_ended", { detail: /** @type {CustomEvent} */ (e).detail }),
         );
       },
       { signal },
     );
 
-    this.backend.addEventListener(
+    this.backend?.addEventListener(
       "passenger_spawned",
       (e) => {
+        const detail = /** @type {CustomEvent} */ (e).detail;
         presentPassenger(
           this.dom.getElement("world"),
-          this.displayManager.passengerDisplays.get(e.detail.passenger.id),
+          this.displayManager?.passengerDisplays.get(detail.passenger.id),
         );
       },
       { signal },
     );
   }
 
+  /**
+   * Starts the simulation with user code.
+   * @param {import('../core/SimulationBackend.js').UserCodeObject} codeObj - User code object
+   * @returns {Promise<void>}
+   * @throws {Error} If initializeChallenge() hasn't been called
+   */
   async start(codeObj) {
     if (!this.backend) {
       throw new Error("World not created. Call initializeChallenge() first.");
@@ -187,11 +279,15 @@ export class WorldManager extends EventTarget {
     }
     presentStats(this.dom.getElement("stats"), this);
     this.codeObj = codeObj;
-    await this.codeObj.start();
+    await this.codeObj.start?.();
     this.setPaused(false);
     this.animationFrameId = window.requestAnimationFrame(this.runFrame);
   }
 
+  /**
+   * Cleans up all resources and event listeners.
+   * @returns {void}
+   */
   cleanup() {
     // Cancel any running animation frame
     if (this.animationFrameId !== null) {

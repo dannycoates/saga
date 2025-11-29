@@ -9,23 +9,43 @@ import { APP_CONSTANTS } from "./config/constants.js";
 import { performanceMonitor } from "./ui/PerformanceMonitor.js";
 import { presentChallenge } from "./ui/presenters.js";
 
-// Main Application class
+/**
+ * @typedef {import('./game/WorldManager.js').Challenge} Challenge
+ * @typedef {import('./core/SimulationBackend.js').UserCodeObject} UserCodeObject
+ */
+
+/**
+ * Main application class for the Elevator Saga game.
+ * Coordinates UI, runtime management, and game logic.
+ *
+ * @extends EventTarget
+ * @fires ElevatorApp#user_code_error - Emitted when user code throws an error
+ */
 export class ElevatorApp extends EventTarget {
+  /**
+   * Creates and initializes the application.
+   */
   constructor() {
     super();
 
-    // Initialize managers
+    /** @type {AppDOM} DOM element manager */
     this.dom = new AppDOM();
+    /** @type {RuntimeManager} Multi-language runtime manager */
     this.runtimeManager = new RuntimeManager();
+    /** @type {CodeEditor} Code editor instance */
     this.editor = new CodeEditor(
       this.dom.getElement("codeArea"),
       APP_CONSTANTS.STORAGE_KEY,
       this.runtimeManager.defaultTemplates,
       this,
     );
+    /** @type {number} Current challenge index */
     this.currentChallengeIndex = 0;
+    /** @type {WorldManager} Game world manager */
     this.worldManager = new WorldManager(this.dom);
+    /** @type {URLManager} URL state manager */
     this.urlManager = new URLManager(this);
+    /** @type {AppEventHandlers} Event handler coordinator */
     this.eventHandlers = new AppEventHandlers(
       this,
       this.dom,
@@ -39,12 +59,17 @@ export class ElevatorApp extends EventTarget {
     this.eventHandlers.setupAllHandlers();
 
     // Set the runtime manager to the editor's current language
-    this.runtimeManager.currentLanguage = this.editor.currentLanguage;
+    this.runtimeManager.currentLanguage = /** @type {import('./runtimes/BaseRuntime.js').LanguageId} */ (this.editor.currentLanguage);
 
     // Initialize with runtime
     this.initializeWithRuntime();
   }
 
+  /**
+   * Current challenge with id property added.
+   * @type {Challenge & {id: number}}
+   * @readonly
+   */
   get currentChallenge() {
     return {
       id: this.currentChallengeIndex,
@@ -52,6 +77,11 @@ export class ElevatorApp extends EventTarget {
     };
   }
 
+  /**
+   * Loads and displays a challenge by index.
+   * @param {number} index - Challenge index (0-based)
+   * @returns {void}
+   */
   loadChallenge(index) {
     this.currentChallengeIndex = index;
     this.dom.clearElements("feedback");
@@ -65,14 +95,32 @@ export class ElevatorApp extends EventTarget {
     this.worldManager.initializeChallenge(this.currentChallenge);
   }
 
+  /**
+   * Sets the simulation time scale.
+   * @param {number} timeScale - Time multiplier
+   * @returns {void}
+   */
   setTimeScale(timeScale) {
     this.worldManager.setTimeScale(timeScale);
   }
 
+  /**
+   * Shows or hides the runtime loading status.
+   * @param {boolean} show - Whether to show status
+   * @param {string} [message] - Status message
+   * @returns {void}
+   */
   showRuntimeStatus(show, message) {
     this.dom.showRuntimeStatus(show, message);
   }
 
+  /**
+   * Shows loading status if promise takes longer than 300ms.
+   * @template T
+   * @param {Promise<T>} promise - Promise to wait for
+   * @param {string} msg - Loading message
+   * @returns {Promise<T>} The original promise result
+   */
   async withStatusIfSlow(promise, msg) {
     const delayedStatus = new Promise((resolve) => {
       setTimeout(resolve, 300, "show");
@@ -85,6 +133,10 @@ export class ElevatorApp extends EventTarget {
     return promise;
   }
 
+  /**
+   * Initializes app by loading challenge and runtime.
+   * @returns {Promise<void>}
+   */
   async initializeWithRuntime() {
     // Load challenge and render world area immediately, before waiting for runtime
     this.urlManager.loadFromUrl();
@@ -102,6 +154,10 @@ export class ElevatorApp extends EventTarget {
     }
   }
 
+  /**
+   * Toggles between starting and stopping the simulation.
+   * @returns {void}
+   */
   startOrStop() {
     if (this.worldManager.isPaused) {
       // Start button clicked - start the challenge
@@ -113,6 +169,10 @@ export class ElevatorApp extends EventTarget {
     }
   }
 
+  /**
+   * Loads user code and creates a code object for execution.
+   * @returns {Promise<UserCodeObject | null>} Code object or null on error
+   */
   async getCodeObj() {
     const code = this.editor.getCode();
 
@@ -152,6 +212,10 @@ export class ElevatorApp extends EventTarget {
     }
   }
 
+  /**
+   * Starts the current challenge with user code.
+   * @returns {Promise<void>}
+   */
   async startChallenge() {
     const codeObj = await this.getCodeObj();
     if (codeObj) {
@@ -159,6 +223,10 @@ export class ElevatorApp extends EventTarget {
     }
   }
 
+  /**
+   * Cleans up all app resources.
+   * @returns {void}
+   */
   cleanup() {
     // Clean up all managers
     this.eventHandlers.cleanup();

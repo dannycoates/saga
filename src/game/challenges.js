@@ -1,9 +1,24 @@
+/**
+ * @typedef {import('./WorldManager.js').ChallengeCondition} ChallengeCondition
+ * @typedef {import('../core/SimulationBackend.js').SimulationStats} SimulationStats
+ */
+
+/**
+ * Creates a challenge condition requiring passengers transported within a time limit.
+ * @param {number} passengerCount - Number of passengers to transport
+ * @param {number} timeLimit - Time limit in seconds
+ * @returns {ChallengeCondition}
+ */
 export const requirePassengerCountWithinTime = function (
   passengerCount,
   timeLimit,
 ) {
   return {
     description: `Transport <span class='emphasis-color'>${passengerCount}</span> people in <span class='emphasis-color'>${timeLimit.toFixed(0)}</span> seconds or less`,
+    /**
+     * @param {SimulationStats} world - Current simulation stats
+     * @returns {boolean | null} True if won, false if lost, null if in progress
+     */
     evaluate: function (world) {
       if (
         world.elapsedTime >= timeLimit ||
@@ -20,12 +35,22 @@ export const requirePassengerCountWithinTime = function (
   };
 };
 
+/**
+ * Creates a challenge condition requiring passengers transported with max wait time limit.
+ * @param {number} passengerCount - Number of passengers to transport
+ * @param {number} maxWaitTime - Maximum wait time allowed in seconds
+ * @returns {ChallengeCondition}
+ */
 export const requirePassengerCountWithMaxWaitTime = function (
   passengerCount,
   maxWaitTime,
 ) {
   return {
     description: `Transport <span class='emphasis-color'>${passengerCount}</span> people and let no one wait more than <span class='emphasis-color'>${maxWaitTime.toFixed(1)}</span> seconds`,
+    /**
+     * @param {SimulationStats} world - Current simulation stats
+     * @returns {boolean | null} True if won, false if lost, null if in progress
+     */
     evaluate: function (world) {
       if (
         world.maxWaitTime >= maxWaitTime ||
@@ -42,6 +67,13 @@ export const requirePassengerCountWithMaxWaitTime = function (
   };
 };
 
+/**
+ * Creates a challenge condition with both time limit and max wait time constraints.
+ * @param {number} passengerCount - Number of passengers to transport
+ * @param {number} timeLimit - Time limit in seconds
+ * @param {number} maxWaitTime - Maximum wait time allowed in seconds
+ * @returns {ChallengeCondition}
+ */
 export const requirePassengerCountWithinTimeWithMaxWaitTime = function (
   passengerCount,
   timeLimit,
@@ -49,6 +81,10 @@ export const requirePassengerCountWithinTimeWithMaxWaitTime = function (
 ) {
   return {
     description: `Transport <span class='emphasis-color'>${passengerCount}</span> people in <span class='emphasis-color'>${timeLimit.toFixed(0)}</span> seconds or less and let no one wait more than <span class='emphasis-color'>${maxWaitTime.toFixed(1)}</span> seconds`,
+    /**
+     * @param {SimulationStats} world - Current simulation stats
+     * @returns {boolean | null} True if won, false if lost, null if in progress
+     */
     evaluate: function (world) {
       if (
         world.elapsedTime >= timeLimit ||
@@ -67,12 +103,22 @@ export const requirePassengerCountWithinTimeWithMaxWaitTime = function (
   };
 };
 
+/**
+ * Creates a challenge condition requiring passengers transported within move limit.
+ * @param {number} passengerCount - Number of passengers to transport
+ * @param {number} moveLimit - Maximum number of elevator moves allowed
+ * @returns {ChallengeCondition}
+ */
 export const requirePassengerCountWithinMoves = function (
   passengerCount,
   moveLimit,
 ) {
   return {
     description: `Transport <span class='emphasis-color'>${passengerCount}</span> people using <span class='emphasis-color'>${moveLimit}</span> elevator moves or less`,
+    /**
+     * @param {SimulationStats} world - Current simulation stats
+     * @returns {boolean | null} True if won, false if lost, null if in progress
+     */
     evaluate: function (world) {
       if (
         world.moveCount >= moveLimit ||
@@ -89,15 +135,26 @@ export const requirePassengerCountWithinMoves = function (
   };
 };
 
+/**
+ * Creates a perpetual demo condition that never ends.
+ * @returns {ChallengeCondition}
+ */
 export const requireDemo = function () {
   return {
     description: "Perpetual demo",
+    /**
+     * @returns {null} Always returns null (never ends)
+     */
     evaluate: function () {
       return null;
     },
   };
 };
 
+/**
+ * Array of all game challenges in order of difficulty.
+ * @type {Array<import('./WorldManager.js').Challenge>}
+ */
 export const challenges = [
   {
     options: { floorCount: 3, elevatorCount: 1, spawnRate: 0.3 },

@@ -1,6 +1,16 @@
 import { BaseRuntime } from "./BaseRuntime.js";
 import { loadExternalScript, executeWithTimeout } from "../utils/AsyncUtils.js";
 
+/**
+ * @typedef {import('./BaseRuntime.js').ElevatorAPI} ElevatorAPI
+ * @typedef {import('./BaseRuntime.js').FloorAPI} FloorAPI
+ */
+
+/**
+ * Base Python code that provides wrapper classes for the elevator API.
+ * Converts JavaScript objects to Python-friendly objects with snake_case naming.
+ * @type {string}
+ */
 const BASE_PYTHON_CODE = `
 import js
 
@@ -71,12 +81,28 @@ def _execute_tick(js_elevators, js_floors):
 
 `;
 
+/**
+ * Python runtime using Pyodide for in-browser Python execution.
+ * Provides snake_case API wrappers for the elevator game.
+ *
+ * @extends BaseRuntime
+ */
 export class PythonRuntime extends BaseRuntime {
+  /**
+   * Creates a Python runtime instance.
+   */
   constructor() {
     super("python");
+    /** @type {any} Pyodide instance */
     this.pyodide = null;
   }
 
+  /**
+   * Loads the Pyodide runtime and initializes Python environment.
+   * @override
+   * @returns {Promise<void>}
+   * @throws {Error} If Pyodide fails to load
+   */
   async loadRuntime() {
     if (this.isLoading || this.isLoaded) return;
     this.isLoading = true;
@@ -113,6 +139,13 @@ export class PythonRuntime extends BaseRuntime {
     }
   }
 
+  /**
+   * Loads user Python code and stores the tick function.
+   * @override
+   * @param {string} code - Python code to load
+   * @returns {Promise<void>}
+   * @throws {Error} If runtime not loaded or code doesn't define tick function
+   */
   async loadCode(code) {
     if (!this.isLoaded) {
       throw new Error("Python runtime not loaded");
@@ -136,6 +169,14 @@ export class PythonRuntime extends BaseRuntime {
     this.loadedCode = code;
   }
 
+  /**
+   * Executes the user's tick function with wrapped elevator and floor objects.
+   * @override
+   * @param {ElevatorAPI[]} elevators - Array of elevator API objects
+   * @param {FloorAPI[]} floors - Array of floor API objects
+   * @returns {Promise<void>}
+   * @throws {Error} If runtime not loaded or no code loaded
+   */
   async execute(elevators, floors) {
     if (!this.isLoaded) {
       throw new Error("Python runtime not loaded");
@@ -155,6 +196,11 @@ export class PythonRuntime extends BaseRuntime {
     );
   }
 
+  /**
+   * Gets the default Python code template.
+   * @override
+   * @returns {string} Default template code
+   */
   getDefaultTemplate() {
     return `"""
 Floor class:
@@ -192,6 +238,11 @@ def tick(elevators, floors):
         elevator.go_to_floor(_next_floor)`;
   }
 
+  /**
+   * Cleans up the runtime by clearing Pyodide references.
+   * @override
+   * @returns {void}
+   */
   cleanup() {
     if (this.pyodide) {
       try {
