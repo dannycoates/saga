@@ -54,9 +54,9 @@ JSSimulationBackend → GameController → ViewModelManager → UI
 ### Multi-Runtime System
 
 **Runtime Architecture** (`src/runtimes/`)
-- `BaseRuntime` - Abstract base class for language runtimes
-- `RuntimeManager` - Handles language switching and code execution coordination
-- Each runtime (`javascript.js`, `python.js`, `java.js`) implements: `loadRuntime()`, `loadCode()`, `execute()`, `getDefaultTemplate()`
+- `BaseRuntime.js` - Abstract base class for language runtimes
+- `RuntimeManager.js` - Handles language switching and code execution coordination
+- Each runtime (`JavaScriptRuntime.js`, `PythonRuntime.js`, `JavaRuntime.js`) implements: `loadRuntime()`, `loadCode()`, `execute()`, `getDefaultTemplate()`
 - JavaScript uses ES modules with `data:text/javascript` imports
 - Python uses Pyodide with wrapper classes that bridge JS objects
 - Java uses CheerpJ with JNI callbacks (`Java_Elevator_jsGoToFloor`)
@@ -82,10 +82,11 @@ function tick(elevators, floors) { /* player code */ }
 ```
 
 ### Key Directories
-- `/src/core/` - Core simulation engine (SimulationCore, World, entities)
-- `/src/game/` - Game logic, challenges, and world management
-- `/src/ui/` - UI presentation layer and display management
+- `/src/core/` - Core simulation engine (JSSimulationBackend, entities)
+- `/src/game/` - Game logic (GameController, challenges)
+- `/src/ui/` - UI presentation layer (ViewModelManager, view models, web components)
 - `/src/runtimes/` - Multi-language runtime implementations
+- `/src/utils/` - Shared utilities (AsyncUtils, common, URLManager)
 - `/tests/` - Test files mirroring src structure
 
 ### Event-Driven Architecture

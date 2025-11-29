@@ -112,13 +112,14 @@ Presentation layer and user interaction handling.
 | File | Purpose |
 |------|---------|
 | `ViewModelManager.js` | **View model orchestrator**. Manages Maps of FloorViewModel, ElevatorViewModel, PassengerViewModel. Subscribes to backend events and updates view models. Can be disabled for headless operation. Uses AbortController for cleanup. |
+| `NullViewModelManager.js` | **No-op view model manager**. Used for headless operation when visual rendering is completely disabled. |
 | `CodeEditor.js` | **CodeMirror integration**. Multi-language editor with syntax highlighting (JavaScript, Python, Java). Features: ESLint linting (JS only), Gruvbox themes, auto-save to localStorage, keyboard shortcuts (Tab indent, Ctrl+S start). Uses Compartments for dynamic reconfiguration. |
 | `AppDOM.js` | **DOM element cache**. Central reference to DOM elements. Methods for showing/hiding runtime loading indicator, clearing feedback. |
 | `AppEventHandlers.js` | **Event coordination**. Attaches UI event listeners for buttons, language selector, theme changes. Delegates to ElevatorApp methods. |
 | `presenters.js` | **Component factories**. Functions to create and bind Web Components: `presentStats()`, `presentChallenge()`, `presentFeedback()`, `presentCodeStatus()`, `presentWorld()`, `presentFloor()`, `presentElevator()`, `presentPassenger()`. |
 | `PerformanceMonitor.js` | **Performance tracking**. Monitors frame rates and rendering performance. |
 | `ResponsiveScaling.js` | **Layout management**. Handles responsive scaling and layout adjustments for different screen sizes. |
-| `theme-manager.js` | **Theme handling**. Watches system theme preference (prefers-color-scheme). Provides `onThemeChange()` callback for subscribers. |
+| `ThemeManager.js` | **Theme handling**. Watches system theme preference (prefers-color-scheme). Provides `onThemeChange()` callback for subscribers. |
 
 #### View Models (`src/ui/viewmodels/`)
 
@@ -157,6 +158,7 @@ Helper functions and utilities.
 | File | Purpose |
 |------|---------|
 | `AsyncUtils.js` | Promise utilities: `sleep()`, `waitFor()`, `timeout()`. Used for async operations and runtime loading. |
+| `common.js` | **Shared utilities**. General-purpose functions: `randomInt()`, `throttle()`, `limitNumber()`. Used across layers. |
 | `URLManager.js` | **URL state management**. Parses URL parameters for challenge index and code. Updates URL on challenge changes. Enables sharing game state via URL. |
 
 ---
@@ -172,9 +174,9 @@ Test files mirroring source structure.
 | `core/Elevator.test.js` | Elevator physics and behavior tests. |
 | `core/Floor.test.js` | Floor button state tests. |
 | `core/Passenger.test.js` | Passenger lifecycle tests. |
-| `core/utils.test.js` | Utility function tests. |
-| `core/World.test.js` | Simulation integration tests. |
-| `ui/viewmodels/AnimatedViewModel.test.js` | Animation utility tests. |
+| `core/GameController.test.js` | GameController orchestration tests. |
+| `ui/viewmodels/AnimatedViewModel.test.js` | Animation and view model tests. |
+| `utils/common.test.js` | Common utility function tests. |
 
 ---
 
@@ -225,16 +227,16 @@ index.html
 |-----------|------------|-------------|
 | `src/` | 2 | Entry point and styles |
 | `src/config/` | 1 | Constants |
-| `src/core/` | 6 | Simulation engine |
+| `src/core/` | 5 | Simulation engine |
 | `src/core/backends/` | 1 | Example backend |
 | `src/game/` | 2 | Game logic |
-| `src/runtimes/` | 4 | Language runtimes |
-| `src/ui/` | 7 | UI management |
+| `src/runtimes/` | 5 | Language runtimes |
+| `src/ui/` | 9 | UI management |
 | `src/ui/components/` | 8 | Web components |
 | `src/ui/viewmodels/` | 6 | View model objects |
-| `src/utils/` | 2 | Utilities |
-| `tests/` | 7 | Test files |
-| **Total** | **45** | Source + tests |
+| `src/utils/` | 3 | Utilities |
+| `tests/` | 8 | Test files |
+| **Total** | **50** | Source + tests |
 
 ---
 
