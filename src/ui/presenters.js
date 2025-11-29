@@ -14,9 +14,9 @@ import "./components/elevator-passenger.js";
 import "./components/code-status.js";
 
 /**
- * @typedef {import('../game/WorldManager.js').WorldManager} WorldManager
+ * @typedef {import('../game/GameController.js').GameController} GameController
  * @typedef {import('../app.js').ElevatorApp} ElevatorApp
- * @typedef {import('../game/WorldManager.js').Challenge} Challenge
+ * @typedef {import('../game/GameController.js').Challenge} Challenge
  * @typedef {import('./ViewModelManager.js').ViewModelManager} ViewModelManager
  * @typedef {import('./viewmodels/FloorViewModel.js').FloorViewModel} FloorViewModel
  * @typedef {import('./viewmodels/ElevatorViewModel.js').ElevatorViewModel} ElevatorViewModel
@@ -26,7 +26,7 @@ import "./components/code-status.js";
 /**
  * Creates and attaches a stats component.
  * @param {HTMLElement} parentElem - Parent element
- * @param {WorldManager} world - World manager
+ * @param {GameController} world - Game controller
  * @returns {ElevatorStatsElement} Created component
  */
 export function presentStats(parentElem, world) {
@@ -43,7 +43,7 @@ export function presentStats(parentElem, world) {
  * @param {HTMLElement} parentElem - Parent element
  * @param {Challenge & {id: number}} challenge - Challenge configuration
  * @param {ElevatorApp} app - Application instance
- * @param {WorldManager} worldManager - World manager
+ * @param {GameController} gameController - Game controller
  * @param {number} challengeNum - Challenge number (1-indexed)
  * @returns {ChallengeControlElement} Created component
  */
@@ -51,7 +51,7 @@ export function presentChallenge(
   parentElem,
   challenge,
   app,
-  worldManager,
+  gameController,
   challengeNum,
 ) {
   // Create and append the web component
@@ -62,7 +62,7 @@ export function presentChallenge(
     challenge.condition.description,
   );
   challengeComponent.app = app;
-  challengeComponent.worldManager = worldManager;
+  challengeComponent.gameController = gameController;
   parentElem.replaceChildren(challengeComponent);
 
   return challengeComponent;

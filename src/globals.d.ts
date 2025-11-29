@@ -46,12 +46,12 @@ interface Window {
 
 // Custom element interfaces for web components
 interface ElevatorStatsElement extends HTMLElement {
-  world: import('./game/WorldManager.js').WorldManager;
+  world: import('./game/GameController.js').GameController;
 }
 
 interface ChallengeControlElement extends HTMLElement {
   app: import('./app.js').ElevatorApp;
-  worldManager: import('./game/WorldManager.js').WorldManager;
+  gameController: import('./game/GameController.js').GameController;
 }
 
 interface CodeStatusElement extends HTMLElement {

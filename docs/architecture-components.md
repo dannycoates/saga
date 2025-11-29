@@ -179,7 +179,7 @@ JSSimulationBackend                                   Subscribers
        │                                    ┌──────────────┼──────────────┐
        │                                    │              │              │
        │                                    ▼              ▼              ▼
-       │                             DisplayManager   WorldManager    ElevatorApp
+       │                             DisplayManager   GameController    ElevatorApp
        │                                    │              │              │
        ├── state_changed ──────────────────►│              │              │
        │    (every tick)                    │              │              │
@@ -487,11 +487,11 @@ EventTarget (Browser API)
 
 ## 5. Game Logic Components
 
-### WorldManager Structure
+### GameController Structure
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                            WorldManager                                      │
+│                            GameController                                      │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  Composed Systems:                                                          │

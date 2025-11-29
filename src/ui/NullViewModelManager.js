@@ -1,7 +1,7 @@
 /**
  * Null implementation of ViewModelManager for headless operation.
  * Provides the same interface as ViewModelManager but performs no operations.
- * Useful for testing WorldManager without DOM dependencies.
+ * Useful for testing GameController without DOM dependencies.
  */
 export class NullViewModelManager {
   /**

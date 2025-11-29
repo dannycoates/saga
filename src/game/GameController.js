@@ -31,14 +31,14 @@ import { APP_CONSTANTS } from "../config/constants.js";
  *
  * @extends EventTarget
  *
- * @fires WorldManager#stats_changed - Forwarded from backend when stats update
- * @fires WorldManager#challenge_ended - Forwarded from backend when challenge ends
- * @fires WorldManager#timescale_changed - Emitted when time scale or pause state changes
- * @fires WorldManager#challenge_initialized - Emitted when a challenge is initialized (includes backend reference)
+ * @fires GameController#stats_changed - Forwarded from backend when stats update
+ * @fires GameController#challenge_ended - Forwarded from backend when challenge ends
+ * @fires GameController#timescale_changed - Emitted when time scale or pause state changes
+ * @fires GameController#challenge_initialized - Emitted when a challenge is initialized (includes backend reference)
  */
-export class WorldManager extends EventTarget {
+export class GameController extends EventTarget {
   /**
-   * Creates a new WorldManager instance.
+   * Creates a new GameController instance.
    */
   constructor() {
     super();
@@ -51,7 +51,7 @@ export class WorldManager extends EventTarget {
     /** @type {AbortController} */
     this.abortController = new AbortController();
 
-    // World controller properties
+    // Game controller properties
     /** @type {number} Maximum time delta per physics step */
     this.dtMax = APP_CONSTANTS.FRAME_RATE;
     /** @type {number} Simulation speed multiplier */
@@ -154,7 +154,7 @@ export class WorldManager extends EventTarget {
    * @returns {void}
    */
   initializeChallenge(challenge, clearStats = true) {
-    // Clean up previous world
+    // Clean up previous challenge
     this.cleanup();
 
     this.challenge = challenge;
@@ -181,7 +181,7 @@ export class WorldManager extends EventTarget {
     });
 
     // Emit event for UI layer FIRST so ViewModelManager subscribes to backend
-    // before WorldManager's event forwarding (ensures correct handler order)
+    // before GameController's event forwarding (ensures correct handler order)
     this.dispatchEvent(
       new CustomEvent("challenge_initialized", {
         detail: {
@@ -248,7 +248,7 @@ export class WorldManager extends EventTarget {
    */
   async start(codeObj) {
     if (!this.backend) {
-      throw new Error("World not created. Call initializeChallenge() first.");
+      throw new Error("Backend not created. Call initializeChallenge() first.");
     }
 
     this.dispatchEvent(new CustomEvent("simulation_started"));

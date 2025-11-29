@@ -15,7 +15,7 @@ Elevator Saga is a multi-language elevator programming game built with Vite. Pla
 - Java uses CheerpJ with JNI callbacks (`Java_Elevator_jsGoToFloor`)
 
 **Game Engine** (`src/core/`):
-- `World.js` - Contains `WorldCreator` (builds floors/elevators) and `worldManager` (game loop, physics, user spawning)
+- `World.js` - Contains `WorldCreator` (builds floors/elevators) and `gameController` (game loop, physics, user spawning)
 - `Elevator.js` - State machine with movement queue, capacity tracking, button management
 - `Floor.js` - User queues and button states
 - `User.js` - Individual entities with spawn timestamps and destinations
@@ -51,7 +51,7 @@ All runtimes expose the same API contract:
 - Code compilation happens per-language: JS uses dynamic imports, Python/Java compile to bytecode
 
 **Game State Management**:
-- `worldManager.tick()` is the main game loop - calls player code, updates physics, spawns users
+- `gameController.tick()` is the main game loop - calls player code, updates physics, spawns users
 - Player code errors are caught and dispatched as `usercode_error` events
 - Stats recalculation is throttled and event-driven (`stats_changed`)
 
@@ -73,7 +73,7 @@ All runtimes expose the same API contract:
 - All runtimes maintain global `ELEVATORS` array for callback resolution
 
 **Event System**:
-- `worldManager` extends `EventTarget` for game events
+- `gameController` extends `EventTarget` for game events
 - UI listens for: `stats_changed`, `usercode_error`, `new_user`, `challenge_ended`
 - Error handling isolates player code failures from game engine
 

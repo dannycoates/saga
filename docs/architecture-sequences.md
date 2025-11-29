@@ -28,7 +28,7 @@ Browser loads index.html
 │         ├── Set language       │
 │         └── Configure themes   │
 │                                │
-│  3. Create WorldManager        │
+│  3. Create GameController        │
 │     ├── Create Backend         │
 │     └── Create DisplayManager  │
 │                                │
@@ -63,7 +63,7 @@ ElevatorApp.loadChallenge(index)
          │
          ├──► Get challenge definition from challenges[index]
          │
-         └──► WorldManager.initializeChallenge(challenge)
+         └──► GameController.initializeChallenge(challenge)
                     │
                     ├──► backend.initialize(config)
                     │         │
@@ -132,7 +132,7 @@ ElevatorApp.startChallenge()
          │         │
          │         └── { tick: async (e, f) => runtime.execute(e, f) }
          │
-         └──► WorldManager.start(codeObj)
+         └──► GameController.start(codeObj)
                     │
                     ├── Store codeObj reference
                     ├── Set isPaused = false
@@ -504,7 +504,7 @@ backend sets isChallengeEnded = true
                     └── { succeeded: boolean }
          │
          ▼
-WorldManager listener
+GameController listener
          │
          ├──► Stop game loop (don't request next frame)
          │
@@ -600,7 +600,7 @@ Error occurs during execution
          │
          └──► Simulation error
                     │
-                    └── WorldManager.runFrame catches
+                    └── GameController.runFrame catches
                               │
                               ├── Log error to console
                               ├── Stop game loop
@@ -615,7 +615,7 @@ Error occurs during execution
 Challenge ends OR User stops
          │
          ▼
-WorldManager.cleanup()
+GameController.cleanup()
          │
          ├──► abortController.abort()
          │         │

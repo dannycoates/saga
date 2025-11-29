@@ -1,14 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { WorldManager } from "../../src/game/WorldManager.js";
+import { GameController } from "../../src/game/GameController.js";
 
-describe("WorldManager", () => {
-  let worldManager;
+describe("GameController", () => {
+  let gameController;
 
   beforeEach(() => {
-    worldManager = new WorldManager();
+    gameController = new GameController();
 
-    // Create a world with the WorldManager
-    worldManager.initializeChallenge({
+    // Create a challenge with the GameController
+    gameController.initializeChallenge({
       options: {
         floorCount: 3,
         elevatorCount: 2,
@@ -21,7 +21,7 @@ describe("WorldManager", () => {
   });
 
   it("should create world with correct configuration", () => {
-    expect(worldManager.backend).toBeDefined();
+    expect(gameController.backend).toBeDefined();
   });
 
   it("should manage game state through start/stop", async () => {
@@ -30,12 +30,12 @@ describe("WorldManager", () => {
       start: vi.fn().mockResolvedValue(),
     };
     
-    expect(worldManager.isPaused).toBe(true);
+    expect(gameController.isPaused).toBe(true);
     
     // Starting should unpause and set up code
-    await worldManager.start(mockCode);
-    expect(worldManager.isPaused).toBe(false);
-    expect(worldManager.codeObj).toBe(mockCode);
+    await gameController.start(mockCode);
+    expect(gameController.isPaused).toBe(false);
+    expect(gameController.codeObj).toBe(mockCode);
     expect(mockCode.start).toHaveBeenCalled();
   });
 });

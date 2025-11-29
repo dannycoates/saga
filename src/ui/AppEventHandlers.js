@@ -14,7 +14,7 @@ import { ViewModelManager } from "./ViewModelManager.js";
  * @typedef {import('./AppDOM.js').AppDOM} AppDOM
  * @typedef {import('./CodeEditor.js').CodeEditor} CodeEditor
  * @typedef {import('../runtimes/RuntimeManager.js').RuntimeManager} RuntimeManager
- * @typedef {import('../game/WorldManager.js').WorldManager} WorldManager
+ * @typedef {import('../game/GameController.js').GameController} GameController
  * @typedef {import('../utils/URLManager.js').URLManager} URLManager
  */
 
@@ -29,10 +29,10 @@ export class AppEventHandlers {
    * @param {AppDOM} dom - DOM manager
    * @param {CodeEditor} editor - Code editor
    * @param {RuntimeManager} runtimeManager - Runtime manager
-   * @param {WorldManager} worldManager - World manager
+   * @param {GameController} gameController - Game controller
    * @param {URLManager} urlManager - URL manager
    */
-  constructor(app, dom, editor, runtimeManager, worldManager, urlManager) {
+  constructor(app, dom, editor, runtimeManager, gameController, urlManager) {
     /** @type {ElevatorApp} */
     this.app = app;
     /** @type {AppDOM} */
@@ -41,8 +41,8 @@ export class AppEventHandlers {
     this.editor = editor;
     /** @type {RuntimeManager} */
     this.runtimeManager = runtimeManager;
-    /** @type {WorldManager} */
-    this.worldManager = worldManager;
+    /** @type {GameController} */
+    this.gameController = gameController;
     /** @type {URLManager} */
     this.urlManager = urlManager;
     /** @type {AbortController} Controller for event listener cleanup */
@@ -63,7 +63,7 @@ export class AppEventHandlers {
     this.setupButtonHandlers();
     this.setupEditorHandlers();
     this.setupLanguageHandler();
-    this.setupWorldManagerHandlers();
+    this.setupGameControllerHandlers();
     this.setupLayoutToggle();
   }
 
@@ -197,16 +197,16 @@ export class AppEventHandlers {
   }
 
   /**
-   * Sets up WorldManager event handlers for presentation.
+   * Sets up GameController event handlers for presentation.
    * Handles challenge initialization, simulation start, passenger spawning, and cleanup.
    * @private
    * @returns {void}
    */
-  setupWorldManagerHandlers() {
+  setupGameControllerHandlers() {
     const { signal } = this.abortController;
 
     // Challenge initialized - reinitialize ViewModelManager, present stats and world, initialize scaling
-    this.worldManager.addEventListener(
+    this.gameController.addEventListener(
       "challenge_initialized",
       (e) => {
         const { clearStats, backend, options } =
@@ -223,7 +223,7 @@ export class AppEventHandlers {
         });
 
         if (clearStats) {
-          presentStats(this.dom.getElement("stats"), this.worldManager);
+          presentStats(this.dom.getElement("stats"), this.gameController);
         }
         presentWorld(this.dom.getElement("world"), this.viewModelManager);
         this.responsiveScaling.initialize();
@@ -232,16 +232,16 @@ export class AppEventHandlers {
     );
 
     // Simulation started - refresh stats
-    this.worldManager.addEventListener(
+    this.gameController.addEventListener(
       "simulation_started",
       () => {
-        presentStats(this.dom.getElement("stats"), this.worldManager);
+        presentStats(this.dom.getElement("stats"), this.gameController);
       },
       { signal },
     );
 
     // Passenger spawned - present new passenger
-    this.worldManager.addEventListener(
+    this.gameController.addEventListener(
       "passenger_spawned",
       (e) => {
         const { passenger } = /** @type {CustomEvent<{passenger: {id: string}}>} */ (e).detail;
@@ -274,14 +274,14 @@ export class AppEventHandlers {
         );
       }
     });
-    this.worldManager.addEventListener(
+    this.gameController.addEventListener(
       "challenge_ended",
       this.boundHandlers.challenge_ended,
       { signal },
     );
 
     // Cleanup - clean up ViewModelManager, clear world elements, and clean up responsive scaling
-    this.worldManager.addEventListener(
+    this.gameController.addEventListener(
       "cleanup",
       () => {
         this.viewModelManager.cleanup();

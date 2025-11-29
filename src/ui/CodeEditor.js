@@ -195,8 +195,8 @@ export class CodeEditor extends EventTarget {
           key: "Mod-s",
           preventDefault: true,
           run: () => {
-            if (this.app && this.app.worldManager) {
-              if (!this.app.worldManager.isPaused) {
+            if (this.app && this.app.gameController) {
+              if (!this.app.gameController.isPaused) {
                 this.app.startOrStop(); // restart
               }
               this.app.startOrStop();
