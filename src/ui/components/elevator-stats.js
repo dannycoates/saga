@@ -46,7 +46,7 @@ export class ElevatorStats extends HTMLElement {
   }
 
   updateFromWorld(stats) {
-    this.setAttribute("transported", stats.transportedCounter);
+    this.setAttribute("transported", stats.transportedCount);
     this.setAttribute("elapsed-time", stats.elapsedTime.toFixed(0) + "s");
     this.setAttribute(
       "transported-per-sec",

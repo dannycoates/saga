@@ -1,9 +1,9 @@
-import { BaseRuntime } from "./base.js";
+import { BaseRuntime } from "./BaseRuntime.js";
 
 export class JavaScriptRuntime extends BaseRuntime {
   constructor() {
     super("javascript");
-    this.loaded = true; // JavaScript is always available
+    this.isLoaded = true; // JavaScript is always available
     this.loadedModule = null;
   }
 
@@ -71,7 +71,7 @@ export function tick(elevators, floors) {
 }`;
   }
 
-  dispose() {
+  cleanup() {
     this.loadedModule = null;
     this.loadedCode = null;
   }

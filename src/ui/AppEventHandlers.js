@@ -91,7 +91,7 @@ export class AppEventHandlers {
       presentCodeStatus(this.dom.getElement("codeStatus"), e.detail);
     };
     this.app.addEventListener(
-      "usercode_error",
+      "user_code_error",
       this.boundHandlers.editorError,
       { signal },
     );

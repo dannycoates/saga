@@ -1,5 +1,5 @@
 import { APP_CONSTANTS } from "../config/constants.js";
-import { themeManager } from "./theme-manager.js";
+import { themeManager } from "./ThemeManager.js";
 import { ThemeSwitcher } from "./components/theme-switcher.js";
 
 export class AppDOM {

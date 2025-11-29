@@ -1,4 +1,4 @@
-import { BaseRuntime } from "./base.js";
+import { BaseRuntime } from "./BaseRuntime.js";
 import { loadExternalScript, executeWithTimeout } from "../utils/AsyncUtils.js";
 
 const BASE_PYTHON_CODE = `
@@ -78,8 +78,8 @@ export class PythonRuntime extends BaseRuntime {
   }
 
   async loadRuntime() {
-    if (this.loading || this.loaded) return;
-    this.loading = true;
+    if (this.isLoading || this.isLoaded) return;
+    this.isLoading = true;
     try {
       // Load Pyodide script
       // Use enhanced script loading with timeout
@@ -105,16 +105,16 @@ export class PythonRuntime extends BaseRuntime {
       // Initialize the Python environment with our API wrapper
       await this.pyodide.runPythonAsync(BASE_PYTHON_CODE);
 
-      this.loaded = true;
+      this.isLoaded = true;
     } catch (error) {
       throw new Error(`Failed to load Python runtime: ${error.message}`);
     } finally {
-      this.loading = false;
+      this.isLoading = false;
     }
   }
 
   async loadCode(code) {
-    if (!this.loaded) {
+    if (!this.isLoaded) {
       throw new Error("Python runtime not loaded");
     }
 
@@ -137,7 +137,7 @@ export class PythonRuntime extends BaseRuntime {
   }
 
   async execute(elevators, floors) {
-    if (!this.loaded) {
+    if (!this.isLoaded) {
       throw new Error("Python runtime not loaded");
     }
 
@@ -192,7 +192,7 @@ def tick(elevators, floors):
         elevator.go_to_floor(_next_floor)`;
   }
 
-  dispose() {
+  cleanup() {
     if (this.pyodide) {
       try {
         // Clear the tick function in Python
@@ -202,7 +202,7 @@ def tick(elevators, floors):
       }
       // Clear references
       this.pyodide = null;
-      this.loaded = false;
+      this.isLoaded = false;
       this.loadedCode = null;
     }
   }

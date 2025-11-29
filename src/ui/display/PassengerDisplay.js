@@ -1,7 +1,7 @@
 import { Animated } from "./Animated.js";
 import { randomInt } from "../../core/utils.js";
 
-const linearInterpolate = function (value0, value1, x) {
+const LINEAR_INTERPOLATE = function (value0, value1, x) {
   return value0 + (value1 - value0) * x;
 };
 
@@ -13,7 +13,7 @@ export class PassengerDisplay extends Animated {
     this.state = "new";
     this.startingY = startingY;
     this.elevatorDisplays = elevatorDisplays; // Reference to world's elevator displays Map
-    this.active = true; // prevents the World from deleting passenger until falsy. NullDisplay is always falsy
+    this.isActive = true; // prevents the World from deleting passenger until falsy. NullDisplay is always falsy
     if (randomInt(0, 40) === 0) {
       this.displayType = "child";
     } else if (randomInt(0, 1) === 0) {
@@ -35,8 +35,8 @@ export class PassengerDisplay extends Animated {
   animateExit() {
     this.setParent(null);
     const destination = this.x + 100;
-    this.moveToOverTime(destination, null, 1, linearInterpolate, () => {
-      this.active = false;
+    this.moveToOverTime(destination, null, 1, LINEAR_INTERPOLATE, () => {
+      this.isActive = false;
       this.dispatchEvent(new CustomEvent("removed"));
     });
   }
@@ -51,7 +51,7 @@ export class PassengerDisplay extends Animated {
         const [x, y] = parent.getPassengerPosition(
           this.passengerState.slotInElevator,
         );
-        this.moveToOverTime(x, y, 1, linearInterpolate);
+        this.moveToOverTime(x, y, 1, LINEAR_INTERPOLATE);
       }
     }
   }

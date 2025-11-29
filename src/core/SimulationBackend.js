@@ -43,8 +43,8 @@ export class SimulationBackend extends EventTarget {
   /**
    * Clean up resources
    */
-  dispose() {
-    throw new Error("SimulationBackend.dispose must be implemented");
+  cleanup() {
+    throw new Error("SimulationBackend.cleanup must be implemented");
   }
 
   /**

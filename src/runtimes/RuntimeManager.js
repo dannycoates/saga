@@ -1,6 +1,6 @@
-import { JavaScriptRuntime } from "./javascript.js";
-import { PythonRuntime } from "./python.js";
-import { JavaRuntime } from "./java.js";
+import { JavaScriptRuntime } from "./JavaScriptRuntime.js";
+import { PythonRuntime } from "./PythonRuntime.js";
+import { JavaRuntime } from "./JavaRuntime.js";
 
 export class RuntimeManager {
   constructor() {
@@ -26,7 +26,7 @@ export class RuntimeManager {
     const language = this.currentLanguage;
     // Load the runtime if needed
     const runtime = this.runtimes[language];
-    if (!runtime.loaded && !runtime.loading) {
+    if (!runtime.isLoaded && !runtime.isLoading) {
       // Cache loading promises to avoid multiple loads
       if (!this.loadingPromises[language]) {
         this.loadingPromises[language] = runtime.loadRuntime();
@@ -54,7 +54,7 @@ export class RuntimeManager {
     const runtime = this.getCurrentRuntime();
 
     // Ensure runtime is loaded
-    if (!runtime.loaded) {
+    if (!runtime.isLoaded) {
       await this.selectLanguage(this.currentLanguage);
     }
 
@@ -73,8 +73,8 @@ export class RuntimeManager {
     return await runtime.execute(elevators, floors);
   }
 
-  dispose() {
-    // Dispose all runtimes
-    Object.values(this.runtimes).forEach((runtime) => runtime.dispose());
+  cleanup() {
+    // Cleanup all runtimes
+    Object.values(this.runtimes).forEach((runtime) => runtime.cleanup());
   }
 }

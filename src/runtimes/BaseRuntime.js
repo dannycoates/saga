@@ -1,8 +1,8 @@
 export class BaseRuntime {
   constructor(language) {
     this.language = language;
-    this.loaded = false;
-    this.loading = false;
+    this.isLoaded = false;
+    this.isLoading = false;
     this.loadedCode = null;
   }
 
@@ -26,7 +26,7 @@ export class BaseRuntime {
     throw new Error("getDefaultTemplate() must be implemented by subclass");
   }
 
-  dispose() {
+  cleanup() {
     this.loadedCode = null;
     // Override in subclass if cleanup is needed
   }

@@ -1,7 +1,7 @@
 import { Animated } from "./Animated.js";
 
 export class ElevatorDisplay extends Animated {
-  constructor(elevatorState, xPos, capacity = 4) {
+  constructor(elevatorState, xPosition, capacity = 4) {
     super();
     this.state = elevatorState;
     this.floorHeight = 50;
@@ -9,7 +9,7 @@ export class ElevatorDisplay extends Animated {
     this.displayedFloorNumber = 0;
     this.capacity = capacity;
     this.maxFloor = 0; // Will be set when updating state
-    this.moveTo(xPos, this.getDisplayYPos(0));
+    this.moveTo(xPosition, this.getDisplayYPos(0));
     this.updateFromState(elevatorState);
     // Trigger initial position update for UI
     this.syncUIComponent(true);

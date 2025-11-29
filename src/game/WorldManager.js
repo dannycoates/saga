@@ -31,11 +31,11 @@ export class WorldManager extends EventTarget {
     // Animation frame tracking
     this.animationFrameId = null;
     this.codeObj = null;
-    this.lastT = null;
+    this.lastTickTime = null;
     this.runFrame = async (t) => {
-      if (!this.isPaused && this.lastT !== null) {
+      if (!this.isPaused && this.lastTickTime !== null) {
         const backend = this.backend;
-        const dt = t - this.lastT;
+        const dt = t - this.lastTickTime;
         let scaledDt = dt * 0.001 * this.timeScale;
         scaledDt = Math.min(scaledDt, this.dtMax * 3 * this.timeScale);
         // This await is a little bit perilous since runFrame can't be awaited.
@@ -48,7 +48,7 @@ export class WorldManager extends EventTarget {
           scaledDt -= this.dtMax;
         }
       }
-      this.lastT = t;
+      this.lastTickTime = t;
       // this.animationFrameId will be null when the sim ends or is stopped.
       // It's our signal to stop the loop.
       if (this.animationFrameId) {
@@ -61,7 +61,7 @@ export class WorldManager extends EventTarget {
     return this.backend
       ? this.backend.getStats()
       : {
-          transportedCounter: 0,
+          transportedCount: 0,
           transportedPerSec: 0,
           avgWaitTime: 0,
           maxWaitTime: 0,
@@ -95,7 +95,7 @@ export class WorldManager extends EventTarget {
     const defaultOptions = {
       floorHeight: 50,
       spawnRate: 0.5,
-      renderingEnabled: true,
+      isRenderingEnabled: true,
     };
     const challengeOptions = challenge.options;
     const options = { ...defaultOptions, ...challengeOptions };
@@ -105,7 +105,7 @@ export class WorldManager extends EventTarget {
 
     // Create display manager
     this.displayManager = new DisplayManager({
-      renderingEnabled: options.renderingEnabled,
+      isRenderingEnabled: options.isRenderingEnabled,
       floorHeight: options.floorHeight,
     });
 
@@ -198,14 +198,14 @@ export class WorldManager extends EventTarget {
       window.cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
     }
-    this.lastT = null;
+    this.lastTickTime = null;
     this.dom.clearElements("world");
 
     // AbortController automatically removes all event listeners
     this.abortController.abort();
 
     if (this.backend) {
-      this.backend.dispose();
+      this.backend.cleanup();
       this.backend = null;
     }
     if (this.displayManager) {

@@ -1,4 +1,4 @@
-import { RuntimeManager } from "./runtimes/manager.js";
+import { RuntimeManager } from "./runtimes/RuntimeManager.js";
 import { CodeEditor } from "./ui/CodeEditor.js";
 import { AppDOM } from "./ui/AppDOM.js";
 import { AppEventHandlers } from "./ui/AppEventHandlers.js";
@@ -96,7 +96,7 @@ export class ElevatorApp extends EventTarget {
       );
     } catch (error) {
       console.error("Failed to load initial runtime:", error);
-      this.dispatchEvent(new CustomEvent("usercode_error", { detail: error }));
+      this.dispatchEvent(new CustomEvent("user_code_error", { detail: error }));
     } finally {
       this.showRuntimeStatus(false);
     }
@@ -139,7 +139,7 @@ export class ElevatorApp extends EventTarget {
           } catch (e) {
             this.worldManager.setPaused(true);
             this.dispatchEvent(
-              new CustomEvent("usercode_error", { detail: e }),
+              new CustomEvent("user_code_error", { detail: e }),
             );
             throw e;
           }
@@ -147,7 +147,7 @@ export class ElevatorApp extends EventTarget {
       };
     } catch (e) {
       this.showRuntimeStatus(false);
-      this.dispatchEvent(new CustomEvent("usercode_error", { detail: e }));
+      this.dispatchEvent(new CustomEvent("user_code_error", { detail: e }));
       return null;
     }
   }
