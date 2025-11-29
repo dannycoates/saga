@@ -1,5 +1,5 @@
 import { Animated } from "./Animated.js";
-import { randomInt } from "../../core/utils.js";
+import { randomInt } from "../../utils/common.js";
 
 /**
  * @typedef {import('../../core/Passenger.js').PassengerStateData} PassengerStateData
