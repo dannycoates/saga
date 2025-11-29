@@ -20,6 +20,15 @@ import { PassengerDisplay } from "./display/PassengerDisplay.js";
  */
 export class DisplayManager {
   /**
+   * Factory method for creating DisplayManager instances.
+   * @param {DisplayManagerOptions} [options={}] - Configuration options
+   * @returns {DisplayManager} A new DisplayManager instance
+   */
+  static create(options = {}) {
+    return new DisplayManager(options);
+  }
+
+  /**
    * Creates a display manager.
    * @param {DisplayManagerOptions} [options={}] - Configuration options
    */

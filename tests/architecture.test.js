@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { JSSimulationBackend } from "../src/core/JSSimulationBackend.js";
 import { DisplayManager } from "../src/ui/DisplayManager.js";
+import { NullDisplayManager } from "../src/ui/NullDisplayManager.js";
 import { WorldManager } from "../src/game/WorldManager.js";
 
 describe("Modern Architecture", () => {
@@ -175,7 +176,8 @@ describe("Modern Architecture", () => {
         isRuntimeLoading: vi.fn().mockReturnValue(false),
       };
 
-      worldManager = new WorldManager(mockDom);
+      // Pass NullDisplayManager class for headless testing
+      worldManager = new WorldManager(mockDom, NullDisplayManager);
       worldManager.initializeChallenge({
         floorCount: 4,
         elevatorCount: 2,
@@ -189,10 +191,10 @@ describe("Modern Architecture", () => {
       expect(worldManager.backend.constructor.name).toBe("JSSimulationBackend");
     });
 
-    it("should use DisplayManager internally", () => {
+    it("should use NullDisplayManager by default for headless operation", () => {
       expect(worldManager.displayManager).toBeDefined();
       expect(worldManager.displayManager.constructor.name).toBe(
-        "DisplayManager",
+        "NullDisplayManager",
       );
     });
 

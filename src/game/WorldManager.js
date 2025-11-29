@@ -1,5 +1,4 @@
 import { JSSimulationBackend } from "../core/JSSimulationBackend.js";
-import { DisplayManager } from "../ui/DisplayManager.js";
 import { ResponsiveScaling } from "../ui/ResponsiveScaling.js";
 import {
   presentPassenger,
@@ -7,6 +6,16 @@ import {
   presentWorld,
 } from "../ui/presenters.js";
 import { APP_CONSTANTS } from "../config/constants.js";
+
+/**
+ * @typedef {import('../ui/DisplayManager.js').DisplayManager} DisplayManager
+ * @typedef {import('../ui/DisplayManager.js').DisplayManagerOptions} DisplayManagerOptions
+ */
+
+/**
+ * @typedef {Object} DisplayManagerClass
+ * @property {(options?: DisplayManagerOptions) => DisplayManager} create - Factory method
+ */
 
 /**
  * @typedef {Object} Challenge
@@ -46,15 +55,18 @@ export class WorldManager extends EventTarget {
   /**
    * Creates a new WorldManager instance.
    * @param {import('../ui/AppDOM.js').AppDOM} dom - DOM manager for element access
+   * @param {DisplayManagerClass} DisplayManagerClass - Class with static create() method for creating display managers.
    */
-  constructor(dom) {
+  constructor(dom, DisplayManagerClass) {
     super();
     /** @type {import('../ui/AppDOM.js').AppDOM} */
     this.dom = dom;
+    /** @type {DisplayManagerClass} Class for creating display managers */
+    this.DisplayManagerClass = DisplayManagerClass;
     /** @type {JSSimulationBackend | null} */
     this.backend = null;
-    /** @type {DisplayManager | null} */
-    this.displayManager = null;
+    /** @type {DisplayManager} */
+    this.displayManager = DisplayManagerClass.create();
     /** @type {ResponsiveScaling} */
     this.responsiveScaling = new ResponsiveScaling();
     /** @type {Challenge | null} */
@@ -183,8 +195,8 @@ export class WorldManager extends EventTarget {
     // Create simulation backend
     this.backend = new JSSimulationBackend();
 
-    // Create display manager
-    this.displayManager = new DisplayManager({
+    // Create display manager using class factory
+    this.displayManager = this.DisplayManagerClass.create({
       isRenderingEnabled: options.isRenderingEnabled,
       floorHeight: options.floorHeight,
     });
@@ -201,8 +213,6 @@ export class WorldManager extends EventTarget {
 
     // Initialize displays with the world element
     this.displayManager.initialize(this.backend.getState());
-
-    // Subscribe the display manager to backend events
     this.displayManager.subscribeToBackend(this.backend);
 
     // Set up event forwarding
@@ -254,7 +264,7 @@ export class WorldManager extends EventTarget {
         const detail = /** @type {CustomEvent} */ (e).detail;
         presentPassenger(
           this.dom.getElement("world"),
-          this.displayManager?.passengerDisplays.get(detail.passenger.id),
+          this.displayManager.passengerDisplays.get(detail.passenger.id),
         );
       },
       { signal },
@@ -304,13 +314,8 @@ export class WorldManager extends EventTarget {
       this.backend.cleanup();
       this.backend = null;
     }
-    if (this.displayManager) {
-      this.displayManager.cleanup();
-      this.displayManager = null;
-    }
-    if (this.responsiveScaling) {
-      this.responsiveScaling.cleanup();
-    }
+    this.displayManager.cleanup();
+    this.responsiveScaling.cleanup();
 
     // Create new AbortController for future use
     this.abortController = new AbortController();
