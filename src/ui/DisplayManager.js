@@ -256,11 +256,20 @@ export class DisplayManager {
 
   /**
    * Cleans up all displays and event subscriptions.
-   * Aborts all event listeners and clears display maps.
+   * Cancels all animations, aborts event listeners, and clears display maps.
    * @returns {void}
    */
   cleanup() {
     this.abortController.abort();
+
+    // Cancel animations on all displays to release closures
+    for (const display of this.elevatorDisplays.values()) {
+      display.cancelAnimation();
+    }
+    for (const display of this.passengerDisplays.values()) {
+      display.cancelAnimation();
+    }
+
     this.floorDisplays.clear();
     this.elevatorDisplays.clear();
     this.passengerDisplays.clear();

@@ -105,6 +105,21 @@ export class Animated extends Display {
   }
 
   /**
+   * Cancels any running animation and optionally invokes the callback.
+   * @param {boolean} [invokeCallback=false] - Whether to invoke the completion callback
+   * @returns {void}
+   */
+  cancelAnimation(invokeCallback = false) {
+    if (this.isBusy()) {
+      this.currentTask = NOOP;
+      if (invokeCallback && this.cb) {
+        this.cb();
+      }
+      this.cb = undefined;
+    }
+  }
+
+  /**
    * Animates movement to a target position over time.
    * Cancels any existing animation and calls its callback.
    * @param {number | null | undefined} newX - Target X (null/undefined keeps current)
@@ -115,9 +130,7 @@ export class Animated extends Display {
    * @returns {void}
    */
   moveToOverTime(newX, newY, timeToSpend, interpolator, cb) {
-    if (this.isBusy()) {
-      this.cb?.();
-    }
+    this.cancelAnimation(true);
     newX ??= this.x;
     newY ??= this.y;
     interpolator ??= DEFAULT_INTERPOLATOR;
