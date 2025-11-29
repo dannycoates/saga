@@ -210,7 +210,7 @@ export class AppEventHandlers {
         if (clearStats) {
           presentStats(this.dom.getElement("stats"), this.worldManager);
         }
-        presentWorld(this.dom.getElement("world"), this.worldManager.displayManager);
+        presentWorld(this.dom.getElement("world"), this.worldManager.viewModelManager);
         this.responsiveScaling.initialize();
       },
       { signal },
@@ -230,8 +230,8 @@ export class AppEventHandlers {
       "passenger_spawned",
       (e) => {
         const { passenger } = /** @type {CustomEvent<{passenger: {id: string}}>} */ (e).detail;
-        const display = this.worldManager.displayManager.passengerDisplays.get(passenger.id);
-        presentPassenger(this.dom.getElement("world"), display);
+        const viewModel = this.worldManager.viewModelManager.passengerViewModels.get(passenger.id);
+        presentPassenger(this.dom.getElement("world"), viewModel);
       },
       { signal },
     );

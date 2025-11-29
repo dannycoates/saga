@@ -1,40 +1,40 @@
 /**
- * Null implementation of DisplayManager for headless operation.
- * Provides the same interface as DisplayManager but performs no operations.
+ * Null implementation of ViewModelManager for headless operation.
+ * Provides the same interface as ViewModelManager but performs no operations.
  * Useful for testing WorldManager without DOM dependencies.
  */
-export class NullDisplayManager {
+export class NullViewModelManager {
   /**
-   * Factory method for creating NullDisplayManager instances.
+   * Factory method for creating NullViewModelManager instances.
    * @param {any} [_options] - Ignored options (for API compatibility)
-   * @returns {NullDisplayManager} A new NullDisplayManager instance
+   * @returns {NullViewModelManager} A new NullViewModelManager instance
    */
   static create(_options) {
-    return new NullDisplayManager();
+    return new NullViewModelManager();
   }
 
   constructor() {
     /** @type {Map<number, any>} */
-    this.floorDisplays = new Map();
+    this.floorViewModels = new Map();
     /** @type {Map<number, any>} */
-    this.elevatorDisplays = new Map();
+    this.elevatorViewModels = new Map();
     /** @type {Map<string, any>} */
-    this.passengerDisplays = new Map();
+    this.passengerViewModels = new Map();
   }
 
   /** @type {Map<number, any>} */
   get floors() {
-    return this.floorDisplays;
+    return this.floorViewModels;
   }
 
   /** @type {Map<number, any>} */
   get elevators() {
-    return this.elevatorDisplays;
+    return this.elevatorViewModels;
   }
 
   /** @type {Map<string, any>} */
   get passengers() {
-    return this.passengerDisplays;
+    return this.passengerViewModels;
   }
 
   /**
@@ -54,7 +54,7 @@ export class NullDisplayManager {
    * @param {any} _state - Ignored
    * @param {number} [_dt=0] - Ignored
    */
-  updateDisplays(_state, _dt = 0) {}
+  updateViewModels(_state, _dt = 0) {}
 
   /**
    * No-op handler.
@@ -72,8 +72,8 @@ export class NullDisplayManager {
    * No-op cleanup.
    */
   cleanup() {
-    this.floorDisplays.clear();
-    this.elevatorDisplays.clear();
-    this.passengerDisplays.clear();
+    this.floorViewModels.clear();
+    this.elevatorViewModels.clear();
+    this.passengerViewModels.clear();
   }
 }

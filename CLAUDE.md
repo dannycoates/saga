@@ -25,8 +25,8 @@ Elevator Saga is a multi-language elevator programming game where users write Ja
 The codebase uses a **streamlined, event-driven architecture** with clear separation of concerns:
 
 ```
-JSSimulationBackend → WorldManager → DisplayManager → UI
-   (Simulation)       (Game Logic)    (Presentation)
+JSSimulationBackend → WorldManager → ViewModelManager → UI
+   (Simulation)       (Game Logic)    (View Models)
 ```
 
 ### Key Components
@@ -40,14 +40,14 @@ JSSimulationBackend → WorldManager → DisplayManager → UI
 
 **WorldManager** (`src/game/WorldManager.js`)
 - Main game orchestrator and controller
-- Composes `JSSimulationBackend` and `DisplayManager`
+- Composes `JSSimulationBackend` and `ViewModelManager`
 - Manages game loops, user code execution, and challenge evaluation
 - Uses **AbortController** for proper event listener cleanup
 - Provides game state properties (`transportedCounter`, `moveCount`, etc.)
 
-**DisplayManager** (`src/ui/DisplayManager.js`)
-- Pure presentation layer separated from simulation logic
-- Manages display objects: floors, elevators, passengers
+**ViewModelManager** (`src/ui/ViewModelManager.js`)
+- View model layer separated from simulation logic
+- Manages view models: floors, elevators, passengers
 - Event-driven updates via subscription to backend events
 - Can be completely disabled for headless operation
 
@@ -92,7 +92,7 @@ function tick(elevators, floors) { /* player code */ }
 
 The system uses **EventTarget** extensively for loose coupling:
 - `JSSimulationBackend` emits core events (`state_changed`, `stats_changed`, `passenger_spawned`)
-- `DisplayManager` subscribes to backend events for UI updates
+- `ViewModelManager` subscribes to backend events for view model updates
 - `WorldManager` uses **AbortController** for proper event cleanup
 - `WorldManager` handles game loop and user code errors
 
@@ -110,7 +110,7 @@ The system uses **EventTarget** extensively for loose coupling:
 
 The project uses Vitest with JSDOM for testing. Test files are in `/tests/` and follow the naming pattern `*.test.js`. Tests focus on:
 - Core game mechanics and entity behaviors
-- Architecture components (JSSimulationBackend, DisplayManager, WorldManager)
+- Architecture components (JSSimulationBackend, ViewModelManager, WorldManager)
 - Multi-runtime compatibility
 - Event-driven system behavior
 
@@ -122,6 +122,6 @@ The project uses Vitest with JSDOM for testing. Test files are in `/tests/` and 
 
 - `src/game/WorldManager.js` - Main game orchestrator with AbortController event management
 - `src/core/JSSimulationBackend.js` - Primary simulation engine and backend
-- `src/ui/DisplayManager.js` - Presentation layer management
+- `src/ui/ViewModelManager.js` - View model layer management
 - `src/game/challenges.js` - Challenge definitions and evaluation
 - `src/runtimes/RuntimeManager.js` - Multi-language runtime coordination

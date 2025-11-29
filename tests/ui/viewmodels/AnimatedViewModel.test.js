@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { Animated } from "../../../src/ui/display/Animated.js";
+import { AnimatedViewModel } from "../../../src/ui/viewmodels/AnimatedViewModel.js";
 
 const timeForwarder = function (dt, stepSize, fn) {
   let accumulated = 0.0;
@@ -9,12 +9,12 @@ const timeForwarder = function (dt, stepSize, fn) {
   }
 };
 
-describe("Animated class", () => {
+describe("AnimatedViewModel class", () => {
   let m;
   let handlers;
 
   beforeEach(() => {
-    m = new Animated();
+    m = new AnimatedViewModel();
     handlers = {
       someHandler: vi.fn(),
       someOtherHandler: vi.fn(),
@@ -24,7 +24,7 @@ describe("Animated class", () => {
   it("disallows incorrect creation", () => {
     const faultyCreation = () => {
       // Call without 'new' by using Function.prototype.call
-      Animated.call({});
+      AnimatedViewModel.call({});
     };
     expect(faultyCreation).toThrow();
   });
@@ -55,7 +55,7 @@ describe("Animated class", () => {
   });
 
   it("gets new display position when parent is moved", () => {
-    const mParent = new Animated();
+    const mParent = new AnimatedViewModel();
     m.setParent(mParent);
     mParent.moveTo(2.0, 3.0);
     m.syncUIComponent();
@@ -76,7 +76,7 @@ describe("Animated class", () => {
   });
 
   it("maintains world position when setting parent", () => {
-    const parent = new Animated();
+    const parent = new AnimatedViewModel();
     parent.moveTo(5.0, 5.0);
 
     m.moveTo(10.0, 10.0);

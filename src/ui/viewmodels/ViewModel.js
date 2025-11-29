@@ -1,11 +1,11 @@
 /**
- * Base class for all display objects.
+ * Base class for all view model objects.
  * Provides event dispatching for UI updates.
  *
  * @extends EventTarget
- * @fires Display#new_display_state - Emitted when display state changes
+ * @fires ViewModel#new_display_state - Emitted when display state changes
  */
-export class Display extends EventTarget {
+export class ViewModel extends EventTarget {
   constructor() {
     super();
   }
