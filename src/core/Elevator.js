@@ -226,11 +226,16 @@ export class Elevator {
   /**
    * Removes a passenger from the elevator.
    * @param {import('./Passenger.js').Passenger} passenger - Passenger to remove
-   * @returns {void}
+   * @returns {boolean} True if passenger was found and removed, false otherwise
    */
   removePassenger(passenger) {
+    const index = this.passengers.indexOf(passenger);
+    if (index === -1) {
+      return false;
+    }
     passenger.exitElevator();
-    this.passengers[this.passengers.indexOf(passenger)] = null;
+    this.passengers[index] = null;
+    return true;
   }
 
   /**
