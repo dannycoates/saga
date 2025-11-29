@@ -1,4 +1,4 @@
-import { throttle } from "../core/utils.js";
+import { throttle } from "../utils/common.js";
 import { basicSetup, EditorView } from "codemirror";
 import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
