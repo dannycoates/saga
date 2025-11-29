@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { WorldManager } from "../../src/game/WorldManager.js";
+import { NullDisplayManager } from "../../src/ui/NullDisplayManager.js";
 import { AppDOM } from "../../src/ui/AppDOM.js";
 
 describe("WorldManager", () => {
@@ -14,7 +15,8 @@ describe("WorldManager", () => {
       isRuntimeLoading: vi.fn().mockReturnValue(false),
     };
 
-    worldManager = new WorldManager(mockDom);
+    // Pass NullDisplayManager class for headless testing
+    worldManager = new WorldManager(mockDom, NullDisplayManager);
 
     // Create a world with the WorldManager
     worldManager.initializeChallenge({
