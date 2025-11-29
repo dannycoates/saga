@@ -1,5 +1,5 @@
 import { SimulationBackend } from "./SimulationBackend.js";
-import { randomInt, throttle } from "./utils.js";
+import { randomInt, throttle } from "../utils/common.js";
 import { Floor } from "./Floor.js";
 import { Elevator } from "./Elevator.js";
 import { Passenger } from "./Passenger.js";

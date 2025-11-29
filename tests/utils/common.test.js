@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { limitNumber } from "../../src/core/utils.js";
+import { limitNumber } from "../../src/utils/common.js";
 
 describe("Utils", () => {
   describe("limitNumber", () => {
