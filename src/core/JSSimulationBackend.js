@@ -29,7 +29,7 @@ export class JSSimulationBackend extends SimulationBackend {
     /** @type {number[]} Capacity for each elevator */
     this.elevatorCapacities = [];
     /** @type {number} Passenger spawn rate per second */
-    this.spawnRate = 0;
+    this.spawnRate = 0.5;
     /** @type {number} Elevator speed in floors per second */
     this.speedFloorsPerSec = 2.6;
 
