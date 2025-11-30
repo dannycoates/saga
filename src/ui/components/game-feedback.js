@@ -18,8 +18,8 @@ export class GameFeedback extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    /** @type {((e: Event) => void) | null} */
-    this.linkClickHandler = null;
+    /** @type {AbortController | null} */
+    this._abortController = null;
   }
 
   /**
@@ -37,7 +37,7 @@ export class GameFeedback extends HTMLElement {
    * @returns {void}
    */
   disconnectedCallback() {
-    this.removeEventListeners();
+    this._abortController?.abort();
   }
 
   /**
@@ -55,39 +55,32 @@ export class GameFeedback extends HTMLElement {
   }
 
   /**
-   * Removes event listeners from the next challenge link.
-   * @private
-   * @returns {void}
-   */
-  removeEventListeners() {
-    const link = this.shadowRoot.querySelector('a');
-    if (link && this.linkClickHandler) {
-      link.removeEventListener('click', this.linkClickHandler);
-      this.linkClickHandler = null;
-    }
-  }
-
-  /**
    * Attaches click event listener to the next challenge link.
    * Handles navigation via hash change.
    * @private
    * @returns {void}
    */
   attachEventListeners() {
-    this.removeEventListeners(); // Remove any existing listeners first
+    // Abort previous listeners
+    this._abortController?.abort();
+    this._abortController = new AbortController();
+    const { signal } = this._abortController;
 
-    const link = this.shadowRoot.querySelector('a');
+    const link = this.shadowRoot.querySelector("a");
     if (link) {
-      this.linkClickHandler = (e) => {
-        e.preventDefault();
-        const nextUrl = this.getAttribute('next-url');
-        if (nextUrl) {
-          // Update the URL hash to trigger the app to load the next challenge
-          window.location.hash = nextUrl.replace('#', '');
-          // The hashchange event will trigger loadFromUrl() automatically
-        }
-      };
-      link.addEventListener('click', this.linkClickHandler);
+      link.addEventListener(
+        "click",
+        (e) => {
+          e.preventDefault();
+          const nextUrl = this.getAttribute("next-url");
+          if (nextUrl) {
+            // Update the URL hash to trigger the app to load the next challenge
+            window.location.hash = nextUrl.replace("#", "");
+            // The hashchange event will trigger loadFromUrl() automatically
+          }
+        },
+        { signal },
+      );
     }
   }
 

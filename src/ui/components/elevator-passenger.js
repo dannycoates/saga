@@ -29,6 +29,8 @@ export class ElevatorPassenger extends HTMLElement {
     this._isVisible = true;
     /** @type {IntersectionObserver | null} */
     this._intersectionObserver = null;
+    /** @type {AbortController | null} */
+    this._abortController = null;
   }
 
   /**
@@ -46,10 +48,7 @@ export class ElevatorPassenger extends HTMLElement {
    * @returns {void}
    */
   disconnectedCallback() {
-    if (this._passenger) {
-      this._passenger.removeEventListener("new_display_state", this._displayStateHandler);
-      this._passenger.removeEventListener("removed", this._removedHandler);
-    }
+    this._abortController?.abort();
     this._intersectionObserver?.disconnect();
   }
 
@@ -71,20 +70,22 @@ export class ElevatorPassenger extends HTMLElement {
    * @param {PassengerViewModel} passenger - Passenger view model
    */
   set passenger(passenger) {
-    if (this._passenger) {
-      this._passenger.removeEventListener("new_display_state", this._displayStateHandler);
-      this._passenger.removeEventListener("removed", this._removedHandler);
-    }
+    // Abort previous listeners
+    this._abortController?.abort();
 
     this._passenger = passenger;
 
     if (passenger) {
+      // Create new abort controller for this passenger's listeners
+      this._abortController = new AbortController();
+      const { signal } = this._abortController;
+
       // Set initial attributes
       this.setAttribute("passenger-type", passenger.displayType);
       this.setAttribute("state", passenger.done ? "leaving" : "");
 
       // Display state handler
-      this._displayStateHandler = () => {
+      const displayStateHandler = () => {
         this.setAttribute("x-position", String(passenger.worldX));
         this.setAttribute("y-position", String(passenger.worldY));
         if (passenger.done) {
@@ -93,16 +94,18 @@ export class ElevatorPassenger extends HTMLElement {
       };
 
       // Removed handler
-      this._removedHandler = () => {
+      const removedHandler = () => {
         this.remove();
       };
 
-      // Attach listeners
-      passenger.addEventListener("new_display_state", this._displayStateHandler);
-      passenger.addEventListener("removed", this._removedHandler);
+      // Attach listeners with abort signal
+      passenger.addEventListener("new_display_state", displayStateHandler, {
+        signal,
+      });
+      passenger.addEventListener("removed", removedHandler, { signal });
 
       // Update initial position
-      this._displayStateHandler();
+      displayStateHandler();
     }
   }
 
@@ -153,9 +156,9 @@ export class ElevatorPassenger extends HTMLElement {
         });
       },
       {
-        rootMargin: '50px', // Start rendering slightly before coming into view
-        threshold: 0
-      }
+        rootMargin: "50px", // Start rendering slightly before coming into view
+        threshold: 0,
+      },
     );
     this._intersectionObserver.observe(this);
   }
@@ -174,8 +177,8 @@ export class ElevatorPassenger extends HTMLElement {
     const y = +(this.getAttribute("y-position") || "0") - 4;
 
     // Use CSS Custom Properties for better performance and cleaner code
-    this.style.setProperty('--translate-x', `${x}px`);
-    this.style.setProperty('--translate-y', `${y}px`);
+    this.style.setProperty("--translate-x", `${x}px`);
+    this.style.setProperty("--translate-y", `${y}px`);
   }
 
   /**
