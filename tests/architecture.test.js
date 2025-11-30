@@ -84,7 +84,6 @@ describe("Modern Architecture", () => {
       expect(backend.callUserCode).toBeDefined();
       expect(backend.cleanup).toBeDefined();
       expect(backend.getStats).toBeDefined();
-      expect(backend.hasEnded).toBeDefined();
     });
 
     it("should forward events from SimulationCore", () => {
@@ -98,12 +97,12 @@ describe("Modern Architecture", () => {
 
     it("should handle user code execution", async () => {
       const mockCodeObj = {
-        tick: vi.fn(),
+        safeTick: vi.fn(),
       };
 
       await backend.callUserCode(mockCodeObj, 1);
 
-      expect(mockCodeObj.tick).toHaveBeenCalledWith(
+      expect(mockCodeObj.safeTick).toHaveBeenCalledWith(
         expect.any(Array), // elevator APIs
         expect.any(Array), // floor APIs
         expect.any(Number),
@@ -204,7 +203,7 @@ describe("Modern Architecture", () => {
 
     it("should manage game state through start/stop", async () => {
       const mockCode = {
-        tick: vi.fn(),
+        safeTick: vi.fn(),
         start: vi.fn().mockResolvedValue(),
       };
 

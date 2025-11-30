@@ -388,7 +388,7 @@ export class JSSimulationBackend extends SimulationBackend {
     if (this.isChallengeEnded) return;
     const elevatorAPIs = this.elevators.map((elevator) => elevator.toAPI());
     const floorAPIs = this.floors.map((floor) => floor.toJSON());
-    await codeObj.tick(elevatorAPIs, floorAPIs, dt);
+    await codeObj.safeTick(elevatorAPIs, floorAPIs, dt);
   }
 
   /**

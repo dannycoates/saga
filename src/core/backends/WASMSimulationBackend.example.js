@@ -122,7 +122,7 @@ export class WASMSimulationBackend extends SimulationBackend {
     }));
 
     // Execute user code
-    await codeObj.tick(elevatorAPIs, floorAPIs);
+    await codeObj.safeTick(elevatorAPIs, floorAPIs);
   }
 
   getStats() {
@@ -138,14 +138,6 @@ export class WASMSimulationBackend extends SimulationBackend {
       moveCount: this.wasmModule.exports.getMoveCount(),
       elapsedTime: this.wasmModule.exports.getElapsedTime(),
     };
-  }
-
-  hasEnded() {
-    if (!this.initialized) {
-      return true;
-    }
-
-    return this.wasmModule.exports.hasEnded() === 1;
   }
 
   cleanup() {

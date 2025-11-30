@@ -29,7 +29,7 @@
 
 /**
  * @typedef {Object} UserCodeObject
- * @property {(elevators: Array<Object>, floors: Array<Object>, dt: number) => Promise<void>} tick - User tick function
+ * @property {(elevators: Array<Object>, floors: Array<Object>, dt: number) => Promise<void>} safeTick - User tick function with error handling
  * @property {() => Promise<void>} [start] - Optional start function
  */
 
@@ -111,12 +111,4 @@ export class SimulationBackend extends EventTarget {
     throw new Error("SimulationBackend.getStats must be implemented");
   }
 
-  /**
-   * Check if the simulation has ended.
-   * @abstract
-   * @returns {boolean} True if simulation has ended
-   */
-  hasEnded() {
-    throw new Error("SimulationBackend.hasEnded must be implemented");
-  }
 }

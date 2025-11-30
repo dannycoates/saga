@@ -19,7 +19,6 @@ EventTarget (Browser API)
               │  ├── getState()
               │  ├── callUserCode(codeObj, dt)
               │  ├── getStats()
-              │  ├── hasEnded()
               │  └── cleanup()
               │
               └── JSSimulationBackend (Implementation)

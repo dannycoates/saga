@@ -174,7 +174,7 @@ runFrame(timestamp)
                     │         │     ├── level
                     │         │     └── buttons {up, down}
                     │         │
-                    │         └── Execute: codeObj.tick(elevators, floors)
+                    │         └── Execute: codeObj.safeTick(elevators, floors)
                     │                   │
                     │                   └── User code runs:
                     │                       ├── Analyze state
