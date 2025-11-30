@@ -193,7 +193,7 @@ export class ElevatorApp extends EventTarget {
       // Return a wrapper object that calls the runtime manager
       return {
         start: this.runtimeManager.start.bind(this.runtimeManager),
-        tick: async (elevators, floors) => {
+        safeTick: async (elevators, floors) => {
           try {
             await this.runtimeManager.execute(elevators, floors);
           } catch (e) {

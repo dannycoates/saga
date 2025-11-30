@@ -65,7 +65,7 @@ The simulation engine that handles game physics and entity management.
 
 | File | Purpose |
 |------|---------|
-| `SimulationBackend.js` | **Abstract base class** extending EventTarget. Defines interface for all backend implementations: `initialize()`, `tick()`, `getState()`, `callUserCode()`, `getStats()`, `hasEnded()`, `cleanup()`. |
+| `SimulationBackend.js` | **Abstract base class** extending EventTarget. Defines interface for all backend implementations: `initialize()`, `tick()`, `getState()`, `callUserCode()`, `getStats()`, `cleanup()`. |
 | `JSSimulationBackend.js` | **Main simulation implementation**. Manages floors, elevators, passengers. Handles spawning, physics updates, boarding/exiting logic, statistics tracking. Emits events: `state_changed`, `stats_changed`, `passenger_spawned`, `passengers_exited`, `passengers_boarded`, `challenge_ended`. |
 | `Elevator.js` | **Elevator entity class**. Properties: position, velocity, destination, passengers, buttons, indicators. Methods: `tick()` for physics, `goToFloor()`, `addPassenger()`, `removePassenger()`, `toAPI()` for player code, `toJSON()` for display. |
 | `Floor.js` | **Floor entity class**. Properties: level, buttons (up/down). Methods: `pressButton()`, `clearButton()`, `toJSON()`. |
