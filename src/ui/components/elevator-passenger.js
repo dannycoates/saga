@@ -24,7 +24,7 @@ export class ElevatorPassenger extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     /** @type {PassengerViewModel | null} */
-    this._passenger = null;
+    this._model = null;
     /** @type {boolean} Whether the element is visible in viewport */
     this._isVisible = true;
     /** @type {IntersectionObserver | null} */
@@ -67,28 +67,28 @@ export class ElevatorPassenger extends HTMLElement {
 
   /**
    * Sets the passenger view model and subscribes to its events.
-   * @param {PassengerViewModel} passenger - Passenger view model
+   * @param {PassengerViewModel} model - Passenger view model
    */
-  set passenger(passenger) {
+  set model(model) {
     // Abort previous listeners
     this._abortController?.abort();
 
-    this._passenger = passenger;
+    this._model = model;
 
-    if (passenger) {
+    if (model) {
       // Create new abort controller for this passenger's listeners
       this._abortController = new AbortController();
       const { signal } = this._abortController;
 
       // Set initial attributes
-      this.setAttribute("passenger-type", passenger.displayType);
-      this.setAttribute("state", passenger.done ? "leaving" : "");
+      this.setAttribute("passenger-type", model.displayType);
+      this.setAttribute("state", model.done ? "leaving" : "");
 
       // Display state handler
       const displayStateHandler = () => {
-        this.setAttribute("x-position", String(passenger.worldX));
-        this.setAttribute("y-position", String(passenger.worldY));
-        if (passenger.done) {
+        this.setAttribute("x-position", String(model.worldX));
+        this.setAttribute("y-position", String(model.worldY));
+        if (model.done) {
           this.setAttribute("state", "leaving");
         }
       };
@@ -99,10 +99,10 @@ export class ElevatorPassenger extends HTMLElement {
       };
 
       // Attach listeners with abort signal
-      passenger.addEventListener("new_display_state", displayStateHandler, {
+      model.addEventListener("new_display_state", displayStateHandler, {
         signal,
       });
-      passenger.addEventListener("removed", removedHandler, { signal });
+      model.addEventListener("removed", removedHandler, { signal });
 
       // Update initial position
       displayStateHandler();

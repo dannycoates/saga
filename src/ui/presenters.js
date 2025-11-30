@@ -33,7 +33,9 @@ import "./components/code-status.js";
  */
 export function presentStats(parentElem, world, eventBus) {
   // Create and append the web component
-  const statsComponent = /** @type {ElevatorStatsElement} */ (document.createElement("elevator-stats"));
+  const statsComponent = /** @type {ElevatorStatsElement} */ (
+    document.createElement("elevator-stats")
+  );
   statsComponent.world = world;
   if (eventBus) {
     statsComponent.eventBus = eventBus;
@@ -62,7 +64,9 @@ export function presentChallenge(
   eventBus,
 ) {
   // Create and append the web component
-  const challengeComponent = /** @type {ChallengeControlElement} */ (document.createElement("challenge-control"));
+  const challengeComponent = /** @type {ChallengeControlElement} */ (
+    document.createElement("challenge-control")
+  );
   challengeComponent.setAttribute("challenge-num", String(challengeNum));
   challengeComponent.setAttribute(
     "challenge-description",
@@ -107,7 +111,9 @@ export function presentFeedback(parentElem, title, message, url) {
  */
 export function presentCodeStatus(parentElem, error) {
   // Create and append the web component
-  const codeStatusComponent = /** @type {CodeStatusElement} */ (document.createElement("code-status"));
+  const codeStatusComponent = /** @type {CodeStatusElement} */ (
+    document.createElement("code-status")
+  );
   codeStatusComponent.setError(error);
   parentElem.replaceChildren(codeStatusComponent);
 
@@ -122,8 +128,10 @@ export function presentCodeStatus(parentElem, error) {
  * @returns {void}
  */
 export function presentFloor(parentElem, viewModel, floorCount) {
-  const floorComponent = /** @type {ElevatorFloorElement} */ (document.createElement("elevator-floor"));
-  floorComponent.floor = viewModel;
+  const floorComponent = /** @type {ElevatorFloorElement} */ (
+    document.createElement("elevator-floor")
+  );
+  floorComponent.model = viewModel;
   if (viewModel.level === 0) {
     floorComponent.setAttribute("hide-down", "true");
   } else if (viewModel.level === floorCount - 1) {
@@ -139,8 +147,10 @@ export function presentFloor(parentElem, viewModel, floorCount) {
  * @returns {void}
  */
 export function presentElevator(parentElem, viewModel) {
-  const elevatorComponent = /** @type {ElevatorCarElement} */ (document.createElement("elevator-car"));
-  elevatorComponent.elevator = viewModel;
+  const elevatorComponent = /** @type {ElevatorCarElement} */ (
+    document.createElement("elevator-car")
+  );
+  elevatorComponent.model = viewModel;
   parentElem.appendChild(elevatorComponent);
 }
 
@@ -151,8 +161,10 @@ export function presentElevator(parentElem, viewModel) {
  * @returns {void}
  */
 export function presentPassenger(parentElem, viewModel) {
-  const passengerComponent = /** @type {ElevatorPassengerElement} */ (document.createElement("elevator-passenger"));
-  passengerComponent.passenger = viewModel;
+  const passengerComponent = /** @type {ElevatorPassengerElement} */ (
+    document.createElement("elevator-passenger")
+  );
+  passengerComponent.model = viewModel;
   parentElem.appendChild(passengerComponent);
 }
 
