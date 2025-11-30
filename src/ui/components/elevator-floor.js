@@ -13,7 +13,14 @@ export class ElevatorFloor extends HTMLElement {
    * @returns {string[]} List of observed attribute names
    */
   static get observedAttributes() {
-    return ['floor-number', 'y-position', 'up-active', 'down-active', 'hide-up', 'hide-down'];
+    return [
+      "floor-number",
+      "y-position",
+      "up-active",
+      "down-active",
+      "hide-up",
+      "hide-down",
+    ];
   }
 
   /**
@@ -21,9 +28,11 @@ export class ElevatorFloor extends HTMLElement {
    */
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
+    this.attachShadow({ mode: "open" });
     /** @type {FloorViewModel | null} */
     this._floor = null;
+    /** @type {AbortController | null} */
+    this._abortController = null;
   }
 
   /**
@@ -41,9 +50,7 @@ export class ElevatorFloor extends HTMLElement {
    * @returns {void}
    */
   disconnectedCallback() {
-    if (this._floor) {
-      this._floor.removeEventListener('button_state_change', this._buttonStateHandler);
-    }
+    this._abortController?.abort();
   }
 
   /**
@@ -64,24 +71,29 @@ export class ElevatorFloor extends HTMLElement {
    * @param {FloorViewModel} floor - Floor view model
    */
   set floor(floor) {
-    if (this._floor) {
-      this._floor.removeEventListener('button_state_change', this._buttonStateHandler);
-    }
+    // Abort previous listeners
+    this._abortController?.abort();
 
     this._floor = floor;
-    
+
     if (floor) {
+      // Create new abort controller for this floor's listeners
+      this._abortController = new AbortController();
+      const { signal } = this._abortController;
+
       // Set initial attributes
-      this.setAttribute('floor-number', String(floor.level));
-      this.setAttribute('y-position', String(floor.yPosition));
+      this.setAttribute("floor-number", String(floor.level));
+      this.setAttribute("y-position", String(floor.yPosition));
 
       // Listen for button state changes
-      this._buttonStateHandler = (event) => {
+      const buttonStateHandler = (event) => {
         const buttons = event.detail || event;
-        this.setAttribute('up-active', String(buttons.up));
-        this.setAttribute('down-active', String(buttons.down));
+        this.setAttribute("up-active", String(buttons.up));
+        this.setAttribute("down-active", String(buttons.down));
       };
-      floor.addEventListener('button_state_change', this._buttonStateHandler);
+      floor.addEventListener("button_state_change", buttonStateHandler, {
+        signal,
+      });
     }
   }
 
@@ -91,16 +103,16 @@ export class ElevatorFloor extends HTMLElement {
    * @returns {void}
    */
   attachEventListeners() {
-    const upButton = this.shadowRoot.querySelector('.up');
-    const downButton = this.shadowRoot.querySelector('.down');
+    const upButton = this.shadowRoot.querySelector(".up");
+    const downButton = this.shadowRoot.querySelector(".down");
 
-    upButton?.addEventListener('click', () => {
+    upButton?.addEventListener("click", () => {
       if (this._floor) {
         this._floor.pressUpButton();
       }
     });
 
-    downButton?.addEventListener('click', () => {
+    downButton?.addEventListener("click", () => {
       if (this._floor) {
         this._floor.pressDownButton();
       }
@@ -116,31 +128,31 @@ export class ElevatorFloor extends HTMLElement {
    */
   updateDisplay(name, value) {
     switch (name) {
-      case 'y-position':
-        this.style.top = value + 'px';
+      case "y-position":
+        this.style.top = value + "px";
         break;
-      case 'up-active':
-        const upBtn = this.shadowRoot.querySelector('.up');
+      case "up-active":
+        const upBtn = this.shadowRoot.querySelector(".up");
         if (upBtn) {
-          upBtn.classList.toggle('activated', value === 'true');
+          upBtn.classList.toggle("activated", value === "true");
         }
         break;
-      case 'down-active':
-        const downBtn = this.shadowRoot.querySelector('.down');
+      case "down-active":
+        const downBtn = this.shadowRoot.querySelector(".down");
         if (downBtn) {
-          downBtn.classList.toggle('activated', value === 'true');
+          downBtn.classList.toggle("activated", value === "true");
         }
         break;
-      case 'hide-up':
-        const upBtnHide = this.shadowRoot.querySelector('.up');
+      case "hide-up":
+        const upBtnHide = this.shadowRoot.querySelector(".up");
         if (upBtnHide) {
-          upBtnHide.classList.toggle('invisible', value === 'true');
+          upBtnHide.classList.toggle("invisible", value === "true");
         }
         break;
-      case 'hide-down':
-        const downBtnHide = this.shadowRoot.querySelector('.down');
+      case "hide-down":
+        const downBtnHide = this.shadowRoot.querySelector(".down");
         if (downBtnHide) {
-          downBtnHide.classList.toggle('invisible', value === 'true');
+          downBtnHide.classList.toggle("invisible", value === "true");
         }
         break;
     }
@@ -152,15 +164,15 @@ export class ElevatorFloor extends HTMLElement {
    * @returns {void}
    */
   initializeDOM() {
-    const floorNumber = this.getAttribute('floor-number') || '0';
-    const yPosition = this.getAttribute('y-position') || '0';
-    const upActive = this.getAttribute('up-active') === 'true';
-    const downActive = this.getAttribute('down-active') === 'true';
-    const hideUp = this.getAttribute('hide-up') === 'true';
-    const hideDown = this.getAttribute('hide-down') === 'true';
+    const floorNumber = this.getAttribute("floor-number") || "0";
+    const yPosition = this.getAttribute("y-position") || "0";
+    const upActive = this.getAttribute("up-active") === "true";
+    const downActive = this.getAttribute("down-active") === "true";
+    const hideUp = this.getAttribute("hide-up") === "true";
+    const hideDown = this.getAttribute("hide-down") === "true";
 
     // Set position on host element
-    this.style.top = yPosition + 'px';
+    this.style.top = yPosition + "px";
 
     this.shadowRoot.innerHTML = `
       <style>
@@ -210,14 +222,14 @@ export class ElevatorFloor extends HTMLElement {
           visibility: hidden;
         }
       </style>
-      
+
       <span class="floornumber">${floorNumber}</span>
       <span class="buttonindicator">
-        <svg class="up ${upActive ? 'activated' : ''} ${hideUp ? 'invisible' : ''}" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+        <svg class="up ${upActive ? "activated" : ""} ${hideUp ? "invisible" : ""}" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
           <circle cx="8" cy="8" r="7" fill="currentColor"/>
           <path d="M8 11 L8 5 M5 8 L8 5 L11 8" fill="none" stroke="#4e585f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <svg class="down ${downActive ? 'activated' : ''} ${hideDown ? 'invisible' : ''}" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+        <svg class="down ${downActive ? "activated" : ""} ${hideDown ? "invisible" : ""}" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
           <circle cx="8" cy="8" r="7" fill="currentColor"/>
           <path d="M8 5 L8 11 M5 8 L8 11 L11 8" fill="none" stroke="#4e585f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -226,4 +238,4 @@ export class ElevatorFloor extends HTMLElement {
   }
 }
 
-customElements.define('elevator-floor', ElevatorFloor);
+customElements.define("elevator-floor", ElevatorFloor);
