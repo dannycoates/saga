@@ -8,6 +8,19 @@
  * @extends HTMLElement
  */
 export class ElevatorCar extends HTMLElement {
+  /** @type {ElevatorViewModel | null} */
+  #model = null;
+  /** @type {boolean[]} Floor button states */
+  #floorButtons = [];
+  /** @type {AbortController | null} */
+  #abortController = null;
+  /** @type {(() => void) | null} */
+  #displayStateHandler = null;
+  /** @type {((event: Event) => void) | null} */
+  #currentFloorHandler = null;
+  /** @type {((event: Event) => void) | null} */
+  #floorButtonsHandler = null;
+
   /**
    * Observed attributes for attribute change callbacks.
    * @returns {string[]} List of observed attribute names
@@ -22,12 +35,6 @@ export class ElevatorCar extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    /** @type {ElevatorViewModel | null} */
-    this._model = null;
-    /** @type {boolean[]} Floor button states */
-    this._floorButtons = [];
-    /** @type {AbortController | null} */
-    this._abortController = null;
   }
 
   /**
@@ -44,7 +51,7 @@ export class ElevatorCar extends HTMLElement {
    * @returns {void}
    */
   disconnectedCallback() {
-    this._abortController?.abort();
+    this.#abortController?.abort();
   }
 
   /**
@@ -66,48 +73,48 @@ export class ElevatorCar extends HTMLElement {
    */
   set model(model) {
     // Clean up previous listeners
-    this._abortController?.abort();
+    this.#abortController?.abort();
 
-    this._model = model;
+    this.#model = model;
 
     if (model) {
       // Create new abort controller for this elevator
-      this._abortController = new AbortController();
-      const { signal } = this._abortController;
+      this.#abortController = new AbortController();
+      const { signal } = this.#abortController;
       // Set initial attributes
       this.setAttribute("width", String(model.width));
-      this._floorButtons = structuredClone(model.buttons);
+      this.#floorButtons = structuredClone(model.buttons);
 
       // Display state handler
-      this._displayStateHandler = () => {
+      this.#displayStateHandler = () => {
         this.setAttribute("x-position", String(model.worldX));
         this.setAttribute("y-position", String(model.worldY));
       };
 
       // Current floor handler
-      this._currentFloorHandler = (event) => {
-        const floor = event.detail ?? event;
+      this.#currentFloorHandler = (event) => {
+        const floor = /** @type {CustomEvent} */ (event).detail ?? event;
         this.setAttribute("current-floor", String(floor));
       };
 
       // Floor buttons handler
-      this._floorButtonsHandler = (event) => {
-        const buttons = event.detail;
+      this.#floorButtonsHandler = (event) => {
+        const buttons = /** @type {CustomEvent} */ (event).detail;
         buttons.forEach((button, i) => {
           this.updateFloorButton(i, button);
         });
       };
 
       // Attach listeners with abort signal
-      model.addEventListener("new_display_state", this._displayStateHandler, {
+      model.addEventListener("new_display_state", this.#displayStateHandler, {
         signal,
       });
-      model.addEventListener("new_current_floor", this._currentFloorHandler, {
+      model.addEventListener("new_current_floor", this.#currentFloorHandler, {
         signal,
       });
       model.addEventListener(
         "floor_buttons_changed",
-        this._floorButtonsHandler,
+        this.#floorButtonsHandler,
         { signal },
       );
 
@@ -176,7 +183,7 @@ export class ElevatorCar extends HTMLElement {
    * @returns {string} HTML string for floor buttons
    */
   renderFloorButtons() {
-    return this._floorButtons
+    return this.#floorButtons
       .map(
         (isActive, i) =>
           `<span class="buttonpress ${isActive ? "activated" : ""}">${i}</span>`,

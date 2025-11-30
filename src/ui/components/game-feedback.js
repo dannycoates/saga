@@ -4,6 +4,9 @@
  * @extends HTMLElement
  */
 export class GameFeedback extends HTMLElement {
+  /** @type {AbortController | null} */
+  #abortController = null;
+
   /**
    * Observed attributes for attribute change callbacks.
    * @returns {string[]} List of observed attribute names
@@ -18,8 +21,6 @@ export class GameFeedback extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    /** @type {AbortController | null} */
-    this._abortController = null;
   }
 
   /**
@@ -37,7 +38,7 @@ export class GameFeedback extends HTMLElement {
    * @returns {void}
    */
   disconnectedCallback() {
-    this._abortController?.abort();
+    this.#abortController?.abort();
   }
 
   /**
@@ -62,9 +63,9 @@ export class GameFeedback extends HTMLElement {
    */
   attachEventListeners() {
     // Abort previous listeners
-    this._abortController?.abort();
-    this._abortController = new AbortController();
-    const { signal } = this._abortController;
+    this.#abortController?.abort();
+    this.#abortController = new AbortController();
+    const { signal } = this.#abortController;
 
     const link = this.shadowRoot.querySelector("a");
     if (link) {

@@ -9,6 +9,15 @@
  * @extends HTMLElement
  */
 export class ElevatorPassenger extends HTMLElement {
+  /** @type {PassengerViewModel | null} */
+  #model = null;
+  /** @type {boolean} Whether the element is visible in viewport */
+  #isVisible = true;
+  /** @type {IntersectionObserver | null} */
+  #intersectionObserver = null;
+  /** @type {AbortController | null} */
+  #abortController = null;
+
   /**
    * Observed attributes for attribute change callbacks.
    * @returns {string[]} List of observed attribute names
@@ -23,14 +32,6 @@ export class ElevatorPassenger extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    /** @type {PassengerViewModel | null} */
-    this._model = null;
-    /** @type {boolean} Whether the element is visible in viewport */
-    this._isVisible = true;
-    /** @type {IntersectionObserver | null} */
-    this._intersectionObserver = null;
-    /** @type {AbortController | null} */
-    this._abortController = null;
   }
 
   /**
@@ -48,8 +49,8 @@ export class ElevatorPassenger extends HTMLElement {
    * @returns {void}
    */
   disconnectedCallback() {
-    this._abortController?.abort();
-    this._intersectionObserver?.disconnect();
+    this.#abortController?.abort();
+    this.#intersectionObserver?.disconnect();
   }
 
   /**
@@ -71,14 +72,14 @@ export class ElevatorPassenger extends HTMLElement {
    */
   set model(model) {
     // Abort previous listeners
-    this._abortController?.abort();
+    this.#abortController?.abort();
 
-    this._model = model;
+    this.#model = model;
 
     if (model) {
       // Create new abort controller for this passenger's listeners
-      this._abortController = new AbortController();
-      const { signal } = this._abortController;
+      this.#abortController = new AbortController();
+      const { signal } = this.#abortController;
 
       // Set initial attributes
       this.setAttribute("passenger-type", model.displayType);
@@ -145,12 +146,12 @@ export class ElevatorPassenger extends HTMLElement {
    */
   setupIntersectionObserver() {
     // Use Intersection Observer for performance optimization
-    this._intersectionObserver = new IntersectionObserver(
+    this.#intersectionObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          this._isVisible = entry.isIntersecting;
+          this.#isVisible = entry.isIntersecting;
           // Only update transforms when visible for better performance
-          if (this._isVisible) {
+          if (this.#isVisible) {
             this.updatePosition();
           }
         });
@@ -160,7 +161,7 @@ export class ElevatorPassenger extends HTMLElement {
         threshold: 0,
       },
     );
-    this._intersectionObserver.observe(this);
+    this.#intersectionObserver.observe(this);
   }
 
   /**
@@ -171,7 +172,7 @@ export class ElevatorPassenger extends HTMLElement {
    */
   updatePosition() {
     // Only update position if visible to improve performance
-    if (!this._isVisible) return;
+    if (!this.#isVisible) return;
 
     const x = +(this.getAttribute("x-position") || "0") - 4;
     const y = +(this.getAttribute("y-position") || "0") - 4;

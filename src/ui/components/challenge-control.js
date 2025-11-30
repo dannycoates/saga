@@ -17,6 +17,17 @@ import { EventBus } from "../../utils/EventBus.js";
  * @extends HTMLElement
  */
 export class ChallengeControl extends HTMLElement {
+  /** @type {ElevatorApp | null} */
+  #app = null;
+  /** @type {GameController | null} */
+  #gameController = null;
+  /** @type {EventBus | null} */
+  #eventBus = null;
+  /** @type {AbortController | null} */
+  #abortController = null;
+  /** @type {CachedElements | null} */
+  #cachedElements = null;
+
   /**
    * Observed attributes for attribute change callbacks.
    * @returns {string[]} List of observed attribute names
@@ -36,14 +47,6 @@ export class ChallengeControl extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    /** @type {ElevatorApp | null} */
-    this._app = null;
-    /** @type {GameController | null} */
-    this._gameController = null;
-    /** @type {EventBus | null} */
-    this._eventBus = null;
-    /** @type {AbortController | null} */
-    this._abortController = null;
   }
 
   /**
@@ -63,7 +66,7 @@ export class ChallengeControl extends HTMLElement {
    */
   cacheElements() {
     // Cache frequently accessed elements for better performance
-    this._cachedElements = {
+    this.#cachedElements = {
       startStopButton: this.shadowRoot.querySelector(".startstop"),
       timeDisplay: this.shadowRoot.querySelector(".time-scale-value"),
     };
@@ -75,7 +78,7 @@ export class ChallengeControl extends HTMLElement {
    * @returns {void}
    */
   disconnectedCallback() {
-    this._abortController?.abort();
+    this.#abortController?.abort();
   }
 
   /**
@@ -96,7 +99,7 @@ export class ChallengeControl extends HTMLElement {
    * @param {ElevatorApp} app - Application instance
    */
   set app(app) {
-    this._app = app;
+    this.#app = app;
   }
 
   /**
@@ -105,12 +108,12 @@ export class ChallengeControl extends HTMLElement {
    */
   set eventBus(eventBus) {
     // Clean up previous subscription
-    this._abortController?.abort();
+    this.#abortController?.abort();
 
-    this._eventBus = eventBus;
+    this.#eventBus = eventBus;
 
     if (eventBus) {
-      this._abortController = new AbortController();
+      this.#abortController = new AbortController();
       eventBus.on(
         "game:timescale_changed",
         (e) => {
@@ -118,7 +121,7 @@ export class ChallengeControl extends HTMLElement {
           this.setAttribute("time-scale", timeScale.toFixed(0) + "x");
           this.setAttribute("is-paused", String(isPaused));
         },
-        { signal: this._abortController.signal },
+        { signal: this.#abortController.signal },
       );
     }
   }
@@ -128,7 +131,7 @@ export class ChallengeControl extends HTMLElement {
    * @param {GameController} manager - Game controller instance
    */
   set gameController(manager) {
-    this._gameController = manager;
+    this.#gameController = manager;
 
     if (manager) {
       // Set initial values
@@ -152,20 +155,20 @@ export class ChallengeControl extends HTMLElement {
 
       // Use matches() for efficient button identification
       if (button.matches(".startstop")) {
-        if (this._app) {
-          this._app.startOrStop();
+        if (this.#app) {
+          this.#app.startOrStop();
         }
       } else if (button.matches(".timescale_increase")) {
         e.preventDefault();
-        if (this._gameController && this._gameController.timeScale < 40) {
-          const timeScale = Math.round(this._gameController.timeScale * 1.618);
-          this._gameController.setTimeScale(timeScale);
+        if (this.#gameController && this.#gameController.timeScale < 40) {
+          const timeScale = Math.round(this.#gameController.timeScale * 1.618);
+          this.#gameController.setTimeScale(timeScale);
         }
       } else if (button.matches(".timescale_decrease")) {
         e.preventDefault();
-        if (this._gameController) {
-          const timeScale = Math.round(this._gameController.timeScale / 1.618);
-          this._gameController.setTimeScale(timeScale);
+        if (this.#gameController) {
+          const timeScale = Math.round(this.#gameController.timeScale / 1.618);
+          this.#gameController.setTimeScale(timeScale);
         }
       }
     });
@@ -179,7 +182,7 @@ export class ChallengeControl extends HTMLElement {
    */
   updateDisplay() {
     // Use cached elements for better performance
-    const { startStopButton, timeDisplay } = this._cachedElements || {};
+    const { startStopButton, timeDisplay } = this.#cachedElements || {};
 
     if (startStopButton) {
       const isPaused = this.getAttribute("is-paused") === "true";
