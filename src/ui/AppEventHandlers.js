@@ -315,29 +315,34 @@ export class AppEventHandlers {
     const shouldUseSideBySide =
       savedLayout === null || savedLayout === "side-by-side";
 
-    // Layout toggle functionality
-    this.boundHandlers.layoutToggle = /** @type {EventListener} */ (() => {
-      isSideBySide = !isSideBySide;
-
-      // Toggle single class on container
+    /**
+     * Updates layout UI state (container class, editor mode, icon).
+     * @param {boolean} savePreference - Whether to persist to localStorage
+     */
+    const updateLayoutUI = (savePreference) => {
       container.classList.toggle("side-by-side", isSideBySide);
 
-      // Update CodeMirror layout mode
       if (this.editor && this.editor.setLayoutMode) {
         this.editor.setLayoutMode(isSideBySide);
       }
 
-      // Update button icon
       const icon = layoutToggle.querySelector(".layout-icon");
       if (icon) {
         icon.textContent = isSideBySide ? "⚎" : "⚏";
       }
 
-      // Save layout preference
-      localStorage.setItem(
-        "layout-preference",
-        isSideBySide ? "side-by-side" : "vertical",
-      );
+      if (savePreference) {
+        localStorage.setItem(
+          "layout-preference",
+          isSideBySide ? "side-by-side" : "vertical",
+        );
+      }
+    };
+
+    // Layout toggle functionality
+    this.boundHandlers.layoutToggle = /** @type {EventListener} */ (() => {
+      isSideBySide = !isSideBySide;
+      updateLayoutUI(true);
     });
 
     // Splitter resize functionality
@@ -395,20 +400,7 @@ export class AppEventHandlers {
 
     // Initialize layout based on saved preference
     isSideBySide = shouldUseSideBySide;
-
-    // Set single class on container
-    container.classList.toggle("side-by-side", isSideBySide);
-
-    // Update CodeMirror layout mode
-    if (this.editor && this.editor.setLayoutMode) {
-      this.editor.setLayoutMode(isSideBySide);
-    }
-
-    // Update button icon
-    const icon = layoutToggle.querySelector(".layout-icon");
-    if (icon) {
-      icon.textContent = isSideBySide ? "⚎" : "⚏";
-    }
+    updateLayoutUI(false);
   }
 
   /**
