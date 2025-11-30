@@ -110,7 +110,7 @@ export class PythonRuntime extends BaseRuntime {
       // Load Pyodide script
       // Use enhanced script loading with timeout
       await loadExternalScript(
-        "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js",
+        "https://cdn.jsdelivr.net/pyodide/v0.29.0/full/pyodide.js",
         30000, // 30 second timeout
       );
 
@@ -123,7 +123,8 @@ export class PythonRuntime extends BaseRuntime {
       this.pyodide = await executeWithTimeout(
         () =>
           loadPyodide({
-            indexURL: "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/",
+            indexURL: "https://cdn.jsdelivr.net/pyodide/v0.29.0/full/",
+            convertNullToNone: true,
           }),
         60000, // 60 second timeout for Pyodide initialization
       );
