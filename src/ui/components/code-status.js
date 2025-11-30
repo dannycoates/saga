@@ -1,35 +1,65 @@
+/**
+ * Custom element for displaying code errors in a modal dialog.
+ * Shows error messages with dismiss functionality.
+ * @extends HTMLElement
+ */
 export class CodeStatus extends HTMLElement {
+  /**
+   * Observed attributes for attribute change callbacks.
+   * @returns {string[]} List of observed attribute names
+   */
   static get observedAttributes() {
     return ['error-message', 'has-error'];
   }
 
+  /**
+   * Creates a code status element.
+   */
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    /** @type {HTMLDialogElement | null} */
     this.dialog = null;
+    /** @type {boolean} Whether event handlers have been set up */
     this.eventHandlersSetup = false;
   }
 
+  /**
+   * Called when element is added to the DOM.
+   * @returns {void}
+   */
   connectedCallback() {
-    this.render();
+    this.initializeDOM();
     // Update dialog visibility after the component is fully connected
     setTimeout(() => {
       this.updateDialogVisibility();
     }, 0);
   }
 
+  /**
+   * Called when an observed attribute changes.
+   * @param {string} name - Attribute name
+   * @param {string | null} oldValue - Previous value
+   * @param {string | null} newValue - New value
+   * @returns {void}
+   */
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue !== newValue) {
-      this.render();
+      this.initializeDOM();
       this.updateDialogVisibility();
     }
   }
 
+  /**
+   * Sets or clears the error to display.
+   * @param {Error | string | undefined} error - Error to display, or undefined to clear
+   * @returns {void}
+   */
   setError(error) {
     if (error) {
       console.error(error);
-      let errorMessage = error;
-      
+      const errorMessage = error instanceof Error ? error.message : String(error);
+
       this.setAttribute('has-error', 'true');
       this.setAttribute('error-message', errorMessage);
     } else {
@@ -38,6 +68,10 @@ export class CodeStatus extends HTMLElement {
     }
   }
 
+  /**
+   * Closes the error dialog and clears the error state.
+   * @returns {void}
+   */
   closeDialog() {
     if (this.dialog) {
       this.dialog.close();
@@ -46,6 +80,12 @@ export class CodeStatus extends HTMLElement {
     this.removeAttribute('error-message');
   }
 
+  /**
+   * Updates dialog visibility based on error state.
+   * Shows modal when error is present, closes when cleared.
+   * @private
+   * @returns {void}
+   */
   updateDialogVisibility() {
     const hasError = this.getAttribute('has-error') === 'true';
     if (this.dialog && this.isConnected) {
@@ -67,7 +107,12 @@ export class CodeStatus extends HTMLElement {
     }
   }
 
-  render() {
+  /**
+   * Initializes the component's shadow DOM content.
+   * @private
+   * @returns {void}
+   */
+  initializeDOM() {
     const errorMessage = this.getAttribute('error-message') || '';
 
     this.shadowRoot.innerHTML = `
@@ -230,6 +275,12 @@ export class CodeStatus extends HTMLElement {
     }, 0);
   }
 
+  /**
+   * Sets up event handlers for dialog interactions.
+   * Handles close button, backdrop click, and escape key.
+   * @private
+   * @returns {void}
+   */
   setupEventHandlers() {
     // Handle close button click and dismiss button click
     this.shadowRoot.addEventListener('click', (e) => {

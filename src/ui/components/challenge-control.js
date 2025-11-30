@@ -1,4 +1,24 @@
+/**
+ * @typedef {import('../../app.js').ElevatorApp} ElevatorApp
+ * @typedef {import('../../game/GameController.js').GameController} GameController
+ */
+
+/**
+ * @typedef {Object} CachedElements
+ * @property {HTMLButtonElement | null} startStopButton - Start/stop button
+ * @property {HTMLElement | null} timeDisplay - Time scale display element
+ */
+
+/**
+ * Custom element for challenge controls including start/stop and time scale.
+ * Displays challenge information and provides game control buttons.
+ * @extends HTMLElement
+ */
 export class ChallengeControl extends HTMLElement {
+  /**
+   * Observed attributes for attribute change callbacks.
+   * @returns {string[]} List of observed attribute names
+   */
   static get observedAttributes() {
     return [
       "challenge-num",
@@ -8,19 +28,33 @@ export class ChallengeControl extends HTMLElement {
     ];
   }
 
+  /**
+   * Creates a challenge control element.
+   */
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
+    /** @type {ElevatorApp | null} */
     this._app = null;
+    /** @type {GameController | null} */
     this._gameController = null;
   }
 
+  /**
+   * Called when element is added to the DOM.
+   * @returns {void}
+   */
   connectedCallback() {
-    this.render();
+    this.initializeDOM();
     this.cacheElements();
     this.attachEventListeners();
   }
 
+  /**
+   * Caches frequently accessed DOM elements for better performance.
+   * @private
+   * @returns {void}
+   */
   cacheElements() {
     // Cache frequently accessed elements for better performance
     this._cachedElements = {
@@ -29,6 +63,11 @@ export class ChallengeControl extends HTMLElement {
     };
   }
 
+  /**
+   * Called when element is removed from the DOM.
+   * Cleans up event listeners.
+   * @returns {void}
+   */
   disconnectedCallback() {
     if (this._gameController) {
       this._gameController.removeEventListener(
@@ -38,16 +77,31 @@ export class ChallengeControl extends HTMLElement {
     }
   }
 
+  /**
+   * Called when an observed attribute changes.
+   * @param {string} name - Attribute name
+   * @param {string | null} oldValue - Previous value
+   * @param {string | null} newValue - New value
+   * @returns {void}
+   */
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue !== newValue) {
       this.updateDisplay();
     }
   }
 
+  /**
+   * Sets the application instance.
+   * @param {ElevatorApp} app - Application instance
+   */
   set app(app) {
     this._app = app;
   }
 
+  /**
+   * Sets the game controller and subscribes to time scale changes.
+   * @param {GameController} manager - Game controller instance
+   */
   set gameController(manager) {
     if (this._gameController) {
       this._gameController.removeEventListener(
@@ -61,15 +115,21 @@ export class ChallengeControl extends HTMLElement {
     if (manager) {
       this._timescaleHandler = () => {
         this.setAttribute("time-scale", manager.timeScale.toFixed(0) + "x");
-        this.setAttribute("is-paused", manager.isPaused);
+        this.setAttribute("is-paused", String(manager.isPaused));
       };
       manager.addEventListener("timescale_changed", this._timescaleHandler);
       // Set initial values
       this.setAttribute("time-scale", manager.timeScale.toFixed(0) + "x");
-      this.setAttribute("is-paused", manager.isPaused);
+      this.setAttribute("is-paused", String(manager.isPaused));
     }
   }
 
+  /**
+   * Attaches click event listeners using event delegation.
+   * Handles start/stop and time scale buttons.
+   * @private
+   * @returns {void}
+   */
   attachEventListeners() {
     // Use event delegation for better performance and cleaner code
     this.shadowRoot.addEventListener("click", (e) => {
@@ -98,6 +158,12 @@ export class ChallengeControl extends HTMLElement {
     });
   }
 
+  /**
+   * Updates the display based on current attribute values.
+   * Updates button text and time scale display.
+   * @private
+   * @returns {void}
+   */
   updateDisplay() {
     // Use cached elements for better performance
     const { startStopButton, timeDisplay } = this._cachedElements || {};
@@ -112,7 +178,12 @@ export class ChallengeControl extends HTMLElement {
     }
   }
 
-  render() {
+  /**
+   * Initializes the component's shadow DOM content.
+   * @private
+   * @returns {void}
+   */
+  initializeDOM() {
     const challengeNum = this.getAttribute("challenge-num") || "";
     const description = this.getAttribute("challenge-description") || "";
     const timeScale = this.getAttribute("time-scale") || "1x";

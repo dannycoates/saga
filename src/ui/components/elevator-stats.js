@@ -1,4 +1,27 @@
+/**
+ * @typedef {import('../../game/GameController.js').GameController} GameController
+ */
+
+/**
+ * @typedef {Object} GameStats
+ * @property {number} transportedCount - Number of passengers transported
+ * @property {number} elapsedTime - Elapsed time in seconds
+ * @property {number} transportedPerSec - Passengers transported per second
+ * @property {number} avgWaitTime - Average wait time in seconds
+ * @property {number} maxWaitTime - Maximum wait time in seconds
+ * @property {number} moveCount - Number of floor moves
+ */
+
+/**
+ * Custom element for displaying game statistics.
+ * Shows transported count, elapsed time, efficiency metrics, and move count.
+ * @extends HTMLElement
+ */
 export class ElevatorStats extends HTMLElement {
+  /**
+   * Observed attributes for attribute change callbacks.
+   * @returns {string[]} List of observed attribute names
+   */
   static get observedAttributes() {
     return [
       "transported",
@@ -10,26 +33,50 @@ export class ElevatorStats extends HTMLElement {
     ];
   }
 
+  /**
+   * Creates an elevator stats element.
+   */
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
+    /** @type {GameController | null} */
     this._world = null;
   }
 
+  /**
+   * Called when element is added to the DOM.
+   * @returns {void}
+   */
   connectedCallback() {
-    this.render();
+    this.initializeDOM();
   }
 
+  /**
+   * Called when element is removed from the DOM.
+   * Cleans up event listeners.
+   * @returns {void}
+   */
   disconnectedCallback() {
     if (this._world) {
       this._world.removeEventListener("stats_changed", this._updateHandler);
     }
   }
 
+  /**
+   * Called when an observed attribute changes.
+   * @param {string} name - Attribute name
+   * @param {string | null} oldValue - Previous value
+   * @param {string | null} newValue - New value
+   * @returns {void}
+   */
   attributeChangedCallback(name, oldValue, newValue) {
     this.updateStat(name, newValue);
   }
 
+  /**
+   * Sets the game controller and subscribes to stats changes.
+   * @param {GameController} world - Game controller instance
+   */
   set world(world) {
     // Disconnect from previous world
     if (this._world) {
@@ -45,8 +92,14 @@ export class ElevatorStats extends HTMLElement {
     }
   }
 
+  /**
+   * Updates attributes from game stats object.
+   * @private
+   * @param {GameStats} stats - Current game statistics
+   * @returns {void}
+   */
   updateFromWorld(stats) {
-    this.setAttribute("transported", stats.transportedCount);
+    this.setAttribute("transported", String(stats.transportedCount));
     this.setAttribute("elapsed-time", stats.elapsedTime.toFixed(0) + "s");
     this.setAttribute(
       "transported-per-sec",
@@ -54,9 +107,16 @@ export class ElevatorStats extends HTMLElement {
     );
     this.setAttribute("avg-wait-time", stats.avgWaitTime.toFixed(1) + "s");
     this.setAttribute("max-wait-time", stats.maxWaitTime.toFixed(1) + "s");
-    this.setAttribute("move-count", stats.moveCount);
+    this.setAttribute("move-count", String(stats.moveCount));
   }
 
+  /**
+   * Updates a single stat display element.
+   * @private
+   * @param {string} name - Stat attribute name
+   * @param {string | null} value - New stat value
+   * @returns {void}
+   */
   updateStat(name, value) {
     const elem = this.shadowRoot.querySelector(`[data-stat="${name}"]`);
     if (elem) {
@@ -64,7 +124,12 @@ export class ElevatorStats extends HTMLElement {
     }
   }
 
-  render() {
+  /**
+   * Initializes the component's shadow DOM content.
+   * @private
+   * @returns {void}
+   */
+  initializeDOM() {
     this.shadowRoot.innerHTML = `
       <style>
         :host {

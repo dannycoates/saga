@@ -3,6 +3,9 @@
  * Scales the game world to fit within available container space.
  */
 export class ResponsiveScaling {
+  /**
+   * Creates a responsive scaling manager.
+   */
   constructor() {
     /** @type {HTMLElement | null} Inner world element */
     this.innerWorld = null;
@@ -41,7 +44,10 @@ export class ResponsiveScaling {
   }
 
   /**
-   * Capture the natural (unscaled) dimensions of the innerworld
+   * Captures the natural (unscaled) dimensions of the innerworld.
+   * Temporarily removes scaling to measure true dimensions.
+   * @private
+   * @returns {void}
    */
   captureNaturalDimensions() {
     if (!this.innerWorld) return;
@@ -66,7 +72,10 @@ export class ResponsiveScaling {
   }
 
   /**
-   * Set up ResizeObserver to watch for container size changes
+   * Sets up ResizeObserver to watch for container size changes.
+   * Falls back to window resize events for older browsers.
+   * @private
+   * @returns {void}
    */
   setupResizeObserver() {
     if (typeof ResizeObserver === "undefined") {
@@ -90,7 +99,10 @@ export class ResponsiveScaling {
   }
 
   /**
-   * Update the scale of the innerworld based on container size
+   * Updates the scale of the innerworld based on container size.
+   * Calculates optimal scale factor and applies CSS transform.
+   * @private
+   * @returns {void}
    */
   updateScale() {
     if (!this.innerWorld || !this.worldContainer || !this.isInitialized) return;
@@ -135,7 +147,9 @@ export class ResponsiveScaling {
   }
 
   /**
-   * Recalculate natural dimensions (call when content changes significantly)
+   * Recalculates natural dimensions and updates scale.
+   * Call when content changes significantly (e.g., new challenge loaded).
+   * @returns {void}
    */
   recalculate() {
     if (!this.isInitialized) return;
@@ -145,7 +159,9 @@ export class ResponsiveScaling {
   }
 
   /**
-   * Clean up observers and listeners
+   * Cleans up observers and listeners.
+   * Disconnects ResizeObserver and resets transform styles.
+   * @returns {void}
    */
   cleanup() {
     if (this.resizeObserver) {
