@@ -1,3 +1,5 @@
+import { EventBus } from "../../utils/EventBus.js";
+
 /**
  * @typedef {import('../../app.js').ElevatorApp} ElevatorApp
  * @typedef {import('../../game/GameController.js').GameController} GameController
@@ -38,6 +40,10 @@ export class ChallengeControl extends HTMLElement {
     this._app = null;
     /** @type {GameController | null} */
     this._gameController = null;
+    /** @type {EventBus | null} */
+    this._eventBus = null;
+    /** @type {AbortController | null} */
+    this._abortController = null;
   }
 
   /**
@@ -69,12 +75,7 @@ export class ChallengeControl extends HTMLElement {
    * @returns {void}
    */
   disconnectedCallback() {
-    if (this._gameController) {
-      this._gameController.removeEventListener(
-        "timescale_changed",
-        this._timescaleHandler,
-      );
-    }
+    this._abortController?.abort();
   }
 
   /**
@@ -99,25 +100,37 @@ export class ChallengeControl extends HTMLElement {
   }
 
   /**
-   * Sets the game controller and subscribes to time scale changes.
+   * Sets the event bus and subscribes to time scale changes.
+   * @param {EventBus} eventBus - Event bus instance
+   */
+  set eventBus(eventBus) {
+    // Clean up previous subscription
+    this._abortController?.abort();
+
+    this._eventBus = eventBus;
+
+    if (eventBus) {
+      this._abortController = new AbortController();
+      eventBus.on(
+        "game:timescale_changed",
+        (e) => {
+          const { timeScale, isPaused } = /** @type {CustomEvent} */ (e).detail;
+          this.setAttribute("time-scale", timeScale.toFixed(0) + "x");
+          this.setAttribute("is-paused", String(isPaused));
+        },
+        { signal: this._abortController.signal },
+      );
+    }
+  }
+
+  /**
+   * Sets the game controller for initial values and control actions.
    * @param {GameController} manager - Game controller instance
    */
   set gameController(manager) {
-    if (this._gameController) {
-      this._gameController.removeEventListener(
-        "timescale_changed",
-        this._timescaleHandler,
-      );
-    }
-
     this._gameController = manager;
 
     if (manager) {
-      this._timescaleHandler = () => {
-        this.setAttribute("time-scale", manager.timeScale.toFixed(0) + "x");
-        this.setAttribute("is-paused", String(manager.isPaused));
-      };
-      manager.addEventListener("timescale_changed", this._timescaleHandler);
       // Set initial values
       this.setAttribute("time-scale", manager.timeScale.toFixed(0) + "x");
       this.setAttribute("is-paused", String(manager.isPaused));

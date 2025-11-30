@@ -8,6 +8,7 @@ import { challenges } from "./game/challenges.js";
 import { APP_CONSTANTS } from "./config/constants.js";
 import { performanceMonitor } from "./ui/PerformanceMonitor.js";
 import { presentChallenge } from "./ui/presenters.js";
+import { EventBus } from "./utils/EventBus.js";
 
 /**
  * @typedef {import('./game/GameController.js').Challenge} Challenge
@@ -17,17 +18,14 @@ import { presentChallenge } from "./ui/presenters.js";
 /**
  * Main application class for the Elevator Saga game.
  * Coordinates UI, runtime management, and game logic.
- *
- * @extends EventTarget
- * @fires ElevatorApp#user_code_error - Emitted when user code throws an error
  */
-export class ElevatorApp extends EventTarget {
+export class ElevatorApp {
   /**
    * Creates and initializes the application.
    */
   constructor() {
-    super();
-
+    /** @type {EventBus} Application event bus */
+    this.eventBus = new EventBus();
     /** @type {AppDOM} DOM element manager */
     this.dom = new AppDOM();
     /** @type {RuntimeManager} Multi-language runtime manager */
@@ -42,11 +40,12 @@ export class ElevatorApp extends EventTarget {
     /** @type {number} Current challenge index */
     this.currentChallengeIndex = 0;
     /** @type {GameController} Game controller */
-    this.gameController = new GameController();
+    this.gameController = new GameController(this.eventBus);
     /** @type {URLManager} URL state manager */
     this.urlManager = new URLManager(this);
     /** @type {AppEventHandlers} Event handler coordinator */
     this.eventHandlers = new AppEventHandlers(
+      this.eventBus,
       this,
       this.dom,
       this.editor,
@@ -94,6 +93,7 @@ export class ElevatorApp extends EventTarget {
       this,
       this.gameController,
       this.currentChallenge.id + 1,
+      this.eventBus,
     );
     this.gameController.initializeChallenge(this.currentChallenge);
   }
@@ -151,7 +151,7 @@ export class ElevatorApp extends EventTarget {
       );
     } catch (error) {
       console.error("Failed to load initial runtime:", error);
-      this.dispatchEvent(new CustomEvent("user_code_error", { detail: error }));
+      this.eventBus.emit("app:user_code_error", error);
     } finally {
       this.showRuntimeStatus(false);
     }
@@ -201,16 +201,14 @@ export class ElevatorApp extends EventTarget {
             await this.runtimeManager.execute(elevators, floors);
           } catch (e) {
             this.gameController.setPaused(true);
-            this.dispatchEvent(
-              new CustomEvent("user_code_error", { detail: e }),
-            );
+            this.eventBus.emit("app:user_code_error", e);
             // simulation errors stop here
           }
         },
       };
     } catch (e) {
       this.showRuntimeStatus(false);
-      this.dispatchEvent(new CustomEvent("user_code_error", { detail: e }));
+      this.eventBus.emit("app:user_code_error", e);
       return null;
     }
   }

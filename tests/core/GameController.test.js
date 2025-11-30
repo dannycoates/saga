@@ -1,11 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { GameController } from "../../src/game/GameController.js";
+import { EventBus } from "../../src/utils/EventBus.js";
 
 describe("GameController", () => {
   let gameController;
+  let eventBus;
 
   beforeEach(() => {
-    gameController = new GameController();
+    eventBus = new EventBus();
+    gameController = new GameController(eventBus);
 
     // Create a challenge with the GameController
     gameController.initializeChallenge({

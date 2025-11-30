@@ -133,7 +133,7 @@ Physics and game state engine:
 │                      UI Framework                            │
 ├─────────────────────────────────────────────────────────────┤
 │  Web Components│ Custom elements with Shadow DOM            │
-│  EventTarget   │ Native browser event system                │
+│  EventBus      │ Centralized event hub (extends EventTarget)│
 │  CSS Variables │ Dynamic theming and styling                │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -142,14 +142,19 @@ Physics and game state engine:
 
 ## Key Design Principles
 
-### 1. Event-Driven Architecture
-Components communicate through custom events rather than direct method calls:
-- Loose coupling between simulation and display
-- Easy to add new listeners without modifying emitters
-- Clean separation of concerns
+### 1. Event-Driven Architecture with EventBus
+Components communicate through a centralized **EventBus** rather than direct method calls:
+- All events flow through a single EventBus instance
+- Events use namespaced naming: `simulation:*`, `game:*`, `viewmodel:*`
+- Loose coupling - components only need the eventBus reference
+- No event forwarding or re-emission needed
+- EventBus injected via dependency injection
 
 ```
-Backend ──(events)──► ViewModelManager ──(events)──► Web Components
+JSSimulationBackend ──► EventBus ◄── ViewModelManager
+GameController ────────►   ↑   ◄──── AppEventHandlers
+                           │
+                     Web Components
 ```
 
 ### 2. Composition Over Inheritance
@@ -180,22 +185,22 @@ All event listeners use AbortController for proper cleanup:
 ## Data Flow Overview
 
 ```
-User Code                  Simulation                    Display
-    │                          │                            │
-    │  tick(elevators,floors)  │                            │
-    ├─────────────────────────►│                            │
-    │                          │                            │
-    │  elevator.goToFloor(n)   │                            │
-    ├─────────────────────────►│                            │
-    │                          │                            │
-    │                          │  backend.tick(dt)          │
-    │                          ├────────────────────────────┤
-    │                          │                            │
-    │                          │  emit state_changed        │
-    │                          ├───────────────────────────►│
-    │                          │                            │
-    │                          │                   updateDisplays()
-    │                          │                            │
+User Code                  Simulation                    EventBus                    Display
+    │                          │                            │                            │
+    │  tick(elevators,floors)  │                            │                            │
+    ├─────────────────────────►│                            │                            │
+    │                          │                            │                            │
+    │  elevator.goToFloor(n)   │                            │                            │
+    ├─────────────────────────►│                            │                            │
+    │                          │                            │                            │
+    │                          │  backend.tick(dt)          │                            │
+    │                          ├────────────────────────────┤                            │
+    │                          │                            │                            │
+    │                          │  simulation:state_changed  │                            │
+    │                          ├───────────────────────────►├───────────────────────────►│
+    │                          │                            │                            │
+    │                          │                            │               updateDisplays()
+    │                          │                            │                            │
 ```
 
 ---

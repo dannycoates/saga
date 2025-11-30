@@ -1,5 +1,6 @@
 import { JSSimulationBackend } from "../core/JSSimulationBackend.js";
 import { APP_CONSTANTS } from "../config/constants.js";
+import { EventBus } from "../utils/EventBus.js";
 
 /**
  * @typedef {Object} Challenge
@@ -27,28 +28,28 @@ import { APP_CONSTANTS } from "../config/constants.js";
 
 /**
  * Main game orchestrator that manages simulation backend.
- * Handles game loop, challenge lifecycle, and event forwarding.
+ * Handles game loop and challenge lifecycle.
  *
- * @extends EventTarget
- *
- * @fires GameController#stats_changed - Forwarded from backend when stats update
- * @fires GameController#challenge_ended - Forwarded from backend when challenge ends
- * @fires GameController#timescale_changed - Emitted when time scale or pause state changes
- * @fires GameController#challenge_initialized - Emitted when a challenge is initialized (includes backend reference)
+ * Events are emitted via the injected EventBus:
+ * - game:timescale_changed - When time scale or pause state changes
+ * - game:challenge_initialized - When a challenge is initialized
+ * - game:simulation_started - When simulation starts
+ * - game:cleanup - When resources are cleaned up
  */
-export class GameController extends EventTarget {
+export class GameController {
   /**
    * Creates a new GameController instance.
+   * @param {EventBus} eventBus - Event bus for emitting game events
    */
-  constructor() {
-    super();
+  constructor(eventBus) {
+    /** @type {EventBus} */
+    this.eventBus = eventBus;
     /** @type {JSSimulationBackend | null} */
     this.backend = null;
     /** @type {Challenge | null} */
     this.challenge = null;
 
-    // Event handling
-    /** @type {AbortController} */
+    /** @type {AbortController} Controller for event listener cleanup */
     this.abortController = new AbortController();
 
     // Game controller properties
@@ -132,7 +133,10 @@ export class GameController extends EventTarget {
    */
   setTimeScale(timeScale) {
     this.timeScale = timeScale;
-    this.dispatchEvent(new CustomEvent("timescale_changed"));
+    this.eventBus.emit("game:timescale_changed", {
+      timeScale: this.timeScale,
+      isPaused: this.isPaused,
+    });
     localStorage.setItem(APP_CONSTANTS.TIME_SCALE_KEY, String(this.timeScale));
   }
 
@@ -143,12 +147,15 @@ export class GameController extends EventTarget {
    */
   setPaused(paused) {
     this.isPaused = paused;
-    this.dispatchEvent(new CustomEvent("timescale_changed"));
+    this.eventBus.emit("game:timescale_changed", {
+      timeScale: this.timeScale,
+      isPaused: this.isPaused,
+    });
   }
 
   /**
    * Initializes or reinitializes a challenge.
-   * Creates backend and sets up event handlers.
+   * Creates backend and emits challenge_initialized event.
    * @param {Challenge | null} challenge - Challenge configuration
    * @param {boolean} [clearStats=true] - Whether to clear statistics display
    * @returns {void}
@@ -167,8 +174,8 @@ export class GameController extends EventTarget {
     const challengeOptions = challenge?.options ?? {};
     const options = { ...defaultOptions, ...challengeOptions };
 
-    // Create simulation backend
-    this.backend = new JSSimulationBackend();
+    // Create simulation backend with eventBus
+    this.backend = new JSSimulationBackend(this.eventBus);
 
     // Initialize simulation
     this.backend.initialize({
@@ -180,64 +187,23 @@ export class GameController extends EventTarget {
       endCondition: challenge?.condition ?? { evaluate: () => null },
     });
 
-    // Emit event for UI layer FIRST so ViewModelManager subscribes to backend
-    // before GameController's event forwarding (ensures correct handler order)
-    this.dispatchEvent(
-      new CustomEvent("challenge_initialized", {
-        detail: {
-          clearStats,
-          backend: this.backend,
-          options: {
-            isRenderingEnabled: options.isRenderingEnabled,
-            floorHeight: options.floorHeight,
-          },
-        },
-      }),
+    // Subscribe to challenge_ended to pause game
+    this.eventBus.on(
+      "simulation:challenge_ended",
+      () => this.end(),
+      { signal: this.abortController.signal },
     );
 
-    // Set up event forwarding AFTER UI layer has subscribed
-    this.setupEventHandlers();
-  }
-
-  /**
-   * Sets up event handlers to forward backend events.
-   * @private
-   * @returns {void}
-   */
-  setupEventHandlers() {
-    const { signal } = this.abortController;
-
-    // Forward backend events
-    this.backend?.addEventListener(
-      "stats_changed",
-      (e) => {
-        this.dispatchEvent(
-          new CustomEvent("stats_changed", { detail: /** @type {CustomEvent} */ (e).detail }),
-        );
+    // Emit challenge initialized event with initial state
+    this.eventBus.emit("game:challenge_initialized", {
+      clearStats,
+      options: {
+        isRenderingEnabled: options.isRenderingEnabled,
+        floorHeight: options.floorHeight,
       },
-      { signal },
-    );
-
-    this.backend?.addEventListener(
-      "challenge_ended",
-      (e) => {
-        this.end();
-        this.dispatchEvent(
-          new CustomEvent("challenge_ended", { detail: /** @type {CustomEvent} */ (e).detail }),
-        );
-      },
-      { signal },
-    );
-
-    this.backend?.addEventListener(
-      "passenger_spawned",
-      (e) => {
-        this.dispatchEvent(
-          new CustomEvent("passenger_spawned", { detail: /** @type {CustomEvent} */ (e).detail }),
-        );
-      },
-      { signal },
-    );
+      initialState: this.backend.getState(),
+      initialStats: this.backend.getStats(),
+    });
   }
 
   /**
@@ -251,7 +217,7 @@ export class GameController extends EventTarget {
       throw new Error("Backend not created. Call initializeChallenge() first.");
     }
 
-    this.dispatchEvent(new CustomEvent("simulation_started"));
+    this.eventBus.emit("game:simulation_started");
     this.codeObj = codeObj;
     await this.codeObj.start?.();
     this.setPaused(false);
@@ -270,7 +236,7 @@ export class GameController extends EventTarget {
     }
     this.lastTickTime = null;
 
-    // AbortController automatically removes all event listeners
+    // AbortController removes our eventBus subscriptions
     this.abortController.abort();
 
     if (this.backend) {
@@ -278,8 +244,8 @@ export class GameController extends EventTarget {
       this.backend = null;
     }
 
-    // Emit cleanup event for UI layer (ViewModelManager cleanup handled there)
-    this.dispatchEvent(new CustomEvent("cleanup"));
+    // Emit cleanup event for UI layer
+    this.eventBus.emit("game:cleanup");
 
     // Create new AbortController for future use
     this.abortController = new AbortController();

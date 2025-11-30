@@ -1,11 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { JSSimulationBackend } from "../../src/core/JSSimulationBackend.js";
+import { EventBus } from "../../src/utils/EventBus.js";
 
 describe("JSSimulationBackend", () => {
   let backend;
+  let eventBus;
 
   beforeEach(() => {
-    backend = new JSSimulationBackend();
+    eventBus = new EventBus();
+    backend = new JSSimulationBackend(eventBus);
   });
 
   describe("constructor", () => {
@@ -13,7 +16,7 @@ describe("JSSimulationBackend", () => {
       expect(backend.floorCount).toBe(0);
       expect(backend.elevatorCount).toBe(0);
       expect(backend.elevatorCapacities).toEqual([]);
-      expect(backend.spawnRate).toBe(0);
+      expect(backend.spawnRate).toBe(0.5);
       expect(backend.transportedCount).toBe(0);
       expect(backend.elapsedTime).toBe(0);
       expect(backend.isChallengeEnded).toBe(false);
@@ -121,7 +124,7 @@ describe("JSSimulationBackend", () => {
 
     it("should emit state_changed event", () => {
       const listener = vi.fn();
-      backend.addEventListener("state_changed", listener);
+      eventBus.on("simulation:state_changed", listener);
 
       backend.tick(0.1);
 
@@ -144,7 +147,7 @@ describe("JSSimulationBackend", () => {
 
     it("should emit passenger_spawned event when spawning", () => {
       const listener = vi.fn();
-      backend.addEventListener("passenger_spawned", listener);
+      eventBus.on("simulation:passenger_spawned", listener);
 
       // Tick enough to trigger spawn
       backend.tick(0.6);
@@ -179,7 +182,8 @@ describe("JSSimulationBackend", () => {
     it("should press floor button when passenger spawns", () => {
       // Directly test the spawnPassenger method by mocking randomStartAndDestination
       // Use a fresh backend to avoid interference from existing spawn timing
-      const testBackend = new JSSimulationBackend();
+      const testEventBus = new EventBus();
+      const testBackend = new JSSimulationBackend(testEventBus);
       testBackend.initialize({
         floorCount: 5,
         elevatorCount: 1,
@@ -265,7 +269,7 @@ describe("JSSimulationBackend", () => {
     it("should emit passengers_exited event", () => {
       const elevator = backend.elevators[0];
       const listener = vi.fn();
-      backend.addEventListener("passengers_exited", listener);
+      eventBus.on("simulation:passengers_exited", listener);
 
       const passenger = {
         id: "test-passenger",
@@ -320,7 +324,7 @@ describe("JSSimulationBackend", () => {
       const elevator = backend.elevators[0];
       elevator.goingUpIndicator = true;
       const listener = vi.fn();
-      backend.addEventListener("passengers_boarded", listener);
+      eventBus.on("simulation:passengers_boarded", listener);
 
       const passenger = {
         id: "waiting-passenger",
@@ -423,7 +427,7 @@ describe("JSSimulationBackend", () => {
         },
       });
 
-      backend.addEventListener("challenge_ended", listener);
+      eventBus.on("simulation:challenge_ended", listener);
       backend.tick(0.1);
 
       expect(listener).toHaveBeenCalled();
@@ -443,7 +447,7 @@ describe("JSSimulationBackend", () => {
         },
       });
 
-      backend.addEventListener("challenge_ended", listener);
+      eventBus.on("simulation:challenge_ended", listener);
       backend.tick(0.1);
 
       expect(listener).toHaveBeenCalled();
@@ -462,7 +466,7 @@ describe("JSSimulationBackend", () => {
         },
       });
 
-      backend.addEventListener("challenge_ended", listener);
+      eventBus.on("simulation:challenge_ended", listener);
       backend.tick(0.1);
       backend.tick(0.1);
       backend.tick(0.1);

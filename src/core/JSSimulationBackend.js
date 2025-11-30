@@ -3,6 +3,7 @@ import { randomInt, throttle } from "../utils/common.js";
 import { Floor } from "./Floor.js";
 import { Elevator } from "./Elevator.js";
 import { Passenger } from "./Passenger.js";
+import { EventBus } from "../utils/EventBus.js";
 
 /**
  * JavaScript implementation of the simulation backend.
@@ -18,8 +19,15 @@ import { Passenger } from "./Passenger.js";
  * @fires JSSimulationBackend#challenge_ended - Emitted when the challenge ends (win or lose)
  */
 export class JSSimulationBackend extends SimulationBackend {
-  constructor() {
+  /**
+   * Creates a new simulation backend.
+   * @param {EventBus} eventBus - Event bus for emitting simulation events
+   */
+  constructor(eventBus) {
     super();
+
+    /** @type {EventBus} */
+    this.eventBus = eventBus;
 
     // Configuration
     /** @type {number} Number of floors in building */
@@ -71,9 +79,7 @@ export class JSSimulationBackend extends SimulationBackend {
         return;
       }
       this.recalculateStats();
-      this.dispatchEvent(
-        new CustomEvent("stats_changed", { detail: this.getStats() }),
-      );
+      this.eventBus.emit("simulation:stats_changed", this.getStats());
     }, 1000 / 30);
   }
 
@@ -147,11 +153,9 @@ export class JSSimulationBackend extends SimulationBackend {
       startFloor.pressButton("down");
     }
 
-    this.dispatchEvent(
-      new CustomEvent("passenger_spawned", {
-        detail: { passenger: passenger.toJSON() },
-      }),
-    );
+    this.eventBus.emit("simulation:passenger_spawned", {
+      passenger: passenger.toJSON(),
+    });
   }
 
   /**
@@ -250,22 +254,14 @@ export class JSSimulationBackend extends SimulationBackend {
 
     // Emit events
     if (exitingPassengers.length > 0) {
-      this.dispatchEvent(
-        new CustomEvent("passengers_exited", {
-          detail: {
-            passengers: exitingPassengers.map((p) => p.toJSON()),
-          },
-        }),
-      );
+      this.eventBus.emit("simulation:passengers_exited", {
+        passengers: exitingPassengers.map((p) => p.toJSON()),
+      });
     }
     if (boardingPassengers.length > 0) {
-      this.dispatchEvent(
-        new CustomEvent("passengers_boarded", {
-          detail: {
-            passengers: boardingPassengers.map((p) => p.toJSON()),
-          },
-        }),
-      );
+      this.eventBus.emit("simulation:passengers_boarded", {
+        passengers: boardingPassengers.map((p) => p.toJSON()),
+      });
     }
 
     this.recalculateStats();
@@ -303,31 +299,19 @@ export class JSSimulationBackend extends SimulationBackend {
     this.passengers = this.passengers.filter((p) => p.state !== "exited");
 
     // Emit state update
-    this.dispatchEvent(
-      new CustomEvent("state_changed", {
-        detail: {
-          ...this.getState(),
-          dt: dt,
-        },
-      }),
-    );
+    this.eventBus.emit("simulation:state_changed", {
+      ...this.getState(),
+      dt: dt,
+    });
 
     const succeeded = this.endCondition?.evaluate(this.getStats()) ?? null;
     if (succeeded !== null) {
       this.isChallengeEnded = true;
       // Emit final stats update before challenge ends
       this.recalculateStats();
-      this.dispatchEvent(
-        new CustomEvent("stats_changed", { detail: this.getStats() }),
-      );
+      this.eventBus.emit("simulation:stats_changed", this.getStats());
       // Emit challenge ended with final stats included
-      this.dispatchEvent(
-        new CustomEvent("challenge_ended", {
-          detail: {
-            succeeded: succeeded,
-          },
-        }),
-      );
+      this.eventBus.emit("simulation:challenge_ended", { succeeded });
     } else {
       this.throttledStats();
     }

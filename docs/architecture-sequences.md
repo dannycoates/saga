@@ -79,12 +79,12 @@ ElevatorApp.loadChallenge(index)
                     │         ├── Create FloorViewModel for each floor
                     │         └── Create ElevatorViewModel for each elevator
                     │
-                    └──► viewModelManager.subscribeToBackend(backend)
+                    └──► viewModelManager.subscribeToEvents()
                               │
-                              └── Attach event listeners:
-                                  ├── state_changed
-                                  ├── passenger_spawned
-                                  └── passengers_exited
+                              └── Attach event listeners to eventBus:
+                                  ├── simulation:state_changed
+                                  ├── simulation:passenger_spawned
+                                  └── simulation:passengers_exited
          │
          ▼
    presentChallenge(element, challenge)
@@ -225,7 +225,7 @@ backend.tick(dt)
          │                   │     ├── Floor button press:
          │                   │     │     └── floor.pressButton(direction)
          │                   │     │
-         │                   │     └── emit passenger_spawned
+         │                   │     └── eventBus.emit simulation:passenger_spawned
          │                   │              │
          │                   │              └── { passenger }
          │                   │
@@ -263,7 +263,7 @@ backend.tick(dt)
          │         │
          │         └── passengers = passengers.filter(p => p.state !== "exited")
          │
-         ├──► emit state_changed
+         ├──► eventBus.emit simulation:state_changed
          │         │
          │         └── {
          │               floors: floors.map(f => f.toJSON()),
@@ -279,13 +279,13 @@ backend.tick(dt)
                     ├── result = endCondition.evaluate(stats)
                     │
                     ├── if (result === null):
-                    │     └── emit stats_changed (throttled)
+                    │     └── eventBus.emit simulation:stats_changed (throttled)
                     │
                     └── if (result === true || result === false):
                           │
                           ├── isChallengeEnded = true
-                          ├── emit stats_changed (final)
-                          └── emit challenge_ended
+                          ├── eventBus.emit simulation:stats_changed (final)
+                          └── eventBus.emit simulation:challenge_ended
                                    │
                                    └── { succeeded: result }
 ```
@@ -316,7 +316,7 @@ handleElevatorArrival(elevator)
          │         │
          │         └── if (exitingPassengers.length > 0):
          │                   │
-         │                   └── emit passengers_exited
+         │                   └── eventBus.emit simulation:passengers_exited
          │                            │
          │                            └── { passengers: exitingPassengers,
          │                                  elevator }
@@ -349,7 +349,7 @@ handleElevatorArrival(elevator)
          │         │
          │         └── if (boardingPassengers.length > 0):
          │                   │
-         │                   └── emit passengers_boarded
+         │                   └── eventBus.emit simulation:passengers_boarded
          │                            │
          │                            └── { passengers: boardingPassengers,
          │                                  elevator }
@@ -427,10 +427,10 @@ handleElevatorArrival(elevator)
 ## 8. View Model Update Sequence
 
 ```
-backend emits state_changed
+eventBus receives simulation:state_changed
          │
          ▼
-ViewModelManager event listener
+ViewModelManager event listener (subscribed via subscribeToEvents())
          │
          └──► updateViewModels(state, dt)
                     │
@@ -496,21 +496,21 @@ endCondition.evaluate(stats) returns true/false
          ▼
 backend sets isChallengeEnded = true
          │
-         ├──► emit stats_changed (final stats)
+         ├──► eventBus.emit simulation:stats_changed (final stats)
          │
-         └──► emit challenge_ended
+         └──► eventBus.emit simulation:challenge_ended
                     │
                     └── { succeeded: boolean }
          │
          ▼
-GameController listener
+GameController listener (subscribed to simulation:challenge_ended)
          │
          ├──► Stop game loop (don't request next frame)
          │
-         └──► Forward event
+         └──► Call this.end()
                     │
                     ▼
-         ElevatorApp listener
+AppEventHandlers listener (subscribed to simulation:challenge_ended)
                     │
                     ├── if (succeeded):
                     │     │

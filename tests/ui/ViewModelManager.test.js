@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { ViewModelManager } from "../../src/ui/ViewModelManager.js";
+import { EventBus } from "../../src/utils/EventBus.js";
 
 // Mock DOM for tests
 beforeEach(() => {
@@ -114,64 +115,71 @@ describe("ViewModelManager", () => {
   });
 
   describe("static create", () => {
-    it("should create instance without backend", () => {
+    it("should create instance without eventBus or initialState", () => {
       const instance = ViewModelManager.create();
       expect(instance).toBeInstanceOf(ViewModelManager);
     });
 
-    it("should initialize and subscribe when backend provided", () => {
-      const mockBackend = {
-        getState: vi.fn().mockReturnValue({
-          floors: [{ level: 0, buttons: { up: false, down: false } }],
-          elevators: [
-            { index: 0, position: 0, capacity: 4, destination: 0, velocity: 0 },
-          ],
-          passengers: [],
-          stats: {},
-          isChallengeEnded: false,
-        }),
-        addEventListener: vi.fn(),
+    it("should initialize and subscribe when eventBus and initialState provided", () => {
+      const eventBus = new EventBus();
+      const subscribeSpy = vi.spyOn(eventBus, "addEventListener");
+
+      const initialState = {
+        floors: [{ level: 0, buttons: { up: false, down: false } }],
+        elevators: [
+          { index: 0, position: 0, capacity: 4, destination: 0, velocity: 0 },
+        ],
+        passengers: [],
+        stats: {},
+        isChallengeEnded: false,
       };
 
-      const instance = ViewModelManager.create({ backend: mockBackend });
+      const instance = ViewModelManager.create({ eventBus, initialState });
 
-      expect(mockBackend.getState).toHaveBeenCalled();
-      expect(mockBackend.addEventListener).toHaveBeenCalled();
+      expect(instance.floorViewModels.size).toBe(1);
+      expect(instance.elevatorViewModels.size).toBe(1);
+      expect(subscribeSpy).toHaveBeenCalled();
     });
   });
 
-  describe("subscribeToBackend", () => {
-    it("should subscribe to state_changed events", () => {
-      const mockBackend = { addEventListener: vi.fn() };
+  describe("subscribeToEvents", () => {
+    it("should subscribe to simulation:state_changed events", () => {
+      const eventBus = new EventBus();
+      const subscribeSpy = vi.spyOn(eventBus, "on");
+      const managerWithBus = new ViewModelManager({ eventBus });
 
-      manager.subscribeToBackend(mockBackend);
+      managerWithBus.subscribeToEvents();
 
-      expect(mockBackend.addEventListener).toHaveBeenCalledWith(
-        "state_changed",
+      expect(subscribeSpy).toHaveBeenCalledWith(
+        "simulation:state_changed",
         expect.any(Function),
         expect.objectContaining({ signal: expect.any(AbortSignal) }),
       );
     });
 
-    it("should subscribe to passenger_spawned events", () => {
-      const mockBackend = { addEventListener: vi.fn() };
+    it("should subscribe to simulation:passenger_spawned events", () => {
+      const eventBus = new EventBus();
+      const subscribeSpy = vi.spyOn(eventBus, "on");
+      const managerWithBus = new ViewModelManager({ eventBus });
 
-      manager.subscribeToBackend(mockBackend);
+      managerWithBus.subscribeToEvents();
 
-      expect(mockBackend.addEventListener).toHaveBeenCalledWith(
-        "passenger_spawned",
+      expect(subscribeSpy).toHaveBeenCalledWith(
+        "simulation:passenger_spawned",
         expect.any(Function),
         expect.objectContaining({ signal: expect.any(AbortSignal) }),
       );
     });
 
-    it("should subscribe to passengers_exited events", () => {
-      const mockBackend = { addEventListener: vi.fn() };
+    it("should subscribe to simulation:passengers_exited events", () => {
+      const eventBus = new EventBus();
+      const subscribeSpy = vi.spyOn(eventBus, "on");
+      const managerWithBus = new ViewModelManager({ eventBus });
 
-      manager.subscribeToBackend(mockBackend);
+      managerWithBus.subscribeToEvents();
 
-      expect(mockBackend.addEventListener).toHaveBeenCalledWith(
-        "passengers_exited",
+      expect(subscribeSpy).toHaveBeenCalledWith(
+        "simulation:passengers_exited",
         expect.any(Function),
         expect.objectContaining({ signal: expect.any(AbortSignal) }),
       );
