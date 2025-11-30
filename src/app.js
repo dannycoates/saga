@@ -59,7 +59,10 @@ export class ElevatorApp extends EventTarget {
     this.eventHandlers.setupAllHandlers();
 
     // Set the runtime manager to the editor's current language
-    this.runtimeManager.currentLanguage = /** @type {import('./runtimes/BaseRuntime.js').LanguageId} */ (this.editor.currentLanguage);
+    this.runtimeManager.currentLanguage =
+      /** @type {import('./runtimes/BaseRuntime.js').LanguageId} */ (
+        this.editor.currentLanguage
+      );
 
     // Initialize with runtime
     this.initializeWithRuntime();
@@ -201,7 +204,7 @@ export class ElevatorApp extends EventTarget {
             this.dispatchEvent(
               new CustomEvent("user_code_error", { detail: e }),
             );
-            throw e;
+            // simulation errors stop here
           }
         },
       };
