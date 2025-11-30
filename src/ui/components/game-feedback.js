@@ -1,30 +1,64 @@
+/**
+ * Custom element for displaying game feedback (success/failure messages).
+ * Shows title, message, and optional link to next challenge.
+ * @extends HTMLElement
+ */
 export class GameFeedback extends HTMLElement {
+  /**
+   * Observed attributes for attribute change callbacks.
+   * @returns {string[]} List of observed attribute names
+   */
   static get observedAttributes() {
     return ["title", "message", "next-url"];
   }
 
+  /**
+   * Creates a game feedback element.
+   */
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
+    /** @type {((e: Event) => void) | null} */
     this.linkClickHandler = null;
   }
 
+  /**
+   * Called when element is added to the DOM.
+   * @returns {void}
+   */
   connectedCallback() {
-    this.render();
+    this.initializeDOM();
     this.attachEventListeners();
   }
 
+  /**
+   * Called when element is removed from the DOM.
+   * Cleans up event listeners.
+   * @returns {void}
+   */
   disconnectedCallback() {
     this.removeEventListeners();
   }
 
+  /**
+   * Called when an observed attribute changes.
+   * @param {string} name - Attribute name
+   * @param {string | null} oldValue - Previous value
+   * @param {string | null} newValue - New value
+   * @returns {void}
+   */
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue !== newValue) {
-      this.render();
+      this.initializeDOM();
       this.attachEventListeners();
     }
   }
 
+  /**
+   * Removes event listeners from the next challenge link.
+   * @private
+   * @returns {void}
+   */
   removeEventListeners() {
     const link = this.shadowRoot.querySelector('a');
     if (link && this.linkClickHandler) {
@@ -33,9 +67,15 @@ export class GameFeedback extends HTMLElement {
     }
   }
 
+  /**
+   * Attaches click event listener to the next challenge link.
+   * Handles navigation via hash change.
+   * @private
+   * @returns {void}
+   */
   attachEventListeners() {
     this.removeEventListeners(); // Remove any existing listeners first
-    
+
     const link = this.shadowRoot.querySelector('a');
     if (link) {
       this.linkClickHandler = (e) => {
@@ -51,7 +91,12 @@ export class GameFeedback extends HTMLElement {
     }
   }
 
-  render() {
+  /**
+   * Initializes the component's shadow DOM content.
+   * @private
+   * @returns {void}
+   */
+  initializeDOM() {
     const title = this.getAttribute("title") || "";
     const message = this.getAttribute("message") || "";
     const nextUrl = this.getAttribute("next-url") || "";

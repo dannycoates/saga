@@ -102,4 +102,20 @@ export class FloorViewModel extends ViewModel {
   tick(dt) {
     // Animation tick if needed
   }
+
+  /**
+   * Handles up button press (no-op for view model).
+   * @returns {void}
+   */
+  pressUpButton() {
+    // View model is read-only; interaction handled by simulation
+  }
+
+  /**
+   * Handles down button press (no-op for view model).
+   * @returns {void}
+   */
+  pressDownButton() {
+    // View model is read-only; interaction handled by simulation
+  }
 }

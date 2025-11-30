@@ -64,6 +64,15 @@ export class PassengerViewModel extends AnimatedViewModel {
   }
 
   /**
+   * Whether the passenger has exited (is done).
+   * @type {boolean}
+   * @readonly
+   */
+  get done() {
+    return this.state === "exited";
+  }
+
+  /**
    * Positions passenger at random location on floor.
    * @returns {void}
    */

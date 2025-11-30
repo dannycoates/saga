@@ -1,30 +1,69 @@
+/**
+ * @typedef {import('../viewmodels/ElevatorViewModel.js').ElevatorViewModel} ElevatorViewModel
+ */
+
+/**
+ * Custom element for displaying an elevator car.
+ * Shows floor indicator, floor buttons, and handles position updates.
+ * @extends HTMLElement
+ */
 export class ElevatorCar extends HTMLElement {
+  /**
+   * Observed attributes for attribute change callbacks.
+   * @returns {string[]} List of observed attribute names
+   */
   static get observedAttributes() {
     return ["width", "x-position", "y-position", "current-floor"];
   }
 
+  /**
+   * Creates an elevator car element.
+   */
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
+    /** @type {ElevatorViewModel | null} */
     this._elevator = null;
+    /** @type {boolean[]} Floor button states */
     this._floorButtons = [];
+    /** @type {AbortController | null} */
     this._abortController = null;
   }
 
+  /**
+   * Called when element is added to the DOM.
+   * @returns {void}
+   */
   connectedCallback() {
-    this.render();
+    this.initializeDOM();
   }
 
+  /**
+   * Called when element is removed from the DOM.
+   * Cleans up event listeners via abort controller.
+   * @returns {void}
+   */
   disconnectedCallback() {
     this._abortController?.abort();
   }
 
+  /**
+   * Called when an observed attribute changes.
+   * @param {string} name - Attribute name
+   * @param {string | null} oldValue - Previous value
+   * @param {string | null} newValue - New value
+   * @returns {void}
+   */
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue !== newValue) {
       this.updateDisplay(name, newValue);
     }
   }
 
+  /**
+   * Sets the elevator view model and subscribes to its events.
+   * @param {ElevatorViewModel} elevator - Elevator view model
+   */
   set elevator(elevator) {
     // Clean up previous listeners
     this._abortController?.abort();
@@ -36,19 +75,19 @@ export class ElevatorCar extends HTMLElement {
       this._abortController = new AbortController();
       const { signal } = this._abortController;
       // Set initial attributes
-      this.setAttribute("width", elevator.width);
+      this.setAttribute("width", String(elevator.width));
       this._floorButtons = structuredClone(elevator.buttons);
 
       // Display state handler
       this._displayStateHandler = () => {
-        this.setAttribute("x-position", elevator.worldX);
-        this.setAttribute("y-position", elevator.worldY);
+        this.setAttribute("x-position", String(elevator.worldX));
+        this.setAttribute("y-position", String(elevator.worldY));
       };
 
       // Current floor handler
       this._currentFloorHandler = (event) => {
         const floor = event.detail ?? event;
-        this.setAttribute("current-floor", floor);
+        this.setAttribute("current-floor", String(floor));
       };
 
       // Floor buttons handler
@@ -86,6 +125,13 @@ export class ElevatorCar extends HTMLElement {
     }
   }
 
+  /**
+   * Updates the display based on attribute changes.
+   * @private
+   * @param {string} name - Attribute name that changed
+   * @param {string | null} value - New attribute value
+   * @returns {void}
+   */
   updateDisplay(name, value) {
     switch (name) {
       case "x-position":
@@ -101,20 +147,38 @@ export class ElevatorCar extends HTMLElement {
     }
   }
 
+  /**
+   * Updates the elevator's CSS transform position.
+   * Uses CSS custom properties for hardware-accelerated transforms.
+   * @private
+   * @returns {void}
+   */
   updatePosition() {
     const x = this.getAttribute("x-position") ?? "0";
     const y = this.getAttribute("y-position") ?? "0";
-    
+
     // Use CSS Custom Properties for better performance and cleaner code
     this.style.setProperty('--translate-x', `${x}px`);
     this.style.setProperty('--translate-y', `${y}px`);
   }
 
+  /**
+   * Updates a floor button's active state.
+   * @private
+   * @param {number} index - Floor button index
+   * @param {boolean} isActive - Whether the button is active
+   * @returns {void}
+   */
   updateFloorButton(index, isActive) {
     const buttons = this.shadowRoot?.querySelectorAll(".buttonpress");
     buttons?.[index]?.classList.toggle("activated", isActive);
   }
 
+  /**
+   * Renders floor button indicators as HTML.
+   * @private
+   * @returns {string} HTML string for floor buttons
+   */
   renderFloorButtons() {
     return this._floorButtons
       .map(
@@ -124,7 +188,12 @@ export class ElevatorCar extends HTMLElement {
       .join("");
   }
 
-  render() {
+  /**
+   * Initializes the component's shadow DOM content.
+   * @private
+   * @returns {void}
+   */
+  initializeDOM() {
     const width = this.getAttribute("width") ?? "60";
     const currentFloor = this.getAttribute("current-floor") ?? "0";
 

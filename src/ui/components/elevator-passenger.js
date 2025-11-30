@@ -1,21 +1,50 @@
+/**
+ * @typedef {import('../viewmodels/PassengerViewModel.js').PassengerViewModel} PassengerViewModel
+ */
+
+/**
+ * Custom element for displaying a passenger.
+ * Shows passenger icon and handles position/state updates.
+ * Uses IntersectionObserver for performance optimization.
+ * @extends HTMLElement
+ */
 export class ElevatorPassenger extends HTMLElement {
+  /**
+   * Observed attributes for attribute change callbacks.
+   * @returns {string[]} List of observed attribute names
+   */
   static get observedAttributes() {
     return ["passenger-type", "x-position", "y-position", "state"];
   }
 
+  /**
+   * Creates an elevator passenger element.
+   */
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
+    /** @type {PassengerViewModel | null} */
     this._passenger = null;
+    /** @type {boolean} Whether the element is visible in viewport */
     this._isVisible = true;
+    /** @type {IntersectionObserver | null} */
     this._intersectionObserver = null;
   }
 
+  /**
+   * Called when element is added to the DOM.
+   * @returns {void}
+   */
   connectedCallback() {
-    this.render();
+    this.initializeDOM();
     this.setupIntersectionObserver();
   }
 
+  /**
+   * Called when element is removed from the DOM.
+   * Cleans up event listeners and observers.
+   * @returns {void}
+   */
   disconnectedCallback() {
     if (this._passenger) {
       this._passenger.removeEventListener("new_display_state", this._displayStateHandler);
@@ -24,12 +53,23 @@ export class ElevatorPassenger extends HTMLElement {
     this._intersectionObserver?.disconnect();
   }
 
+  /**
+   * Called when an observed attribute changes.
+   * @param {string} name - Attribute name
+   * @param {string | null} oldValue - Previous value
+   * @param {string | null} newValue - New value
+   * @returns {void}
+   */
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue !== newValue) {
       this.updateDisplay(name, newValue);
     }
   }
 
+  /**
+   * Sets the passenger view model and subscribes to its events.
+   * @param {PassengerViewModel} passenger - Passenger view model
+   */
   set passenger(passenger) {
     if (this._passenger) {
       this._passenger.removeEventListener("new_display_state", this._displayStateHandler);
@@ -45,8 +85,8 @@ export class ElevatorPassenger extends HTMLElement {
 
       // Display state handler
       this._displayStateHandler = () => {
-        this.setAttribute("x-position", passenger.worldX);
-        this.setAttribute("y-position", passenger.worldY);
+        this.setAttribute("x-position", String(passenger.worldX));
+        this.setAttribute("y-position", String(passenger.worldY));
         if (passenger.done) {
           this.setAttribute("state", "leaving");
         }
@@ -66,6 +106,13 @@ export class ElevatorPassenger extends HTMLElement {
     }
   }
 
+  /**
+   * Updates the display based on attribute changes.
+   * @private
+   * @param {string} name - Attribute name that changed
+   * @param {string | null} value - New attribute value
+   * @returns {void}
+   */
   updateDisplay(name, value) {
     switch (name) {
       case "x-position":
@@ -87,6 +134,12 @@ export class ElevatorPassenger extends HTMLElement {
     }
   }
 
+  /**
+   * Sets up IntersectionObserver for viewport visibility tracking.
+   * Only updates transforms when element is visible for performance.
+   * @private
+   * @returns {void}
+   */
   setupIntersectionObserver() {
     // Use Intersection Observer for performance optimization
     this._intersectionObserver = new IntersectionObserver(
@@ -107,18 +160,30 @@ export class ElevatorPassenger extends HTMLElement {
     this._intersectionObserver.observe(this);
   }
 
+  /**
+   * Updates the passenger's CSS transform position.
+   * Only updates when element is visible for performance.
+   * @private
+   * @returns {void}
+   */
   updatePosition() {
     // Only update position if visible to improve performance
     if (!this._isVisible) return;
-    
+
     const x = +(this.getAttribute("x-position") || "0") - 4;
     const y = +(this.getAttribute("y-position") || "0") - 4;
-    
+
     // Use CSS Custom Properties for better performance and cleaner code
     this.style.setProperty('--translate-x', `${x}px`);
     this.style.setProperty('--translate-y', `${y}px`);
   }
 
+  /**
+   * Gets the SVG markup for a passenger type.
+   * @private
+   * @param {string} passengerType - Type of passenger ('male', 'female', or 'child')
+   * @returns {string} SVG markup string
+   */
   getPassengerSvg(passengerType) {
     const svgMap = {
       male: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M112 48a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm40 304l0 128c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-223.1L59.4 304.5c-9.1 15.1-28.8 20-43.9 10.9s-20-28.8-10.9-43.9l58.3-97c17.4-28.9 48.6-46.6 82.3-46.6l29.7 0c33.7 0 64.9 17.7 82.3 46.6l58.3 97c9.1 15.1 4.2 34.8-10.9 43.9s-34.8 4.2-43.9-10.9L232 256.9 232 480c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-128-16 0z"/></svg>`,
@@ -128,7 +193,12 @@ export class ElevatorPassenger extends HTMLElement {
     return svgMap[passengerType] || svgMap.male;
   }
 
-  render() {
+  /**
+   * Initializes the component's shadow DOM content.
+   * @private
+   * @returns {void}
+   */
+  initializeDOM() {
     const passengerType = this.getAttribute("passenger-type") || "male";
     const state = this.getAttribute("state") || "";
 

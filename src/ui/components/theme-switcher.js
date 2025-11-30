@@ -1,14 +1,30 @@
 /**
- * Theme Switcher Component - UI element for switching between light/dark themes
+ * @typedef {import('../ThemeManager.js').ThemeManager} ThemeManager
+ * @typedef {import('../ThemeManager.js').Theme} Theme
  */
 
+/**
+ * Theme switcher component for toggling between light and dark themes.
+ * Displays sun/moon icon based on current theme state.
+ */
 export class ThemeSwitcher {
+  /**
+   * Creates a theme switcher component.
+   * @param {ThemeManager} themeManager - Theme manager instance
+   */
   constructor(themeManager) {
+    /** @type {ThemeManager} */
     this.themeManager = themeManager;
+    /** @type {HTMLElement} */
     this.element = this.createElement();
     this.bindEvents();
   }
 
+  /**
+   * Creates the switcher DOM element with button and icons.
+   * @private
+   * @returns {HTMLDivElement} The switcher container element
+   */
   createElement() {
     const switcher = document.createElement('div');
     switcher.className = 'theme-switcher';
@@ -43,6 +59,11 @@ export class ThemeSwitcher {
     return switcher;
   }
 
+  /**
+   * Binds click events and theme change listeners.
+   * @private
+   * @returns {void}
+   */
   bindEvents() {
     const button = this.element.querySelector('.theme-toggle-btn');
     button.addEventListener('click', () => {
@@ -58,12 +79,22 @@ export class ThemeSwitcher {
     this.updateButtonState(this.themeManager.getCurrentTheme());
   }
 
+  /**
+   * Updates the button's CSS class based on current theme.
+   * @private
+   * @param {Theme} theme - Current theme
+   * @returns {void}
+   */
   updateButtonState(theme) {
     // Use CSS classes for better performance and cleaner code
     this.element.classList.remove('theme-dark', 'theme-light');
     this.element.classList.add(`theme-${theme}`);
   }
 
+  /**
+   * Gets the switcher's root DOM element.
+   * @returns {HTMLElement} The switcher container element
+   */
   getElement() {
     return this.element;
   }

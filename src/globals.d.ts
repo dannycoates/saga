@@ -26,6 +26,7 @@ declare function cheerpOSAddStringFile(path: string, content: string): void;
 // Pyodide runtime globals
 declare function loadPyodide(config: {
   indexURL: string;
+  convertNullToNone: boolean;
 }): Promise<{
   runPython(code: string): any;
   runPythonAsync(code: string): Promise<any>;
@@ -37,7 +38,7 @@ declare function loadPyodide(config: {
 
 // Window augmentation for app instance
 interface Window {
-  app?: import('./app.js').ElevatorApp;
+  app?: import("./app.js").ElevatorApp;
   cheerpjInit?: typeof cheerpjInit;
   cheerpjRunMain?: typeof cheerpjRunMain;
   cheerpjRunLibrary?: typeof cheerpjRunLibrary;
@@ -46,12 +47,12 @@ interface Window {
 
 // Custom element interfaces for web components
 interface ElevatorStatsElement extends HTMLElement {
-  world: import('./game/GameController.js').GameController;
+  world: import("./game/GameController.js").GameController;
 }
 
 interface ChallengeControlElement extends HTMLElement {
-  app: import('./app.js').ElevatorApp;
-  gameController: import('./game/GameController.js').GameController;
+  app: import("./app.js").ElevatorApp;
+  gameController: import("./game/GameController.js").GameController;
 }
 
 interface CodeStatusElement extends HTMLElement {
@@ -59,13 +60,13 @@ interface CodeStatusElement extends HTMLElement {
 }
 
 interface ElevatorFloorElement extends HTMLElement {
-  floor: import('./ui/viewmodels/FloorViewModel.js').FloorViewModel;
+  floor: import("./ui/viewmodels/FloorViewModel.js").FloorViewModel;
 }
 
 interface ElevatorCarElement extends HTMLElement {
-  elevator: import('./ui/viewmodels/ElevatorViewModel.js').ElevatorViewModel;
+  elevator: import("./ui/viewmodels/ElevatorViewModel.js").ElevatorViewModel;
 }
 
 interface ElevatorPassengerElement extends HTMLElement {
-  passenger: import('./ui/viewmodels/PassengerViewModel.js').PassengerViewModel;
+  passenger: import("./ui/viewmodels/PassengerViewModel.js").PassengerViewModel;
 }

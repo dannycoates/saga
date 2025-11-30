@@ -1,31 +1,68 @@
+/**
+ * @typedef {import('../viewmodels/FloorViewModel.js').FloorViewModel} FloorViewModel
+ */
+
+/**
+ * Custom element for displaying a floor with up/down call buttons.
+ * Shows floor number and button indicators.
+ * @extends HTMLElement
+ */
 export class ElevatorFloor extends HTMLElement {
+  /**
+   * Observed attributes for attribute change callbacks.
+   * @returns {string[]} List of observed attribute names
+   */
   static get observedAttributes() {
     return ['floor-number', 'y-position', 'up-active', 'down-active', 'hide-up', 'hide-down'];
   }
 
+  /**
+   * Creates an elevator floor element.
+   */
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    /** @type {FloorViewModel | null} */
     this._floor = null;
   }
 
+  /**
+   * Called when element is added to the DOM.
+   * @returns {void}
+   */
   connectedCallback() {
-    this.render();
+    this.initializeDOM();
     this.attachEventListeners();
   }
 
+  /**
+   * Called when element is removed from the DOM.
+   * Cleans up event listeners.
+   * @returns {void}
+   */
   disconnectedCallback() {
     if (this._floor) {
       this._floor.removeEventListener('button_state_change', this._buttonStateHandler);
     }
   }
 
+  /**
+   * Called when an observed attribute changes.
+   * @param {string} name - Attribute name
+   * @param {string | null} oldValue - Previous value
+   * @param {string | null} newValue - New value
+   * @returns {void}
+   */
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue !== newValue) {
       this.updateDisplay(name, newValue);
     }
   }
 
+  /**
+   * Sets the floor view model and subscribes to button state changes.
+   * @param {FloorViewModel} floor - Floor view model
+   */
   set floor(floor) {
     if (this._floor) {
       this._floor.removeEventListener('button_state_change', this._buttonStateHandler);
@@ -35,19 +72,24 @@ export class ElevatorFloor extends HTMLElement {
     
     if (floor) {
       // Set initial attributes
-      this.setAttribute('floor-number', floor.level);
-      this.setAttribute('y-position', floor.yPosition);
-      
+      this.setAttribute('floor-number', String(floor.level));
+      this.setAttribute('y-position', String(floor.yPosition));
+
       // Listen for button state changes
       this._buttonStateHandler = (event) => {
         const buttons = event.detail || event;
-        this.setAttribute('up-active', buttons.up);
-        this.setAttribute('down-active', buttons.down);
+        this.setAttribute('up-active', String(buttons.up));
+        this.setAttribute('down-active', String(buttons.down));
       };
       floor.addEventListener('button_state_change', this._buttonStateHandler);
     }
   }
 
+  /**
+   * Attaches click event listeners to up/down buttons.
+   * @private
+   * @returns {void}
+   */
   attachEventListeners() {
     const upButton = this.shadowRoot.querySelector('.up');
     const downButton = this.shadowRoot.querySelector('.down');
@@ -65,6 +107,13 @@ export class ElevatorFloor extends HTMLElement {
     });
   }
 
+  /**
+   * Updates the display based on attribute changes.
+   * @private
+   * @param {string} name - Attribute name that changed
+   * @param {string | null} value - New attribute value
+   * @returns {void}
+   */
   updateDisplay(name, value) {
     switch (name) {
       case 'y-position':
@@ -97,7 +146,12 @@ export class ElevatorFloor extends HTMLElement {
     }
   }
 
-  render() {
+  /**
+   * Initializes the component's shadow DOM content.
+   * @private
+   * @returns {void}
+   */
+  initializeDOM() {
     const floorNumber = this.getAttribute('floor-number') || '0';
     const yPosition = this.getAttribute('y-position') || '0';
     const upActive = this.getAttribute('up-active') === 'true';

@@ -13,7 +13,11 @@ import { linter, lintGutter } from "@codemirror/lint";
 import * as eslint from "eslint-linter-browserify";
 import { themeManager } from "./ThemeManager.js";
 
-// Enhanced JavaScript linter using ESLint
+/**
+ * Creates an ESLint-based linter for JavaScript code in CodeMirror.
+ * Falls back to basic syntax checking if ESLint fails.
+ * @returns {import('@codemirror/state').Extension | null} Linter extension or null if creation fails
+ */
 function createJavaScriptLinter() {
   try {
     const eslintLinter = new eslint.Linter();
@@ -156,6 +160,12 @@ export class CodeEditor extends EventTarget {
     });
   }
 
+  /**
+   * Gets all CodeMirror extensions for the current language.
+   * Includes syntax highlighting, theme, linting, and keymaps.
+   * @private
+   * @returns {import('@codemirror/state').Extension[]} Array of CodeMirror extensions
+   */
   getExtensions() {
     let langExtension;
     let lintExtension = null;
@@ -215,6 +225,11 @@ export class CodeEditor extends EventTarget {
     return extensions;
   }
 
+  /**
+   * Updates the editor theme.
+   * @param {'light' | 'dark'} theme - Theme to apply
+   * @returns {void}
+   */
   updateTheme(theme) {
     const themeExtension = theme === "dark" ? gruvboxDark : gruvboxLight;
     this.view.dispatch({
@@ -222,6 +237,12 @@ export class CodeEditor extends EventTarget {
     });
   }
 
+  /**
+   * Switches the editor to a different programming language.
+   * Saves current code, loads saved code for new language, and reconfigures extensions.
+   * @param {string} language - Language identifier ('javascript', 'python', or 'java')
+   * @returns {void}
+   */
   setLanguage(language) {
     if (language === this.currentLanguage) return;
 
@@ -256,6 +277,12 @@ export class CodeEditor extends EventTarget {
     this.setCode(existingCode);
   }
 
+  /**
+   * Gets the CodeMirror language extension for a given language.
+   * @private
+   * @param {string} language - Language identifier
+   * @returns {import('@codemirror/state').Extension} Language extension
+   */
   getLanguageExtension(language) {
     switch (language) {
       case "javascript":
@@ -269,6 +296,10 @@ export class CodeEditor extends EventTarget {
     }
   }
 
+  /**
+   * Resets the editor content to the default template for the current language.
+   * @returns {void}
+   */
   reset() {
     const defaultCode = this.defaultTemplates[this.currentLanguage];
 
@@ -277,6 +308,10 @@ export class CodeEditor extends EventTarget {
     });
   }
 
+  /**
+   * Saves the current code to localStorage and dispatches a change event.
+   * @returns {void}
+   */
   saveCode() {
     localStorage.setItem(
       `${this.storageKey}_${this.currentLanguage}`,
@@ -287,15 +322,31 @@ export class CodeEditor extends EventTarget {
     this.dispatchEvent(new CustomEvent("change"));
   }
 
+  /**
+   * Gets the current code content from the editor.
+   * @returns {string} Current editor content
+   */
   getCode() {
     return this.view.state.doc.toString();
   }
 
+  /**
+   * Sets the editor content to the specified code.
+   * @param {string} code - Code to set in the editor
+   * @returns {void}
+   */
   setCode(code) {
     this.view.dispatch({
       changes: { from: 0, to: this.view.state.doc.length, insert: code },
     });
   }
+
+  /**
+   * Sets the layout mode for the editor (side-by-side or vertical).
+   * Adjusts editor height constraints based on layout.
+   * @param {boolean} isSideBySide - Whether to use side-by-side layout
+   * @returns {void}
+   */
   setLayoutMode(isSideBySide) {
     const layoutTheme = isSideBySide
       ? EditorView.theme({
