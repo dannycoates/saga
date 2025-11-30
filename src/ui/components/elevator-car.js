@@ -23,7 +23,7 @@ export class ElevatorCar extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     /** @type {ElevatorViewModel | null} */
-    this._elevator = null;
+    this._model = null;
     /** @type {boolean[]} Floor button states */
     this._floorButtons = [];
     /** @type {AbortController | null} */
@@ -62,26 +62,26 @@ export class ElevatorCar extends HTMLElement {
 
   /**
    * Sets the elevator view model and subscribes to its events.
-   * @param {ElevatorViewModel} elevator - Elevator view model
+   * @param {ElevatorViewModel} model - Elevator view model
    */
-  set elevator(elevator) {
+  set model(model) {
     // Clean up previous listeners
     this._abortController?.abort();
 
-    this._elevator = elevator;
+    this._model = model;
 
-    if (elevator) {
+    if (model) {
       // Create new abort controller for this elevator
       this._abortController = new AbortController();
       const { signal } = this._abortController;
       // Set initial attributes
-      this.setAttribute("width", String(elevator.width));
-      this._floorButtons = structuredClone(elevator.buttons);
+      this.setAttribute("width", String(model.width));
+      this._floorButtons = structuredClone(model.buttons);
 
       // Display state handler
       this._displayStateHandler = () => {
-        this.setAttribute("x-position", String(elevator.worldX));
-        this.setAttribute("y-position", String(elevator.worldY));
+        this.setAttribute("x-position", String(model.worldX));
+        this.setAttribute("y-position", String(model.worldY));
       };
 
       // Current floor handler
@@ -99,28 +99,24 @@ export class ElevatorCar extends HTMLElement {
       };
 
       // Attach listeners with abort signal
-      elevator.addEventListener(
-        "new_display_state",
-        this._displayStateHandler,
-        { signal },
-      );
-      elevator.addEventListener(
-        "new_current_floor",
-        this._currentFloorHandler,
-        { signal },
-      );
-      elevator.addEventListener(
+      model.addEventListener("new_display_state", this._displayStateHandler, {
+        signal,
+      });
+      model.addEventListener("new_current_floor", this._currentFloorHandler, {
+        signal,
+      });
+      model.addEventListener(
         "floor_buttons_changed",
         this._floorButtonsHandler,
         { signal },
       );
 
       // Trigger initial updates
-      elevator.dispatchEvent(
-        new CustomEvent("new_display_state", { detail: elevator }),
+      model.dispatchEvent(
+        new CustomEvent("new_display_state", { detail: model }),
       );
-      elevator.dispatchEvent(
-        new CustomEvent("new_current_floor", { detail: elevator.currentFloor }),
+      model.dispatchEvent(
+        new CustomEvent("new_current_floor", { detail: model.currentFloor }),
       );
     }
   }
@@ -158,8 +154,8 @@ export class ElevatorCar extends HTMLElement {
     const y = this.getAttribute("y-position") ?? "0";
 
     // Use CSS Custom Properties for better performance and cleaner code
-    this.style.setProperty('--translate-x', `${x}px`);
-    this.style.setProperty('--translate-y', `${y}px`);
+    this.style.setProperty("--translate-x", `${x}px`);
+    this.style.setProperty("--translate-y", `${y}px`);
   }
 
   /**

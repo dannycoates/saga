@@ -30,7 +30,7 @@ export class ElevatorFloor extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     /** @type {FloorViewModel | null} */
-    this._floor = null;
+    this._model = null;
     /** @type {AbortController | null} */
     this._abortController = null;
   }
@@ -68,22 +68,22 @@ export class ElevatorFloor extends HTMLElement {
 
   /**
    * Sets the floor view model and subscribes to button state changes.
-   * @param {FloorViewModel} floor - Floor view model
+   * @param {FloorViewModel} model - Floor view model
    */
-  set floor(floor) {
+  set model(model) {
     // Abort previous listeners
     this._abortController?.abort();
 
-    this._floor = floor;
+    this._model = model;
 
-    if (floor) {
+    if (model) {
       // Create new abort controller for this floor's listeners
       this._abortController = new AbortController();
       const { signal } = this._abortController;
 
       // Set initial attributes
-      this.setAttribute("floor-number", String(floor.level));
-      this.setAttribute("y-position", String(floor.yPosition));
+      this.setAttribute("floor-number", String(model.level));
+      this.setAttribute("y-position", String(model.yPosition));
 
       // Listen for button state changes
       const buttonStateHandler = (event) => {
@@ -91,7 +91,7 @@ export class ElevatorFloor extends HTMLElement {
         this.setAttribute("up-active", String(buttons.up));
         this.setAttribute("down-active", String(buttons.down));
       };
-      floor.addEventListener("button_state_change", buttonStateHandler, {
+      model.addEventListener("button_state_change", buttonStateHandler, {
         signal,
       });
     }
@@ -107,14 +107,14 @@ export class ElevatorFloor extends HTMLElement {
     const downButton = this.shadowRoot.querySelector(".down");
 
     upButton?.addEventListener("click", () => {
-      if (this._floor) {
-        this._floor.pressUpButton();
+      if (this._model) {
+        this._model.pressUpButton();
       }
     });
 
     downButton?.addEventListener("click", () => {
-      if (this._floor) {
-        this._floor.pressDownButton();
+      if (this._model) {
+        this._model.pressDownButton();
       }
     });
   }
