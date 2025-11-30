@@ -1,9 +1,24 @@
 import { randomInt } from "../utils/common.js";
 
+// Physics constants
 /** @type {number} Acceleration rate in floors per second squared */
 const ACCELERATION = 1.1;
 /** @type {number} Deceleration rate in floors per second squared */
 const DECELERATION = 1.6;
+
+// Timing constants
+/** @type {number} Time elevator pauses with doors open (seconds) */
+const DOOR_PAUSE_TIME = 1.2;
+
+// Movement thresholds
+/** @type {number} Distance threshold to consider elevator arrived at floor */
+const ARRIVAL_THRESHOLD = 0.01;
+/** @type {number} Multiplier for distance-based acceleration scaling */
+const ACCELERATION_DISTANCE_FACTOR = 5;
+/** @type {number} Safety margin for stopping distance calculation */
+const STOPPING_DISTANCE_MARGIN = 1.05;
+/** @type {number} Correction factor for deceleration calculations */
+const DECELERATION_CORRECTION = 1.1;
 
 /**
  * Represents an elevator in the simulation with physics-based movement.
@@ -41,7 +56,7 @@ export class Elevator {
     /** @type {boolean} Whether elevator accepts passengers going up */
     this.goingUpIndicator = true;
     /** @type {number} Pause time remaining before movement (seconds) */
-    this.pause = 1.2;
+    this.pause = DOOR_PAUSE_TIME;
   }
 
   /**
@@ -145,11 +160,11 @@ export class Elevator {
     this.position += this.velocity * dt;
 
     // Check if arrived
-    if (this.distanceToDestination < 0.01) {
+    if (this.distanceToDestination < ARRIVAL_THRESHOLD) {
       this.position = this.destination;
       this.velocity = 0;
       this.buttons[this.currentFloor] = false;
-      this.pause = 1.2;
+      this.pause = DOOR_PAUSE_TIME;
       return true;
     }
 
@@ -176,7 +191,7 @@ export class Elevator {
 
     // Starting from rest
     if (this.velocity === 0) {
-      const acceleration = Math.min(distance * 5, ACCELERATION);
+      const acceleration = Math.min(distance * ACCELERATION_DISTANCE_FACTOR, ACCELERATION);
       return targetDirection * acceleration * dt;
     }
 
@@ -190,14 +205,14 @@ export class Elevator {
     const stoppingDistance =
       (this.velocity * this.velocity) / (2 * DECELERATION);
 
-    if (stoppingDistance * 1.05 < distance) {
+    if (stoppingDistance * STOPPING_DISTANCE_MARGIN < distance) {
       // Can safely accelerate
-      const acceleration = Math.min(distance * 5, ACCELERATION);
+      const acceleration = Math.min(distance * ACCELERATION_DISTANCE_FACTOR, ACCELERATION);
       return this.velocity + targetDirection * acceleration * dt;
     } else {
       // Need to decelerate
       const requiredDecel = (this.velocity * this.velocity) / (2 * distance);
-      const deceleration = Math.min(DECELERATION * 1.1, requiredDecel);
+      const deceleration = Math.min(DECELERATION * DECELERATION_CORRECTION, requiredDecel);
       return this.velocity - targetDirection * deceleration * dt;
     }
   }

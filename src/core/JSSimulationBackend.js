@@ -5,6 +5,28 @@ import { Elevator } from "./Elevator.js";
 import { Passenger } from "./Passenger.js";
 import { EventBus } from "../utils/EventBus.js";
 
+// Default configuration
+/** @type {number} Default passenger spawn rate (passengers per second) */
+const DEFAULT_SPAWN_RATE = 0.5;
+/** @type {number} Default elevator speed (floors per second) */
+const DEFAULT_ELEVATOR_SPEED = 2.6;
+
+// Stats update rate
+/** @type {number} Maximum stats update frequency (frames per second) */
+const STATS_UPDATE_FPS = 30;
+
+// Spawn timing
+/** @type {number} Offset multiplier to trigger immediate first passenger spawn */
+const IMMEDIATE_SPAWN_MULTIPLIER = 1.001;
+
+// Passenger generation
+/** @type {number} Minimum passenger weight */
+const MIN_PASSENGER_WEIGHT = 55;
+/** @type {number} Maximum passenger weight */
+const MAX_PASSENGER_WEIGHT = 100;
+/** @type {number} Odds denominator for going somewhere other than ground floor (1 in N) */
+const NON_GROUND_DESTINATION_ODDS = 10;
+
 /**
  * JavaScript implementation of the simulation backend.
  * Handles elevator physics, passenger spawning, and game logic.
@@ -37,9 +59,9 @@ export class JSSimulationBackend extends SimulationBackend {
     /** @type {number[]} Capacity for each elevator */
     this.elevatorCapacities = [];
     /** @type {number} Passenger spawn rate per second */
-    this.spawnRate = 0.5;
+    this.spawnRate = DEFAULT_SPAWN_RATE;
     /** @type {number} Elevator speed in floors per second */
-    this.speedFloorsPerSec = 2.6;
+    this.speedFloorsPerSec = DEFAULT_ELEVATOR_SPEED;
 
     // Stats
     /** @type {number} Total passengers successfully transported */
@@ -72,7 +94,7 @@ export class JSSimulationBackend extends SimulationBackend {
     /** @type {{evaluate: (stats: import('./SimulationBackend.js').SimulationStats) => boolean | null} | undefined} */
     this.endCondition = undefined;
 
-    // Throttled stats update (30 FPS max)
+    // Throttled stats update
     /** @type {() => void} */
     this.throttledStats = throttle(() => {
       if (this.isChallengeEnded) {
@@ -80,7 +102,7 @@ export class JSSimulationBackend extends SimulationBackend {
       }
       this.recalculateStats();
       this.eventBus.emit("simulation:stats_changed", this.getStats());
-    }, 1000 / 30);
+    }, 1000 / STATS_UPDATE_FPS);
   }
 
   /**
@@ -95,7 +117,7 @@ export class JSSimulationBackend extends SimulationBackend {
     this.elevatorCount = config.elevatorCount;
     this.elevatorCapacities = config.elevatorCapacities || [4];
     this.spawnRate = config.spawnRate;
-    this.speedFloorsPerSec = config.speedFloorsPerSec || 2.6;
+    this.speedFloorsPerSec = config.speedFloorsPerSec || DEFAULT_ELEVATOR_SPEED;
     this.endCondition = config.endCondition;
 
     // Reset state
@@ -107,7 +129,8 @@ export class JSSimulationBackend extends SimulationBackend {
     this.avgWaitTime = 0.0;
     this.isChallengeEnded = false;
 
-    this.elapsedSinceSpawn = 1.001 / this.spawnRate;
+    // Initialize spawn timer to trigger immediate first spawn
+    this.elapsedSinceSpawn = IMMEDIATE_SPAWN_MULTIPLIER / this.spawnRate;
 
     this.passengers = [];
     this.floors = Array.from(
@@ -135,7 +158,7 @@ export class JSSimulationBackend extends SimulationBackend {
    */
   spawnPassenger() {
     const { currentFloor, destinationFloor } = this.randomStartAndDestination();
-    const weight = randomInt(55, 100);
+    const weight = randomInt(MIN_PASSENGER_WEIGHT, MAX_PASSENGER_WEIGHT);
     const passenger = new Passenger(
       `passenger_${this.elapsedTime}_${Math.random()}`,
       weight,
@@ -173,8 +196,8 @@ export class JSSimulationBackend extends SimulationBackend {
       // Definitely going up
       destinationFloor = randomInt(1, this.floorCount - 1);
     } else {
-      // Usually going down, but sometimes not
-      if (randomInt(0, 10) === 0) {
+      // Usually going down to ground floor, but occasionally going elsewhere
+      if (randomInt(0, NON_GROUND_DESTINATION_ODDS) === 0) {
         destinationFloor =
           (currentFloor + randomInt(1, this.floorCount - 1)) % this.floorCount;
       } else {
