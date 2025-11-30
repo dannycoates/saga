@@ -2,13 +2,16 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { JSSimulationBackend } from "../src/core/JSSimulationBackend.js";
 import { ViewModelManager } from "../src/ui/ViewModelManager.js";
 import { GameController } from "../src/game/GameController.js";
+import { EventBus } from "../src/utils/EventBus.js";
 
 describe("Modern Architecture", () => {
   describe("JSSimulationBackend Core Functionality", () => {
     let simulation;
+    let eventBus;
 
     beforeEach(() => {
-      simulation = new JSSimulationBackend();
+      eventBus = new EventBus();
+      simulation = new JSSimulationBackend(eventBus);
       simulation.initialize({
         floorCount: 4,
         elevatorCount: 2,
@@ -38,9 +41,9 @@ describe("Modern Architecture", () => {
       expect(simulation.passengers.length).toBeGreaterThan(0);
     });
 
-    it("should emit state_changed events", () => {
+    it("should emit state_changed events via eventBus", () => {
       const stateHandler = vi.fn();
-      simulation.addEventListener("state_changed", stateHandler);
+      eventBus.on("simulation:state_changed", stateHandler);
 
       simulation.tick(0.1);
 
@@ -64,9 +67,11 @@ describe("Modern Architecture", () => {
 
   describe("JSSimulationBackend", () => {
     let backend;
+    let backendEventBus;
 
     beforeEach(() => {
-      backend = new JSSimulationBackend();
+      backendEventBus = new EventBus();
+      backend = new JSSimulationBackend(backendEventBus);
       backend.initialize({
         floorCount: 3,
         elevatorCount: 1,
@@ -86,9 +91,9 @@ describe("Modern Architecture", () => {
       expect(backend.getStats).toBeDefined();
     });
 
-    it("should forward events from SimulationCore", () => {
+    it("should emit events via eventBus", () => {
       const stateHandler = vi.fn();
-      backend.addEventListener("state_changed", stateHandler);
+      backendEventBus.on("simulation:state_changed", stateHandler);
 
       backend.tick(0.1);
 
@@ -113,14 +118,17 @@ describe("Modern Architecture", () => {
   describe("ViewModelManager", () => {
     let viewModelManager;
     let backend;
+    let vmEventBus;
 
     beforeEach(() => {
+      vmEventBus = new EventBus();
       viewModelManager = new ViewModelManager({
         isRenderingEnabled: true,
         floorHeight: 50,
+        eventBus: vmEventBus,
       });
 
-      backend = new JSSimulationBackend();
+      backend = new JSSimulationBackend(vmEventBus);
       backend.initialize({
         floorCount: 2,
         elevatorCount: 1,
@@ -141,8 +149,8 @@ describe("Modern Architecture", () => {
       expect(viewModelManager.elevatorViewModels.size).toBe(1);
     });
 
-    it("should subscribe to backend events", () => {
-      viewModelManager.subscribeToBackend(backend);
+    it("should subscribe to eventBus events", () => {
+      viewModelManager.subscribeToEvents();
 
       const updateSpy = vi.spyOn(viewModelManager, "updateViewModels");
       backend.tick(0.1);
@@ -165,9 +173,11 @@ describe("Modern Architecture", () => {
 
   describe("GameController", () => {
     let gameController;
+    let gcEventBus;
 
     beforeEach(() => {
-      gameController = new GameController();
+      gcEventBus = new EventBus();
+      gameController = new GameController(gcEventBus);
       gameController.initializeChallenge({
         options: {
           floorCount: 4,
@@ -184,10 +194,11 @@ describe("Modern Architecture", () => {
       expect(gameController.backend.constructor.name).toBe("JSSimulationBackend");
     });
 
-    it("should emit challenge_initialized with backend reference", () => {
+    it("should emit challenge_initialized with initialState", () => {
       const handler = vi.fn();
-      const newGameController = new GameController();
-      newGameController.addEventListener("challenge_initialized", handler);
+      const newEventBus = new EventBus();
+      const newGameController = new GameController(newEventBus);
+      newEventBus.on("game:challenge_initialized", handler);
 
       newGameController.initializeChallenge({
         options: { floorCount: 2 },
@@ -196,7 +207,7 @@ describe("Modern Architecture", () => {
 
       expect(handler).toHaveBeenCalled();
       const detail = handler.mock.calls[0][0].detail;
-      expect(detail.backend).toBeDefined();
+      expect(detail.initialState).toBeDefined();
       expect(detail.options).toBeDefined();
       expect(detail.options.floorHeight).toBeDefined();
     });
@@ -219,7 +230,8 @@ describe("Modern Architecture", () => {
 
   describe("State Snapshot Integrity", () => {
     it("should create complete elevator snapshots", () => {
-      const simulation = new JSSimulationBackend();
+      const snapshotEventBus = new EventBus();
+      const simulation = new JSSimulationBackend(snapshotEventBus);
       simulation.initialize({
         floorCount: 4,
         elevatorCount: 1,
@@ -250,7 +262,8 @@ describe("Modern Architecture", () => {
     });
 
     it("should create complete passenger snapshots", () => {
-      const simulation = new JSSimulationBackend();
+      const snapshotEventBus = new EventBus();
+      const simulation = new JSSimulationBackend(snapshotEventBus);
       simulation.initialize({
         floorCount: 4,
         elevatorCount: 1,

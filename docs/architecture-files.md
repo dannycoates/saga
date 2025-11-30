@@ -65,8 +65,8 @@ The simulation engine that handles game physics and entity management.
 
 | File | Purpose |
 |------|---------|
-| `SimulationBackend.js` | **Abstract base class** extending EventTarget. Defines interface for all backend implementations: `initialize()`, `tick()`, `getState()`, `callUserCode()`, `getStats()`, `cleanup()`. |
-| `JSSimulationBackend.js` | **Main simulation implementation**. Manages floors, elevators, passengers. Handles spawning, physics updates, boarding/exiting logic, statistics tracking. Emits events: `state_changed`, `stats_changed`, `passenger_spawned`, `passengers_exited`, `passengers_boarded`, `challenge_ended`. |
+| `SimulationBackend.js` | **Abstract base class**. Defines interface for all backend implementations: `initialize()`, `tick()`, `getState()`, `callUserCode()`, `getStats()`, `cleanup()`. Implementations receive EventBus via constructor. |
+| `JSSimulationBackend.js` | **Main simulation implementation**. Receives EventBus via constructor. Manages floors, elevators, passengers. Handles spawning, physics updates, boarding/exiting logic, statistics tracking. Emits events via eventBus: `simulation:state_changed`, `simulation:stats_changed`, `simulation:passenger_spawned`, `simulation:passengers_exited`, `simulation:passengers_boarded`, `simulation:challenge_ended`. |
 | `Elevator.js` | **Elevator entity class**. Properties: position, velocity, destination, passengers, buttons, indicators. Methods: `tick()` for physics, `goToFloor()`, `addPassenger()`, `removePassenger()`, `toAPI()` for player code, `toJSON()` for display. |
 | `Floor.js` | **Floor entity class**. Properties: level, buttons (up/down). Methods: `pressButton()`, `clearButton()`, `toJSON()`. |
 | `Passenger.js` | **Passenger entity class**. Properties: id, weight, origin, destination, currentFloor, state, elevator, timestamps. Methods: `enterElevator()`, `exitElevator()`, `shouldExitAt()`, `toJSON()`. |
@@ -86,7 +86,7 @@ Game flow, challenges, and world management.
 
 | File | Purpose |
 |------|---------|
-| `GameController.js` | **Game orchestrator**. Composes JSSimulationBackend and ViewModelManager. Manages game loop via `requestAnimationFrame`. Handles: challenge initialization, start/pause/resume, time scaling, user code execution coordination. Uses AbortController for event cleanup. |
+| `GameController.js` | **Game orchestrator**. Receives EventBus via constructor, passes it to JSSimulationBackend. Manages game loop via `requestAnimationFrame`. Handles: challenge initialization, start/pause/resume, time scaling, user code execution coordination. Emits `game:*` events. Uses AbortController for event cleanup. |
 | `challenges.js` | **Challenge definitions**. Contains 16 progressive challenges with configurations (floors, elevators, spawn rates) and end conditions. Condition functions: `requirePassengerCountWithinTime()`, `requirePassengerCountWithMaxWaitTime()`, `requirePassengerCountWithinMoves()`, `requireDemo()`. |
 
 ---
@@ -111,11 +111,11 @@ Presentation layer and user interaction handling.
 
 | File | Purpose |
 |------|---------|
-| `ViewModelManager.js` | **View model orchestrator**. Manages Maps of FloorViewModel, ElevatorViewModel, PassengerViewModel. Subscribes to backend events and updates view models. Can be disabled for headless operation. Uses AbortController for cleanup. |
+| `ViewModelManager.js` | **View model orchestrator**. Receives EventBus via constructor. Manages Maps of FloorViewModel, ElevatorViewModel, PassengerViewModel. Subscribes to `simulation:*` events via eventBus. Emits `viewmodel:passenger_created` after creating passenger view models. Can be disabled for headless operation. Uses AbortController for cleanup. |
 | `NullViewModelManager.js` | **No-op view model manager**. Used for headless operation when visual rendering is completely disabled. |
 | `CodeEditor.js` | **CodeMirror integration**. Multi-language editor with syntax highlighting (JavaScript, Python, Java). Features: ESLint linting (JS only), Gruvbox themes, auto-save to localStorage, keyboard shortcuts (Tab indent, Ctrl+S start). Uses Compartments for dynamic reconfiguration. |
 | `AppDOM.js` | **DOM element cache**. Central reference to DOM elements. Methods for showing/hiding runtime loading indicator, clearing feedback. |
-| `AppEventHandlers.js` | **Event coordination**. Attaches UI event listeners for buttons, language selector, theme changes. Delegates to ElevatorApp methods. |
+| `AppEventHandlers.js` | **Event coordination**. Receives EventBus via constructor. Subscribes to `simulation:*`, `game:*`, and `viewmodel:*` events. Attaches UI event listeners for buttons, language selector, theme changes. Delegates to presenters for UI updates. |
 | `presenters.js` | **Component factories**. Functions to create and bind Web Components: `presentStats()`, `presentChallenge()`, `presentFeedback()`, `presentCodeStatus()`, `presentWorld()`, `presentFloor()`, `presentElevator()`, `presentPassenger()`. |
 | `PerformanceMonitor.js` | **Performance tracking**. Monitors frame rates and rendering performance. |
 | `ResponsiveScaling.js` | **Layout management**. Handles responsive scaling and layout adjustments for different screen sizes. |
@@ -157,6 +157,7 @@ Helper functions and utilities.
 
 | File | Purpose |
 |------|---------|
+| `EventBus.js` | **Central event bus**. Extends EventTarget. Provides `emit(name, detail)`, `on(name, handler, options)`, `off(name, handler)` methods. All application events flow through a single EventBus instance injected via dependency injection. Events use namespaced naming: `simulation:*`, `game:*`, `viewmodel:*`, `app:*`. |
 | `AsyncUtils.js` | Promise utilities: `sleep()`, `waitFor()`, `timeout()`. Used for async operations and runtime loading. |
 | `common.js` | **Shared utilities**. General-purpose functions: `randomInt()`, `throttle()`, `limitNumber()`. Used across layers. |
 | `URLManager.js` | **URL state management**. Parses URL parameters for challenge index and code. Updates URL on challenge changes. Enables sharing game state via URL. |
@@ -234,9 +235,9 @@ index.html
 | `src/ui/` | 9 | UI management |
 | `src/ui/components/` | 8 | Web components |
 | `src/ui/viewmodels/` | 6 | View model objects |
-| `src/utils/` | 3 | Utilities |
+| `src/utils/` | 4 | Utilities (inc. EventBus) |
 | `tests/` | 8 | Test files |
-| **Total** | **50** | Source + tests |
+| **Total** | **51** | Source + tests |
 
 ---
 

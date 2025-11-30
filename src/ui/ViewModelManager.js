@@ -1,6 +1,7 @@
 import { FloorViewModel } from "./viewmodels/FloorViewModel.js";
 import { ElevatorViewModel } from "./viewmodels/ElevatorViewModel.js";
 import { PassengerViewModel } from "./viewmodels/PassengerViewModel.js";
+import { EventBus } from "../utils/EventBus.js";
 
 /**
  * @typedef {import('../core/SimulationBackend.js').SimulationState} SimulationState
@@ -11,26 +12,29 @@ import { PassengerViewModel } from "./viewmodels/PassengerViewModel.js";
  * @typedef {Object} ViewModelManagerOptions
  * @property {boolean} [isRenderingEnabled=true] - Whether to create and update view models
  * @property {number} [floorHeight=50] - Height of each floor in pixels
- * @property {import('../core/SimulationBackend.js').SimulationBackend} [backend] - Backend to subscribe to
+ * @property {EventBus} [eventBus] - Event bus to subscribe to
+ * @property {SimulationState} [initialState] - Initial simulation state
  */
 
 /**
  * Manages all view model objects and updates them based on simulation state.
- * Subscribes to backend events and maintains view model object lifecycle.
+ * Subscribes to event bus for simulation events and maintains view model lifecycle.
  * Can be disabled for headless operation.
  */
 export class ViewModelManager {
   /**
    * Factory method for creating ViewModelManager instances.
-   * If backend is provided, initializes view models and subscribes to backend events.
+   * If eventBus and initialState are provided, initializes view models and subscribes to events.
    * @param {ViewModelManagerOptions} [options={}] - Configuration options
    * @returns {ViewModelManager} A new ViewModelManager instance
    */
   static create(options = {}) {
     const instance = new ViewModelManager(options);
-    if (options.backend) {
-      instance.initialize(options.backend.getState());
-      instance.subscribeToBackend(options.backend);
+    if (options.initialState) {
+      instance.initialize(options.initialState);
+    }
+    if (options.eventBus) {
+      instance.subscribeToEvents();
     }
     return instance;
   }
@@ -44,6 +48,8 @@ export class ViewModelManager {
     this.isRenderingEnabled = options.isRenderingEnabled !== false;
     /** @type {number} Height of each floor in pixels */
     this.floorHeight = options.floorHeight || 50;
+    /** @type {EventBus | undefined} Event bus for simulation events */
+    this.eventBus = options.eventBus;
 
     /** @type {Map<number, FloorViewModel>} Floor view models keyed by level */
     this.floorViewModels = new Map();
@@ -130,16 +136,17 @@ export class ViewModelManager {
   }
 
   /**
-   * Subscribes to simulation backend events for state updates.
+   * Subscribes to simulation events via the event bus.
    * Uses AbortController for proper cleanup on dispose.
-   * @param {import('../core/SimulationBackend.js').SimulationBackend} backend - Backend to subscribe to
    * @returns {void}
    */
-  subscribeToBackend(backend) {
+  subscribeToEvents() {
+    if (!this.eventBus) return;
+
     const { signal } = this.abortController;
 
-    backend.addEventListener(
-      "state_changed",
+    this.eventBus.on(
+      "simulation:state_changed",
       (e) => {
         const detail = /** @type {CustomEvent<SimulationState & {dt?: number}>} */ (e).detail;
         const dt = detail.dt ?? 0;
@@ -148,8 +155,8 @@ export class ViewModelManager {
       { signal },
     );
 
-    backend.addEventListener(
-      "passenger_spawned",
+    this.eventBus.on(
+      "simulation:passenger_spawned",
       (e) => {
         const detail = /** @type {CustomEvent<{passenger: PassengerStateData}>} */ (e).detail;
         this.handlePassengerSpawned(detail.passenger);
@@ -157,8 +164,8 @@ export class ViewModelManager {
       { signal },
     );
 
-    backend.addEventListener(
-      "passengers_exited",
+    this.eventBus.on(
+      "simulation:passengers_exited",
       (e) => {
         const detail = /** @type {CustomEvent<{passengers: PassengerStateData[]}>} */ (e).detail;
         this.handlePassengersExited(detail.passengers);
@@ -235,6 +242,14 @@ export class ViewModelManager {
     );
 
     this.passengerViewModels.set(passengerState.id, viewModel);
+
+    // Emit event so UI can present the new passenger
+    if (this.eventBus) {
+      this.eventBus.emit("viewmodel:passenger_created", {
+        passengerId: passengerState.id,
+        viewModel,
+      });
+    }
   }
 
   /**

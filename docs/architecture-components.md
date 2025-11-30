@@ -9,9 +9,9 @@ This document details the component relationships, class hierarchies, and data s
 ### Backend Hierarchy
 
 ```
-EventTarget (Browser API)
+SimulationBackend (Abstract)
      │
-     └── SimulationBackend (Abstract)
+     │  Receives EventBus via constructor
               │
               │  Interface Methods:
               │  ├── initialize(config)
@@ -108,11 +108,17 @@ EventTarget (Browser API)
 
 ## 2. Event System
 
+The application uses a centralized **EventBus** for all inter-component communication. Events are namespaced with prefixes:
+- `simulation:*` - Core simulation events from JSSimulationBackend
+- `game:*` - Game lifecycle events from GameController
+- `viewmodel:*` - View model events from ViewModelManager
+- `app:*` - Application-level events
+
 ### Event Types and Payloads
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  Event: state_changed                                                        │
+│  Event: simulation:state_changed                                             │
 │  Frequency: Every tick (~60 Hz)                                              │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  Payload:                                                                    │
@@ -127,7 +133,7 @@ EventTarget (Browser API)
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  Event: stats_changed                                                        │
+│  Event: simulation:stats_changed                                             │
 │  Frequency: Throttled to 30 FPS max                                          │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  Payload:                                                                    │
@@ -142,28 +148,28 @@ EventTarget (Browser API)
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  Event: passenger_spawned                                                    │
+│  Event: simulation:passenger_spawned                                         │
 │  Frequency: Based on spawnRate                                               │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  Payload: { passenger: Passenger }                                           │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  Event: passengers_exited                                                    │
+│  Event: simulation:passengers_exited                                         │
 │  Frequency: When elevator arrives and passengers exit                        │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  Payload: { passengers: Passenger[], elevator: Elevator }                    │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  Event: passengers_boarded                                                   │
+│  Event: simulation:passengers_boarded                                        │
 │  Frequency: When elevator arrives and passengers board                       │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  Payload: { passengers: Passenger[], elevator: Elevator }                    │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  Event: challenge_ended                                                      │
+│  Event: simulation:challenge_ended                                           │
 │  Frequency: Once per challenge (success or failure)                          │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  Payload: { succeeded: boolean }                                             │
@@ -172,31 +178,29 @@ EventTarget (Browser API)
 
 ### Event Flow Diagram
 
+All events flow through the centralized EventBus. Components subscribe directly to the events they need.
+
 ```
-JSSimulationBackend                                   Subscribers
-       │                                                   │
-       │                                    ┌──────────────┼──────────────┐
-       │                                    │              │              │
-       │                                    ▼              ▼              ▼
-       │                             ViewModelManager   GameController    ElevatorApp
-       │                                    │              │              │
-       ├── state_changed ──────────────────►│              │              │
-       │    (every tick)                    │              │              │
-       │                          updateDisplays()         │              │
-       │                                    │              │              │
-       ├── stats_changed ──────────────────►├──────────────┤              │
-       │    (throttled)                     │        forward to           │
-       │                                    │        UI presenter         │
-       │                                    │              │              │
-       ├── passenger_spawned ──────────────►│              │              │
-       │                          createPassengerViewModel() │              │
-       │                                    │              │              │
-       ├── passengers_exited ──────────────►│              │              │
-       │                          animateExit()            │              │
-       │                                    │              │              │
-       └── challenge_ended ────────────────►├──────────────┤──────────────┤
-                                            │         stop loop    show feedback
-                                     show feedback         │              │
+                                         EventBus
+                                            │
+    Emitters                                │                    Subscribers
+    ────────                                │                    ───────────
+                                            │
+JSSimulationBackend ──────────────────────►─┤
+  simulation:state_changed                  │──────────────────► ViewModelManager
+  simulation:stats_changed                  │                      updateDisplays()
+  simulation:passenger_spawned              │
+  simulation:passengers_exited              │──────────────────► AppEventHandlers
+  simulation:challenge_ended                │                      presentPassenger()
+                                            │                      showFeedback()
+GameController ───────────────────────────►─┤
+  game:challenge_initialized                │──────────────────► Web Components
+  game:simulation_started                   │                      elevator-stats
+  game:timescale_changed                    │                      challenge-control
+                                            │
+ViewModelManager ─────────────────────────►─┤
+  viewmodel:passenger_created               │──────────────────► AppEventHandlers
+                                            │                      presentPassenger()
 ```
 
 ---
@@ -466,7 +470,7 @@ EventTarget (Browser API)
 │                                                                             │
 │  Lifecycle Methods:                                                         │
 │  ├── initialize(initialState)    // Create view models from state          │
-│  ├── subscribeToBackend(backend) // Attach event listeners                 │
+│  ├── subscribeToEvents()         // Subscribe to eventBus events           │
 │  ├── tick(dt)                    // Advance animations                     │
 │  └── cleanup()                   // Remove view models, abort events       │
 │                                                                             │

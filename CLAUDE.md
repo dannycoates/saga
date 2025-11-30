@@ -22,33 +22,46 @@ Elevator Saga is a multi-language elevator programming game where users write Ja
 
 ### Core Architecture Pattern
 
-The codebase uses a **streamlined, event-driven architecture** with clear separation of concerns:
+The codebase uses a **streamlined, event-driven architecture** with a central EventBus for loose coupling:
 
 ```
-JSSimulationBackend → GameController → ViewModelManager → UI
-   (Simulation)       (Game Control)    (View Models)
+                         EventBus
+                            ↑
+        ┌───────────────────┼───────────────────┐
+        ↓                   ↓                   ↓
+JSSimulationBackend   GameController    ViewModelManager → UI
+   (Simulation)       (Game Control)      (View Models)
 ```
+
+All components communicate through a shared `EventBus` instance injected via dependency injection.
 
 ### Key Components
 
+**EventBus** (`src/utils/EventBus.js`)
+- Central event bus extending `EventTarget` for application-wide events
+- Provides `emit(name, detail)`, `on(name, handler, options)`, `off(name, handler)` methods
+- Events use namespaced naming: `simulation:*`, `game:*`, `viewmodel:*`
+- Injected via dependency injection to all major components
+
 **JSSimulationBackend** (`src/core/JSSimulationBackend.js`)
 - Primary simulation engine handling game physics and logic
-- Event-driven with direct state management
+- Receives `eventBus` in constructor for event emission
 - Manages passengers, elevators, floors, and their interactions
 - Handles user code execution and error propagation
-- Emits `state_changed`, `stats_changed`, `passenger_spawned` events
+- Emits `simulation:state_changed`, `simulation:stats_changed`, `simulation:passenger_spawned`, `simulation:challenge_ended` events
 
 **GameController** (`src/game/GameController.js`)
 - Main game orchestrator and controller
-- Composes `JSSimulationBackend` and `ViewModelManager`
+- Receives `eventBus` in constructor, passes it to `JSSimulationBackend`
 - Manages game loops, user code execution, and challenge evaluation
 - Uses **AbortController** for proper event listener cleanup
-- Provides game state properties (`transportedCounter`, `moveCount`, etc.)
+- Emits `game:challenge_initialized`, `game:simulation_started`, `game:timescale_changed`
 
 **ViewModelManager** (`src/ui/ViewModelManager.js`)
 - View model layer separated from simulation logic
 - Manages view models: floors, elevators, passengers
-- Event-driven updates via subscription to backend events
+- Subscribes to `simulation:*` events via eventBus for updates
+- Emits `viewmodel:passenger_created` after creating passenger view models
 - Can be completely disabled for headless operation
 
 ### Multi-Runtime System
@@ -86,16 +99,36 @@ function tick(elevators, floors) { /* player code */ }
 - `/src/game/` - Game logic (GameController, challenges)
 - `/src/ui/` - UI presentation layer (ViewModelManager, view models, web components)
 - `/src/runtimes/` - Multi-language runtime implementations
-- `/src/utils/` - Shared utilities (AsyncUtils, common, URLManager)
+- `/src/utils/` - Shared utilities (EventBus, AsyncUtils, common, URLManager)
 - `/tests/` - Test files mirroring src structure
 
 ### Event-Driven Architecture
 
-The system uses **EventTarget** extensively for loose coupling:
-- `JSSimulationBackend` emits core events (`state_changed`, `stats_changed`, `passenger_spawned`)
-- `ViewModelManager` subscribes to backend events for view model updates
-- `GameController` uses **AbortController** for proper event cleanup
-- `GameController` handles game loop and user code errors
+The system uses a centralized **EventBus** for loose coupling between components:
+
+**Event Namespaces:**
+- `simulation:*` - Core simulation events from JSSimulationBackend
+- `game:*` - Game lifecycle events from GameController
+- `viewmodel:*` - View model events from ViewModelManager
+- `app:*` - Application-level events (e.g., user code errors)
+
+**Key Events:**
+| Event | Source | Description |
+|-------|--------|-------------|
+| `simulation:state_changed` | JSSimulationBackend | Emitted each tick with current state |
+| `simulation:stats_changed` | JSSimulationBackend | Statistics update (throttled) |
+| `simulation:passenger_spawned` | JSSimulationBackend | New passenger created |
+| `simulation:challenge_ended` | JSSimulationBackend | Challenge win/lose condition met |
+| `game:challenge_initialized` | GameController | New challenge loaded |
+| `game:simulation_started` | GameController | Simulation started |
+| `game:timescale_changed` | GameController | Time scale adjusted |
+| `viewmodel:passenger_created` | ViewModelManager | Passenger view model ready for rendering |
+
+**Pattern Benefits:**
+- No event forwarding/re-emission between components
+- All subscribers are equal - no ordering dependencies
+- Components don't need references to each other, just the eventBus
+- Clean separation via dependency injection
 
 ### Critical Patterns
 
@@ -121,8 +154,10 @@ The project uses Vitest with JSDOM for testing. Test files are in `/tests/` and 
 
 ## Important Files
 
+- `src/utils/EventBus.js` - Central event bus for application-wide communication
 - `src/game/GameController.js` - Main game orchestrator with AbortController event management
 - `src/core/JSSimulationBackend.js` - Primary simulation engine and backend
 - `src/ui/ViewModelManager.js` - View model layer management
+- `src/ui/AppEventHandlers.js` - UI event subscriptions and handlers
 - `src/game/challenges.js` - Challenge definitions and evaluation
 - `src/runtimes/RuntimeManager.js` - Multi-language runtime coordination

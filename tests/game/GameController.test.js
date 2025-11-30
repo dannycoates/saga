@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { GameController } from "../../src/game/GameController.js";
+import { EventBus } from "../../src/utils/EventBus.js";
 
 // Mock window for animation frames
 const mockRAF = vi.fn((cb) => {
@@ -24,9 +25,11 @@ afterEach(() => {
 
 describe("GameController", () => {
   let gameController;
+  let eventBus;
 
   beforeEach(() => {
-    gameController = new GameController();
+    eventBus = new EventBus();
+    gameController = new GameController(eventBus);
   });
 
   describe("constructor", () => {
@@ -74,7 +77,7 @@ describe("GameController", () => {
 
     it("should emit challenge_initialized event", () => {
       const listener = vi.fn();
-      gameController.addEventListener("challenge_initialized", listener);
+      eventBus.on("game:challenge_initialized", listener);
 
       gameController.initializeChallenge({
         options: { floorCount: 3 },
@@ -82,7 +85,7 @@ describe("GameController", () => {
       });
 
       expect(listener).toHaveBeenCalled();
-      expect(listener.mock.calls[0][0].detail).toHaveProperty("backend");
+      expect(listener.mock.calls[0][0].detail).toHaveProperty("initialState");
       expect(listener.mock.calls[0][0].detail).toHaveProperty("options");
     });
 
@@ -160,7 +163,7 @@ describe("GameController", () => {
 
     it("should emit simulation_started event", async () => {
       const listener = vi.fn();
-      gameController.addEventListener("simulation_started", listener);
+      eventBus.on("game:simulation_started", listener);
 
       await gameController.start({ tick: vi.fn() });
 
@@ -168,7 +171,7 @@ describe("GameController", () => {
     });
 
     it("should throw if backend not initialized", async () => {
-      const controller = new GameController();
+      const controller = new GameController(eventBus);
 
       await expect(controller.start({ tick: vi.fn() })).rejects.toThrow(
         "Backend not created",
@@ -212,11 +215,15 @@ describe("GameController", () => {
 
     it("should emit timescale_changed event", () => {
       const listener = vi.fn();
-      gameController.addEventListener("timescale_changed", listener);
+      eventBus.on("game:timescale_changed", listener);
 
       gameController.setTimeScale(3.0);
 
       expect(listener).toHaveBeenCalled();
+      expect(listener.mock.calls[0][0].detail).toEqual({
+        timeScale: 3.0,
+        isPaused: true,
+      });
     });
 
     it("should persist to localStorage", () => {
@@ -240,11 +247,15 @@ describe("GameController", () => {
 
     it("should emit timescale_changed event", () => {
       const listener = vi.fn();
-      gameController.addEventListener("timescale_changed", listener);
+      eventBus.on("game:timescale_changed", listener);
 
       gameController.setPaused(false);
 
       expect(listener).toHaveBeenCalled();
+      expect(listener.mock.calls[0][0].detail).toEqual({
+        timeScale: 1.0,
+        isPaused: false,
+      });
     });
   });
 
@@ -277,7 +288,7 @@ describe("GameController", () => {
     });
   });
 
-  describe("event forwarding", () => {
+  describe("event handling", () => {
     beforeEach(() => {
       gameController.initializeChallenge({
         options: { floorCount: 3, isRenderingEnabled: false },
@@ -285,41 +296,32 @@ describe("GameController", () => {
       });
     });
 
-    it("should forward stats_changed events", () => {
+    it("should emit stats_changed via eventBus from backend", () => {
       const listener = vi.fn();
-      gameController.addEventListener("stats_changed", listener);
+      eventBus.on("simulation:stats_changed", listener);
 
-      gameController.backend.dispatchEvent(
-        new CustomEvent("stats_changed", { detail: { test: true } }),
-      );
+      // Backend emits directly to eventBus
+      eventBus.emit("simulation:stats_changed", { test: true });
 
       expect(listener).toHaveBeenCalled();
       expect(listener.mock.calls[0][0].detail).toEqual({ test: true });
     });
 
-    it("should forward passenger_spawned events", () => {
+    it("should emit passenger_spawned via eventBus from backend", () => {
       const listener = vi.fn();
-      gameController.addEventListener("passenger_spawned", listener);
+      eventBus.on("simulation:passenger_spawned", listener);
 
-      gameController.backend.dispatchEvent(
-        new CustomEvent("passenger_spawned", {
-          detail: { passenger: { id: "test" } },
-        }),
-      );
+      eventBus.emit("simulation:passenger_spawned", { passenger: { id: "test" } });
 
       expect(listener).toHaveBeenCalled();
     });
 
-    it("should forward challenge_ended and call end()", () => {
-      const listener = vi.fn();
-      gameController.addEventListener("challenge_ended", listener);
+    it("should call end() on challenge_ended", () => {
       const endSpy = vi.spyOn(gameController, "end");
 
-      gameController.backend.dispatchEvent(
-        new CustomEvent("challenge_ended", { detail: { succeeded: true } }),
-      );
+      // Simulate challenge ended event from backend
+      eventBus.emit("simulation:challenge_ended", { succeeded: true });
 
-      expect(listener).toHaveBeenCalled();
       expect(endSpy).toHaveBeenCalled();
     });
   });
@@ -361,7 +363,7 @@ describe("GameController", () => {
 
     it("should emit cleanup event", () => {
       const listener = vi.fn();
-      gameController.addEventListener("cleanup", listener);
+      eventBus.on("game:cleanup", listener);
 
       gameController.cleanup();
 

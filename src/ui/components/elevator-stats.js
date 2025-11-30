@@ -1,3 +1,5 @@
+import { EventBus } from "../../utils/EventBus.js";
+
 /**
  * @typedef {import('../../game/GameController.js').GameController} GameController
  */
@@ -41,6 +43,10 @@ export class ElevatorStats extends HTMLElement {
     this.attachShadow({ mode: "open" });
     /** @type {GameController | null} */
     this._world = null;
+    /** @type {EventBus | null} */
+    this._eventBus = null;
+    /** @type {AbortController | null} */
+    this._abortController = null;
   }
 
   /**
@@ -57,9 +63,7 @@ export class ElevatorStats extends HTMLElement {
    * @returns {void}
    */
   disconnectedCallback() {
-    if (this._world) {
-      this._world.removeEventListener("stats_changed", this._updateHandler);
-    }
+    this._abortController?.abort();
   }
 
   /**
@@ -74,21 +78,33 @@ export class ElevatorStats extends HTMLElement {
   }
 
   /**
-   * Sets the game controller and subscribes to stats changes.
+   * Sets the event bus and subscribes to stats changes.
+   * @param {EventBus} eventBus - Event bus instance
+   */
+  set eventBus(eventBus) {
+    // Clean up previous subscription
+    this._abortController?.abort();
+
+    this._eventBus = eventBus;
+
+    if (eventBus) {
+      this._abortController = new AbortController();
+      eventBus.on(
+        "simulation:stats_changed",
+        (e) => this.updateFromStats(/** @type {CustomEvent} */ (e).detail),
+        { signal: this._abortController.signal },
+      );
+    }
+  }
+
+  /**
+   * Sets the game controller for initial stats.
    * @param {GameController} world - Game controller instance
    */
   set world(world) {
-    // Disconnect from previous world
-    if (this._world) {
-      this._world.removeEventListener("stats_changed", this._updateHandler);
-    }
-
     this._world = world;
-
     if (world) {
-      this._updateHandler = (e) => this.updateFromWorld(e.detail);
-      world.addEventListener("stats_changed", this._updateHandler);
-      this.updateFromWorld(world.stats);
+      this.updateFromStats(world.stats);
     }
   }
 
@@ -98,7 +114,7 @@ export class ElevatorStats extends HTMLElement {
    * @param {GameStats} stats - Current game statistics
    * @returns {void}
    */
-  updateFromWorld(stats) {
+  updateFromStats(stats) {
     this.setAttribute("transported", String(stats.transportedCount));
     this.setAttribute("elapsed-time", stats.elapsedTime.toFixed(0) + "s");
     this.setAttribute(

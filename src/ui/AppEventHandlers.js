@@ -8,6 +8,7 @@ import {
 } from "./presenters.js";
 import { ResponsiveScaling } from "./ResponsiveScaling.js";
 import { ViewModelManager } from "./ViewModelManager.js";
+import { EventBus } from "../utils/EventBus.js";
 
 /**
  * @typedef {import('../app.js').ElevatorApp} ElevatorApp
@@ -25,6 +26,7 @@ import { ViewModelManager } from "./ViewModelManager.js";
 export class AppEventHandlers {
   /**
    * Creates event handlers coordinator.
+   * @param {EventBus} eventBus - Event bus for application events
    * @param {ElevatorApp} app - Application instance
    * @param {AppDOM} dom - DOM manager
    * @param {CodeEditor} editor - Code editor
@@ -32,7 +34,9 @@ export class AppEventHandlers {
    * @param {GameController} gameController - Game controller
    * @param {URLManager} urlManager - URL manager
    */
-  constructor(app, dom, editor, runtimeManager, gameController, urlManager) {
+  constructor(eventBus, app, dom, editor, runtimeManager, gameController, urlManager) {
+    /** @type {EventBus} */
+    this.eventBus = eventBus;
     /** @type {ElevatorApp} */
     this.app = app;
     /** @type {AppDOM} */
@@ -52,7 +56,7 @@ export class AppEventHandlers {
     /** @type {ResponsiveScaling} Handles responsive scaling of the game world */
     this.responsiveScaling = new ResponsiveScaling();
     /** @type {ViewModelManager} View model manager for UI rendering */
-    this.viewModelManager = ViewModelManager.create();
+    this.viewModelManager = ViewModelManager.create({ eventBus });
   }
 
   /**
@@ -143,12 +147,11 @@ export class AppEventHandlers {
     );
 
     // User code error event
-    this.boundHandlers.editorError = /** @type {EventListener} */ ((e) => {
-      presentCodeStatus(this.dom.getElement("codeStatus"), /** @type {CustomEvent} */ (e).detail);
-    });
-    this.app.addEventListener(
-      "user_code_error",
-      this.boundHandlers.editorError,
+    this.eventBus.on(
+      "app:user_code_error",
+      (e) => {
+        presentCodeStatus(this.dom.getElement("codeStatus"), /** @type {CustomEvent} */ (e).detail);
+      },
       { signal },
     );
   }
@@ -197,7 +200,7 @@ export class AppEventHandlers {
   }
 
   /**
-   * Sets up GameController event handlers for presentation.
+   * Sets up game event handlers for presentation.
    * Handles challenge initialization, simulation start, passenger spawning, and cleanup.
    * @private
    * @returns {void}
@@ -206,11 +209,11 @@ export class AppEventHandlers {
     const { signal } = this.abortController;
 
     // Challenge initialized - reinitialize ViewModelManager, present stats and world, initialize scaling
-    this.gameController.addEventListener(
-      "challenge_initialized",
+    this.eventBus.on(
+      "game:challenge_initialized",
       (e) => {
-        const { clearStats, backend, options } =
-          /** @type {CustomEvent<{clearStats: boolean, backend: import('../core/SimulationBackend.js').SimulationBackend, options: {isRenderingEnabled?: boolean, floorHeight?: number}}>} */ (
+        const { clearStats, options, initialState } =
+          /** @type {CustomEvent<{clearStats: boolean, options: {isRenderingEnabled?: boolean, floorHeight?: number}, initialState: import('../core/SimulationBackend.js').SimulationState}>} */ (
             e
           ).detail;
 
@@ -219,11 +222,12 @@ export class AppEventHandlers {
         this.viewModelManager = ViewModelManager.create({
           isRenderingEnabled: options.isRenderingEnabled,
           floorHeight: options.floorHeight,
-          backend,
+          eventBus: this.eventBus,
+          initialState,
         });
 
         if (clearStats) {
-          presentStats(this.dom.getElement("stats"), this.gameController);
+          presentStats(this.dom.getElement("stats"), this.gameController, this.eventBus);
         }
         presentWorld(this.dom.getElement("world"), this.viewModelManager);
         this.responsiveScaling.initialize();
@@ -232,57 +236,53 @@ export class AppEventHandlers {
     );
 
     // Simulation started - refresh stats
-    this.gameController.addEventListener(
-      "simulation_started",
+    this.eventBus.on(
+      "game:simulation_started",
       () => {
-        presentStats(this.dom.getElement("stats"), this.gameController);
+        presentStats(this.dom.getElement("stats"), this.gameController, this.eventBus);
       },
       { signal },
     );
 
-    // Passenger spawned - present new passenger
-    this.gameController.addEventListener(
-      "passenger_spawned",
+    // Passenger view model created - present new passenger
+    this.eventBus.on(
+      "viewmodel:passenger_created",
       (e) => {
-        const { passenger } = /** @type {CustomEvent<{passenger: {id: string}}>} */ (e).detail;
-        const viewModel = this.viewModelManager.passengerViewModels.get(passenger.id);
-        if (viewModel) {
-          presentPassenger(this.dom.getElement("world"), viewModel);
-        }
+        const { viewModel } = /** @type {CustomEvent<{passengerId: string, viewModel: import('./viewmodels/PassengerViewModel.js').PassengerViewModel}>} */ (e).detail;
+        presentPassenger(this.dom.getElement("world"), viewModel);
       },
       { signal },
     );
 
     // Challenge ended - show success/failure feedback
-    this.boundHandlers.challenge_ended = /** @type {EventListener} */ ((e) => {
-      const { succeeded } = /** @type {CustomEvent<{succeeded: boolean}>} */ (e).detail;
-      if (succeeded) {
-        presentFeedback(
-          this.dom.getElement("feedback"),
-          APP_CONSTANTS.MESSAGES.SUCCESS_TITLE,
-          APP_CONSTANTS.MESSAGES.SUCCESS_MESSAGE,
-          this.urlManager.createParamsUrl({
-            challenge: this.app.currentChallenge.id + 2,
-          }),
-        );
-      } else {
-        presentFeedback(
-          this.dom.getElement("feedback"),
-          APP_CONSTANTS.MESSAGES.FAILURE_TITLE,
-          APP_CONSTANTS.MESSAGES.FAILURE_MESSAGE,
-          "",
-        );
-      }
-    });
-    this.gameController.addEventListener(
-      "challenge_ended",
-      this.boundHandlers.challenge_ended,
+    this.eventBus.on(
+      "simulation:challenge_ended",
+      (e) => {
+        const { succeeded } = /** @type {CustomEvent<{succeeded: boolean}>} */ (e).detail;
+        if (succeeded) {
+          presentFeedback(
+            this.dom.getElement("feedback"),
+            APP_CONSTANTS.MESSAGES.SUCCESS_TITLE,
+            APP_CONSTANTS.MESSAGES.SUCCESS_MESSAGE,
+            this.urlManager.createParamsUrl({
+              challenge: this.app.currentChallenge.id + 2,
+            }),
+          );
+        } else {
+          presentFeedback(
+            this.dom.getElement("feedback"),
+            APP_CONSTANTS.MESSAGES.FAILURE_TITLE,
+            APP_CONSTANTS.MESSAGES.FAILURE_MESSAGE,
+            "",
+          );
+        }
+      },
       { signal },
     );
 
     // Cleanup - clean up ViewModelManager, clear world elements, and clean up responsive scaling
-    this.gameController.addEventListener(
-      "cleanup",
+    this.eventBus.on(
+      "game:cleanup",
       () => {
         this.viewModelManager.cleanup();
         this.dom.clearElements("world");

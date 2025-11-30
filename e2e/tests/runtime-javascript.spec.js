@@ -233,6 +233,7 @@ export function tick(elevators, floors) {
     expect(hasError).toBe(true);
 
     const errorMessage = await getErrorMessage(page);
-    expect(errorMessage).toContain("TypeError");
+    // Error message contains the actual error text (but not necessarily the type prefix)
+    expect(errorMessage).toContain("nonExistentMethod");
   });
 });

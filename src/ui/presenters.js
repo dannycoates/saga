@@ -21,18 +21,23 @@ import "./components/code-status.js";
  * @typedef {import('./viewmodels/FloorViewModel.js').FloorViewModel} FloorViewModel
  * @typedef {import('./viewmodels/ElevatorViewModel.js').ElevatorViewModel} ElevatorViewModel
  * @typedef {import('./viewmodels/PassengerViewModel.js').PassengerViewModel} PassengerViewModel
+ * @typedef {import('../utils/EventBus.js').EventBus} EventBus
  */
 
 /**
  * Creates and attaches a stats component.
  * @param {HTMLElement} parentElem - Parent element
  * @param {GameController} world - Game controller
+ * @param {EventBus} [eventBus] - Event bus for stats updates
  * @returns {ElevatorStatsElement} Created component
  */
-export function presentStats(parentElem, world) {
+export function presentStats(parentElem, world, eventBus) {
   // Create and append the web component
   const statsComponent = /** @type {ElevatorStatsElement} */ (document.createElement("elevator-stats"));
   statsComponent.world = world;
+  if (eventBus) {
+    statsComponent.eventBus = eventBus;
+  }
   parentElem.replaceChildren(statsComponent);
 
   return statsComponent;
@@ -45,6 +50,7 @@ export function presentStats(parentElem, world) {
  * @param {ElevatorApp} app - Application instance
  * @param {GameController} gameController - Game controller
  * @param {number} challengeNum - Challenge number (1-indexed)
+ * @param {EventBus} [eventBus] - Event bus for time scale updates
  * @returns {ChallengeControlElement} Created component
  */
 export function presentChallenge(
@@ -53,6 +59,7 @@ export function presentChallenge(
   app,
   gameController,
   challengeNum,
+  eventBus,
 ) {
   // Create and append the web component
   const challengeComponent = /** @type {ChallengeControlElement} */ (document.createElement("challenge-control"));
@@ -63,6 +70,9 @@ export function presentChallenge(
   );
   challengeComponent.app = app;
   challengeComponent.gameController = gameController;
+  if (eventBus) {
+    challengeComponent.eventBus = eventBus;
+  }
   parentElem.replaceChildren(challengeComponent);
 
   return challengeComponent;
