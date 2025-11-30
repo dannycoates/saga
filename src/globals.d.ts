@@ -48,11 +48,13 @@ interface Window {
 // Custom element interfaces for web components
 interface ElevatorStatsElement extends HTMLElement {
   world: import("./game/GameController.js").GameController;
+  eventBus: import("./utils/EventBus.js").EventBus;
 }
 
 interface ChallengeControlElement extends HTMLElement {
   app: import("./app.js").ElevatorApp;
   gameController: import("./game/GameController.js").GameController;
+  eventBus: import("./utils/EventBus.js").EventBus;
 }
 
 interface CodeStatusElement extends HTMLElement {
@@ -60,13 +62,13 @@ interface CodeStatusElement extends HTMLElement {
 }
 
 interface ElevatorFloorElement extends HTMLElement {
-  floor: import("./ui/viewmodels/FloorViewModel.js").FloorViewModel;
+  model: import("./ui/viewmodels/FloorViewModel.js").FloorViewModel;
 }
 
 interface ElevatorCarElement extends HTMLElement {
-  elevator: import("./ui/viewmodels/ElevatorViewModel.js").ElevatorViewModel;
+  model: import("./ui/viewmodels/ElevatorViewModel.js").ElevatorViewModel;
 }
 
 interface ElevatorPassengerElement extends HTMLElement {
-  passenger: import("./ui/viewmodels/PassengerViewModel.js").PassengerViewModel;
+  model: import("./ui/viewmodels/PassengerViewModel.js").PassengerViewModel;
 }

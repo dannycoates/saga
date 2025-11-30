@@ -14,6 +14,9 @@ import { ViewModel } from "./ViewModel.js";
  * @fires FloorViewModel#button_state_change - Emitted when call buttons change state
  */
 export class FloorViewModel extends ViewModel {
+  /** @type {{up: boolean, down: boolean}} Previous button state for change detection */
+  #prevButtonState = { up: false, down: false };
+
   /**
    * Creates a floor display.
    * @param {FloorState} floorState - Initial floor state
@@ -25,8 +28,6 @@ export class FloorViewModel extends ViewModel {
     this.state = floorState;
     /** @type {number} Y position in pixels */
     this.yPosition = yPosition;
-    /** @type {{up: boolean, down: boolean}} Previous button state for change detection */
-    this._prevButtonState = { up: false, down: false };
   }
 
   /**
@@ -65,10 +66,10 @@ export class FloorViewModel extends ViewModel {
     if (!this.state) return;
 
     if (
-      this._prevButtonState.up !== this.state.buttons.up ||
-      this._prevButtonState.down !== this.state.buttons.down
+      this.#prevButtonState.up !== this.state.buttons.up ||
+      this.#prevButtonState.down !== this.state.buttons.down
     ) {
-      this._prevButtonState = { ...this.state.buttons };
+      this.#prevButtonState = { ...this.state.buttons };
       this.dispatchEvent(
         new CustomEvent("button_state_change", { detail: this.state.buttons }),
       );

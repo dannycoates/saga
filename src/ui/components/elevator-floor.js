@@ -8,6 +8,11 @@
  * @extends HTMLElement
  */
 export class ElevatorFloor extends HTMLElement {
+  /** @type {FloorViewModel | null} */
+  #model = null;
+  /** @type {AbortController | null} */
+  #abortController = null;
+
   /**
    * Observed attributes for attribute change callbacks.
    * @returns {string[]} List of observed attribute names
@@ -29,10 +34,6 @@ export class ElevatorFloor extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    /** @type {FloorViewModel | null} */
-    this._model = null;
-    /** @type {AbortController | null} */
-    this._abortController = null;
   }
 
   /**
@@ -50,7 +51,7 @@ export class ElevatorFloor extends HTMLElement {
    * @returns {void}
    */
   disconnectedCallback() {
-    this._abortController?.abort();
+    this.#abortController?.abort();
   }
 
   /**
@@ -72,14 +73,14 @@ export class ElevatorFloor extends HTMLElement {
    */
   set model(model) {
     // Abort previous listeners
-    this._abortController?.abort();
+    this.#abortController?.abort();
 
-    this._model = model;
+    this.#model = model;
 
     if (model) {
       // Create new abort controller for this floor's listeners
-      this._abortController = new AbortController();
-      const { signal } = this._abortController;
+      this.#abortController = new AbortController();
+      const { signal } = this.#abortController;
 
       // Set initial attributes
       this.setAttribute("floor-number", String(model.level));
@@ -107,14 +108,14 @@ export class ElevatorFloor extends HTMLElement {
     const downButton = this.shadowRoot.querySelector(".down");
 
     upButton?.addEventListener("click", () => {
-      if (this._model) {
-        this._model.pressUpButton();
+      if (this.#model) {
+        this.#model.pressUpButton();
       }
     });
 
     downButton?.addEventListener("click", () => {
-      if (this._model) {
-        this._model.pressDownButton();
+      if (this.#model) {
+        this.#model.pressDownButton();
       }
     });
   }

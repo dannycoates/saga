@@ -20,6 +20,13 @@ import { EventBus } from "../../utils/EventBus.js";
  * @extends HTMLElement
  */
 export class ElevatorStats extends HTMLElement {
+  /** @type {GameController | null} */
+  #world = null;
+  /** @type {EventBus | null} */
+  #eventBus = null;
+  /** @type {AbortController | null} */
+  #abortController = null;
+
   /**
    * Observed attributes for attribute change callbacks.
    * @returns {string[]} List of observed attribute names
@@ -41,12 +48,6 @@ export class ElevatorStats extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    /** @type {GameController | null} */
-    this._world = null;
-    /** @type {EventBus | null} */
-    this._eventBus = null;
-    /** @type {AbortController | null} */
-    this._abortController = null;
   }
 
   /**
@@ -63,7 +64,7 @@ export class ElevatorStats extends HTMLElement {
    * @returns {void}
    */
   disconnectedCallback() {
-    this._abortController?.abort();
+    this.#abortController?.abort();
   }
 
   /**
@@ -83,16 +84,16 @@ export class ElevatorStats extends HTMLElement {
    */
   set eventBus(eventBus) {
     // Clean up previous subscription
-    this._abortController?.abort();
+    this.#abortController?.abort();
 
-    this._eventBus = eventBus;
+    this.#eventBus = eventBus;
 
     if (eventBus) {
-      this._abortController = new AbortController();
+      this.#abortController = new AbortController();
       eventBus.on(
         "simulation:stats_changed",
         (e) => this.updateFromStats(/** @type {CustomEvent} */ (e).detail),
-        { signal: this._abortController.signal },
+        { signal: this.#abortController.signal },
       );
     }
   }
@@ -102,7 +103,7 @@ export class ElevatorStats extends HTMLElement {
    * @param {GameController} world - Game controller instance
    */
   set world(world) {
-    this._world = world;
+    this.#world = world;
     if (world) {
       this.updateFromStats(world.stats);
     }
