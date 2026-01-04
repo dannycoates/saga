@@ -28,13 +28,13 @@ describe("GameController", () => {
   });
 
   it("should manage game state through start/stop", async () => {
-    const mockCode = { 
+    const mockCode = {
       tick: vi.fn(),
       start: vi.fn().mockResolvedValue(),
     };
-    
+
     expect(gameController.isPaused).toBe(true);
-    
+
     // Starting should unpause and set up code
     await gameController.start(mockCode);
     expect(gameController.isPaused).toBe(false);

@@ -115,7 +115,7 @@ test.describe("Challenge Progression", () => {
         // Wait for URL to change to challenge 2
         await page.waitForFunction(
           () => window.location.href.includes("challenge=2"),
-          { timeout: 5000 }
+          { timeout: 5000 },
         );
         const url = page.url();
         expect(url).toContain("challenge=2");

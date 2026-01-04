@@ -9,7 +9,7 @@ export class CodeStatus extends HTMLElement {
    * @returns {string[]} List of observed attribute names
    */
   static get observedAttributes() {
-    return ['error-message', 'has-error'];
+    return ["error-message", "has-error"];
   }
 
   /**
@@ -17,7 +17,7 @@ export class CodeStatus extends HTMLElement {
    */
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
+    this.attachShadow({ mode: "open" });
     /** @type {HTMLDialogElement | null} */
     this.dialog = null;
     /** @type {boolean} Whether event handlers have been set up */
@@ -58,13 +58,14 @@ export class CodeStatus extends HTMLElement {
   setError(error) {
     if (error) {
       console.error(error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
 
-      this.setAttribute('has-error', 'true');
-      this.setAttribute('error-message', errorMessage);
+      this.setAttribute("has-error", "true");
+      this.setAttribute("error-message", errorMessage);
     } else {
-      this.setAttribute('has-error', 'false');
-      this.removeAttribute('error-message');
+      this.setAttribute("has-error", "false");
+      this.removeAttribute("error-message");
     }
   }
 
@@ -76,8 +77,8 @@ export class CodeStatus extends HTMLElement {
     if (this.dialog) {
       this.dialog.close();
     }
-    this.setAttribute('has-error', 'false');
-    this.removeAttribute('error-message');
+    this.setAttribute("has-error", "false");
+    this.removeAttribute("error-message");
   }
 
   /**
@@ -87,19 +88,21 @@ export class CodeStatus extends HTMLElement {
    * @returns {void}
    */
   updateDialogVisibility() {
-    const hasError = this.getAttribute('has-error') === 'true';
+    const hasError = this.getAttribute("has-error") === "true";
     if (this.dialog && this.isConnected) {
       if (hasError) {
         try {
           this.dialog.showModal();
           // Focus the close button for accessibility
-          const closeButton = /** @type {HTMLButtonElement | null} */ (this.shadowRoot.querySelector('.close-button'));
+          const closeButton = /** @type {HTMLButtonElement | null} */ (
+            this.shadowRoot.querySelector(".close-button")
+          );
           if (closeButton) {
             closeButton.focus();
           }
         } catch (e) {
           // If showModal fails, we might not be connected yet
-          console.warn('Failed to show modal:', e);
+          console.warn("Failed to show modal:", e);
         }
       } else {
         this.dialog.close();
@@ -113,7 +116,7 @@ export class CodeStatus extends HTMLElement {
    * @returns {void}
    */
   initializeDOM() {
-    const errorMessage = this.getAttribute('error-message') || '';
+    const errorMessage = this.getAttribute("error-message") || "";
 
     this.shadowRoot.innerHTML = `
       <style>
@@ -255,7 +258,7 @@ export class CodeStatus extends HTMLElement {
     `;
 
     // Store reference to dialog
-    this.dialog = this.shadowRoot.querySelector('dialog');
+    this.dialog = this.shadowRoot.querySelector("dialog");
 
     // Set up event handlers after rendering (only once)
     if (!this.eventHandlersSetup) {
@@ -264,7 +267,7 @@ export class CodeStatus extends HTMLElement {
     }
 
     // Set HTML content for error message to preserve formatting
-    const errorContent = this.shadowRoot.querySelector('#error-content');
+    const errorContent = this.shadowRoot.querySelector("#error-content");
     if (errorContent && errorMessage) {
       errorContent.innerHTML = errorMessage;
     }
@@ -283,28 +286,28 @@ export class CodeStatus extends HTMLElement {
    */
   setupEventHandlers() {
     // Handle close button click and dismiss button click
-    this.shadowRoot.addEventListener('click', (e) => {
+    this.shadowRoot.addEventListener("click", (e) => {
       const target = /** @type {Element} */ (e.target);
-      if (target.classList.contains('close-button')) {
+      if (target.classList.contains("close-button")) {
         this.closeDialog();
       }
     });
 
     // Handle dialog backdrop click (click outside modal content)
-    this.shadowRoot.addEventListener('click', (e) => {
+    this.shadowRoot.addEventListener("click", (e) => {
       const target = /** @type {Element} */ (e.target);
-      if (target.tagName === 'DIALOG') {
+      if (target.tagName === "DIALOG") {
         this.closeDialog();
       }
     });
 
     // Handle escape key globally for the dialog
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this.dialog && this.dialog.open) {
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && this.dialog && this.dialog.open) {
         this.closeDialog();
       }
     });
   }
 }
 
-customElements.define('code-status', CodeStatus);
+customElements.define("code-status", CodeStatus);

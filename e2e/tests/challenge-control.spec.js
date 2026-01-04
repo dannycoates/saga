@@ -16,7 +16,7 @@ test.describe("Challenge Control", () => {
   test("Start button initiates simulation", async ({ appPage: page }) => {
     // Verify initial paused state
     await expect(
-      page.locator('challenge-control[is-paused="true"]')
+      page.locator('challenge-control[is-paused="true"]'),
     ).toBeVisible();
 
     // Set valid code
@@ -28,7 +28,7 @@ test.describe("Challenge Control", () => {
     // Verify simulation started
     await waitForSimulationRunning(page);
     await expect(
-      page.locator('challenge-control[is-paused="false"]')
+      page.locator('challenge-control[is-paused="false"]'),
     ).toBeVisible();
 
     // Button text should change to "Stop"
@@ -46,7 +46,7 @@ test.describe("Challenge Control", () => {
 
     // Verify running
     await expect(
-      page.locator('challenge-control[is-paused="false"]')
+      page.locator('challenge-control[is-paused="false"]'),
     ).toBeVisible();
 
     // Click Stop button
@@ -55,7 +55,7 @@ test.describe("Challenge Control", () => {
     // Verify simulation stopped
     await waitForSimulationStopped(page);
     await expect(
-      page.locator('challenge-control[is-paused="true"]')
+      page.locator('challenge-control[is-paused="true"]'),
     ).toBeVisible();
 
     // Button text should change to "Start"
@@ -138,7 +138,9 @@ test.describe("Challenge Control", () => {
     expect(timeScaleAfterReload).toBe("3x");
   });
 
-  test("challenge description displays correctly", async ({ appPage: page }) => {
+  test("challenge description displays correctly", async ({
+    appPage: page,
+  }) => {
     const challengeControl = page.locator("challenge-control");
     const description = challengeControl.locator("#description");
 

@@ -36,7 +36,7 @@ test.describe("JavaScript Runtime", () => {
         const control = document.querySelector("challenge-control");
         return control?.getAttribute("is-paused") === "false";
       },
-      { timeout: 5000 }
+      { timeout: 5000 },
     );
 
     // Should not show error modal
@@ -97,10 +97,9 @@ export function tick(elevators, floors) {
     await startSimulation(page);
 
     // Wait for some floor checks to accumulate
-    await page.waitForFunction(
-      () => (window.floorChecks || []).length > 10,
-      { timeout: 5000 }
-    );
+    await page.waitForFunction(() => (window.floorChecks || []).length > 10, {
+      timeout: 5000,
+    });
 
     // Verify floor values are valid numbers
     const floorChecks = await page.evaluate(() => window.floorChecks || []);
@@ -138,14 +137,16 @@ export function tick(elevators, floors) {
     try {
       await page.waitForFunction(
         () => (window.pressedButtons || []).length > 0,
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
     } catch {
       // It's okay if no buttons were pressed - passengers may not have been picked up
     }
 
     // Check if any buttons were tracked
-    const pressedButtons = await page.evaluate(() => window.pressedButtons || []);
+    const pressedButtons = await page.evaluate(
+      () => window.pressedButtons || [],
+    );
     // Buttons might be pressed by passengers if they board the elevator
     expect(Array.isArray(pressedButtons)).toBe(true);
   });
@@ -211,7 +212,10 @@ export function tick(elevators, floors) {
     });
 
     // Wait for error modal to appear
-    await page.locator("code-status").locator("dialog[open]").waitFor({ timeout: 5000 });
+    await page
+      .locator("code-status")
+      .locator("dialog[open]")
+      .waitFor({ timeout: 5000 });
 
     const hasError = await isErrorModalVisible(page);
     expect(hasError).toBe(true);

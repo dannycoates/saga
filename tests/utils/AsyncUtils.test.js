@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { loadExternalScript, executeWithTimeout } from "../../src/utils/AsyncUtils.js";
+import {
+  loadExternalScript,
+  executeWithTimeout,
+} from "../../src/utils/AsyncUtils.js";
 
 describe("AsyncUtils", () => {
   beforeEach(() => {
@@ -37,7 +40,9 @@ describe("AsyncUtils", () => {
       // Simulate script error
       appendedScript.onerror();
 
-      await expect(promise).rejects.toThrow("Failed to load script: https://example.com/bad.js");
+      await expect(promise).rejects.toThrow(
+        "Failed to load script: https://example.com/bad.js",
+      );
     });
 
     it("should reject on timeout", async () => {
@@ -64,11 +69,17 @@ describe("AsyncUtils", () => {
 
     it("should reject when abort signal is triggered", async () => {
       const controller = new AbortController();
-      const promise = loadExternalScript("https://example.com/script.js", 30000, controller.signal);
+      const promise = loadExternalScript(
+        "https://example.com/script.js",
+        30000,
+        controller.signal,
+      );
 
       controller.abort();
 
-      await expect(promise).rejects.toThrow("Loading https://example.com/script.js was aborted");
+      await expect(promise).rejects.toThrow(
+        "Loading https://example.com/script.js was aborted",
+      );
     });
 
     it("should clean up script element on success", async () => {
@@ -178,7 +189,9 @@ describe("AsyncUtils", () => {
       const fn = vi.fn();
       const promise = executeWithTimeout(fn, 5000, controller.signal);
 
-      await expect(promise).rejects.toThrow("Operation was aborted before execution");
+      await expect(promise).rejects.toThrow(
+        "Operation was aborted before execution",
+      );
       expect(fn).not.toHaveBeenCalled();
     });
 
@@ -241,7 +254,11 @@ describe("AsyncUtils", () => {
         return script;
       });
 
-      const promise = loadExternalScript("https://example.com/script.js", 30000, controller.signal);
+      const promise = loadExternalScript(
+        "https://example.com/script.js",
+        30000,
+        controller.signal,
+      );
 
       // Abort before timeout
       controller.abort();

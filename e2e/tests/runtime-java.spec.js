@@ -65,7 +65,7 @@ test.describe("Java Runtime", () => {
         const control = document.querySelector("challenge-control");
         return control?.getAttribute("is-paused") === "false";
       },
-      { timeout: 10000 }
+      { timeout: 10000 },
     );
 
     // Should not show error modal
@@ -91,11 +91,13 @@ public class ElevatorController {
       () => {
         const control = document.querySelector("challenge-control");
         const stats = document.querySelector("elevator-stats");
-        const elapsed = stats?.shadowRoot?.querySelector('[data-stat="elapsed-time"]');
+        const elapsed = stats?.shadowRoot?.querySelector(
+          '[data-stat="elapsed-time"]',
+        );
         const time = parseFloat(elapsed?.textContent?.replace("s", "") || "0");
         return control?.getAttribute("is-paused") === "false" && time >= 0.5;
       },
-      { timeout: 10000 }
+      { timeout: 10000 },
     );
 
     // We can verify the simulation is running without errors
@@ -129,7 +131,7 @@ public class ElevatorController {
         const el = stats?.shadowRoot?.querySelector('[data-stat="move-count"]');
         return parseInt(el?.textContent || "0", 10) >= 1;
       },
-      { timeout: 15000 }
+      { timeout: 15000 },
     );
 
     // Check stats - move count should increase if elevator moved
@@ -152,7 +154,10 @@ public class ElevatorController {
     await clickStartStop(page);
 
     // Wait for error modal to appear (Java compilation can take a while)
-    await page.locator("code-status").locator("dialog[open]").waitFor({ timeout: 30000 });
+    await page
+      .locator("code-status")
+      .locator("dialog[open]")
+      .waitFor({ timeout: 30000 });
 
     const hasError = await isErrorModalVisible(page);
     expect(hasError).toBe(true);
@@ -172,7 +177,10 @@ public class ElevatorController {
     await clickStartStop(page);
 
     // Wait for error modal to appear (runtime error may take a moment)
-    await page.locator("code-status").locator("dialog[open]").waitFor({ timeout: 30000 });
+    await page
+      .locator("code-status")
+      .locator("dialog[open]")
+      .waitFor({ timeout: 30000 });
 
     const hasError = await isErrorModalVisible(page);
     expect(hasError).toBe(true);

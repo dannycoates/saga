@@ -26,8 +26,12 @@ export class ResponsiveScaling {
    * @returns {void}
    */
   initialize() {
-    this.innerWorld = /** @type {HTMLElement | null} */ (document.querySelector(".innerworld"));
-    this.worldContainer = /** @type {HTMLElement | null} */ (document.querySelector(".world-container"));
+    this.innerWorld = /** @type {HTMLElement | null} */ (
+      document.querySelector(".innerworld")
+    );
+    this.worldContainer = /** @type {HTMLElement | null} */ (
+      document.querySelector(".world-container")
+    );
 
     if (!this.innerWorld || !this.worldContainer) {
       console.warn("ResponsiveScaling: Required DOM elements not found");

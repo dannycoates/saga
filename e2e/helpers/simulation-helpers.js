@@ -129,7 +129,7 @@ export async function waitForRuntimeLoaded(page, language, timeout = 60000) {
       return select && /** @type {HTMLSelectElement} */ (select).value === lang;
     },
     language,
-    { timeout: 5000 }
+    { timeout: 5000 },
   );
 }
 
@@ -345,7 +345,7 @@ export async function waitForElapsedTime(page, seconds, timeout = 30000) {
       return elapsed >= targetSeconds;
     },
     seconds,
-    { timeout }
+    { timeout },
   );
 }
 
@@ -367,7 +367,7 @@ export async function waitForMoveCount(page, count, timeout = 30000) {
       return moves >= targetCount;
     },
     count,
-    { timeout }
+    { timeout },
   );
 }
 
@@ -387,14 +387,19 @@ export async function waitForPassengersVisible(page, timeout = 10000) {
  * @param {'javascript' | 'python' | 'java'} [language='javascript']
  * @param {number} [timeout=5000]
  */
-export async function waitForCodeSaved(page, expectedCode, language = "javascript", timeout = 5000) {
+export async function waitForCodeSaved(
+  page,
+  expectedCode,
+  language = "javascript",
+  timeout = 5000,
+) {
   await page.waitForFunction(
     ({ code, lang }) => {
       const saved = localStorage.getItem(`develevate_code_${lang}`);
       return saved === code;
     },
     { code: expectedCode, lang: language },
-    { timeout }
+    { timeout },
   );
 }
 
@@ -404,7 +409,9 @@ export async function waitForCodeSaved(page, expectedCode, language = "javascrip
  * @param {number} [timeout=5000]
  */
 export async function waitForErrorModalHidden(page, timeout = 5000) {
-  await page.locator("code-status dialog[open]").waitFor({ state: "hidden", timeout });
+  await page
+    .locator("code-status dialog[open]")
+    .waitFor({ state: "hidden", timeout });
 }
 
 /**
@@ -415,7 +422,9 @@ export async function waitForErrorModalHidden(page, timeout = 5000) {
 export async function waitForFeedbackVisible(page, timeout = 30000) {
   // Use 'attached' state because visibility detection can be unreliable
   // due to CSS positioning of the overlay
-  await page.locator("game-feedback[title]").waitFor({ state: 'attached', timeout });
+  await page
+    .locator("game-feedback[title]")
+    .waitFor({ state: "attached", timeout });
 }
 
 /**
@@ -425,7 +434,12 @@ export async function waitForFeedbackVisible(page, timeout = 30000) {
  * @param {(value: any) => boolean} condition - Condition function
  * @param {number} [timeout=10000]
  */
-export async function waitForWindowVar(page, varName, condition, timeout = 10000) {
+export async function waitForWindowVar(
+  page,
+  varName,
+  condition,
+  timeout = 10000,
+) {
   await page.waitForFunction(
     ({ name, condStr }) => {
       // @ts-ignore
@@ -434,8 +448,15 @@ export async function waitForWindowVar(page, varName, condition, timeout = 10000
       const condFn = new Function("value", `return ${condStr}`);
       return condFn(value);
     },
-    { name: varName, condStr: condition.toString().replace(/^[^=]+=>\s*/, "return ").replace(/^function[^{]*{/, "").replace(/}$/, "") },
-    { timeout }
+    {
+      name: varName,
+      condStr: condition
+        .toString()
+        .replace(/^[^=]+=>\s*/, "return ")
+        .replace(/^function[^{]*{/, "")
+        .replace(/}$/, ""),
+    },
+    { timeout },
   );
 }
 
@@ -452,7 +473,7 @@ export async function waitForTickCount(page, count, timeout = 10000) {
       return (window.testTickCount || 0) >= targetCount;
     },
     count,
-    { timeout }
+    { timeout },
   );
 }
 
@@ -467,6 +488,6 @@ export async function waitForFloorButtonsPressed(page, timeout = 10000) {
       // @ts-ignore
       return (window.buttonStates || []).length > 0;
     },
-    { timeout }
+    { timeout },
   );
 }

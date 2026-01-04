@@ -34,7 +34,15 @@ export class AppEventHandlers {
    * @param {GameController} gameController - Game controller
    * @param {URLManager} urlManager - URL manager
    */
-  constructor(eventBus, app, dom, editor, runtimeManager, gameController, urlManager) {
+  constructor(
+    eventBus,
+    app,
+    dom,
+    editor,
+    runtimeManager,
+    gameController,
+    urlManager,
+  ) {
     /** @type {EventBus} */
     this.eventBus = eventBus;
     /** @type {ElevatorApp} */
@@ -150,7 +158,10 @@ export class AppEventHandlers {
     this.eventBus.on(
       "app:user_code_error",
       (e) => {
-        presentCodeStatus(this.dom.getElement("codeStatus"), /** @type {CustomEvent} */ (e).detail);
+        presentCodeStatus(
+          this.dom.getElement("codeStatus"),
+          /** @type {CustomEvent} */ (e).detail,
+        );
       },
       { signal },
     );
@@ -163,33 +174,47 @@ export class AppEventHandlers {
    */
   setupLanguageHandler() {
     const { signal } = this.abortController;
-    const languageSelect = /** @type {HTMLSelectElement | null} */ (this.dom.getElement("languageSelect"));
+    const languageSelect = /** @type {HTMLSelectElement | null} */ (
+      this.dom.getElement("languageSelect")
+    );
     if (languageSelect) {
       languageSelect.value = this.editor.currentLanguage;
 
-      this.boundHandlers.languageChange = /** @type {EventListener} */ (async (e) => {
-        const newLanguage = /** @type {HTMLSelectElement} */ (e.target).value;
+      this.boundHandlers.languageChange = /** @type {EventListener} */ (
+        async (e) => {
+          const newLanguage = /** @type {HTMLSelectElement} */ (e.target).value;
 
-        try {
-          // Show loading state
-          this.dom.showRuntimeStatus(true, `Loading ${newLanguage} runtime...`);
-          // Update editor language
-          this.editor.setLanguage(newLanguage);
-          // Select the language in runtime manager
-          // Note: not using withStatusIfSlow because pyodide blocks the event loop
-          await this.runtimeManager.selectLanguage(/** @type {import('../runtimes/BaseRuntime.js').LanguageId} */ (newLanguage));
+          try {
+            // Show loading state
+            this.dom.showRuntimeStatus(
+              true,
+              `Loading ${newLanguage} runtime...`,
+            );
+            // Update editor language
+            this.editor.setLanguage(newLanguage);
+            // Select the language in runtime manager
+            // Note: not using withStatusIfSlow because pyodide blocks the event loop
+            await this.runtimeManager.selectLanguage(
+              /** @type {import('../runtimes/BaseRuntime.js').LanguageId} */ (
+                newLanguage
+              ),
+            );
 
-          // Clear status
-          presentCodeStatus(this.dom.getElement("codeStatus"));
-        } catch (error) {
-          presentCodeStatus(this.dom.getElement("codeStatus"), /** @type {Error} */ (error));
-          // Revert language selector
-          languageSelect.value = this.editor.currentLanguage;
-        } finally {
-          // Hide loading state
-          this.dom.showRuntimeStatus(false);
+            // Clear status
+            presentCodeStatus(this.dom.getElement("codeStatus"));
+          } catch (error) {
+            presentCodeStatus(
+              this.dom.getElement("codeStatus"),
+              /** @type {Error} */ (error),
+            );
+            // Revert language selector
+            languageSelect.value = this.editor.currentLanguage;
+          } finally {
+            // Hide loading state
+            this.dom.showRuntimeStatus(false);
+          }
         }
-      });
+      );
 
       languageSelect.addEventListener(
         "change",
@@ -227,7 +252,11 @@ export class AppEventHandlers {
         });
 
         if (clearStats) {
-          presentStats(this.dom.getElement("stats"), this.gameController, this.eventBus);
+          presentStats(
+            this.dom.getElement("stats"),
+            this.gameController,
+            this.eventBus,
+          );
         }
         presentWorld(this.dom.getElement("world"), this.viewModelManager);
         this.responsiveScaling.initialize();
@@ -239,7 +268,11 @@ export class AppEventHandlers {
     this.eventBus.on(
       "game:simulation_started",
       () => {
-        presentStats(this.dom.getElement("stats"), this.gameController, this.eventBus);
+        presentStats(
+          this.dom.getElement("stats"),
+          this.gameController,
+          this.eventBus,
+        );
       },
       { signal },
     );
@@ -248,7 +281,10 @@ export class AppEventHandlers {
     this.eventBus.on(
       "viewmodel:passenger_created",
       (e) => {
-        const { viewModel } = /** @type {CustomEvent<{passengerId: string, viewModel: import('./viewmodels/PassengerViewModel.js').PassengerViewModel}>} */ (e).detail;
+        const { viewModel } =
+          /** @type {CustomEvent<{passengerId: string, viewModel: import('./viewmodels/PassengerViewModel.js').PassengerViewModel}>} */ (
+            e
+          ).detail;
         presentPassenger(this.dom.getElement("world"), viewModel);
       },
       { signal },
@@ -258,7 +294,9 @@ export class AppEventHandlers {
     this.eventBus.on(
       "simulation:challenge_ended",
       (e) => {
-        const { succeeded } = /** @type {CustomEvent<{succeeded: boolean}>} */ (e).detail;
+        const { succeeded } = /** @type {CustomEvent<{succeeded: boolean}>} */ (
+          e
+        ).detail;
         if (succeeded) {
           presentFeedback(
             this.dom.getElement("feedback"),
@@ -340,45 +378,57 @@ export class AppEventHandlers {
     };
 
     // Layout toggle functionality
-    this.boundHandlers.layoutToggle = /** @type {EventListener} */ (() => {
-      isSideBySide = !isSideBySide;
-      updateLayoutUI(true);
-    });
+    this.boundHandlers.layoutToggle = /** @type {EventListener} */ (
+      () => {
+        isSideBySide = !isSideBySide;
+        updateLayoutUI(true);
+      }
+    );
 
     // Splitter resize functionality
-    this.boundHandlers.splitterMouseDown = /** @type {EventListener} */ ((e) => {
-      if (!isSideBySide) return;
+    this.boundHandlers.splitterMouseDown = /** @type {EventListener} */ (
+      (e) => {
+        if (!isSideBySide) return;
 
-      isResizing = true;
-      document.body.style.cursor = "col-resize";
-      document.body.style.userSelect = "none";
+        isResizing = true;
+        document.body.style.cursor = "col-resize";
+        document.body.style.userSelect = "none";
 
-      e.preventDefault();
-    });
-
-    this.boundHandlers.splitterMouseMove = /** @type {EventListener} */ ((e) => {
-      if (!isResizing || !isSideBySide) return;
-
-      const containerRect = mainContent.getBoundingClientRect();
-      const codeSection = /** @type {HTMLElement | null} */ (mainContent.querySelector(".code-section"));
-      const mouseEvent = /** @type {MouseEvent} */ (e);
-      const newWidth = ((mouseEvent.clientX - containerRect.left) / containerRect.width) * 100;
-
-      // Constrain between 20% and 80%
-      const constrainedWidth = Math.max(20, Math.min(80, newWidth));
-
-      if (codeSection) {
-        codeSection.style.flex = `0 0 ${constrainedWidth}%`;
+        e.preventDefault();
       }
+    );
 
-      e.preventDefault();
-    });
+    this.boundHandlers.splitterMouseMove = /** @type {EventListener} */ (
+      (e) => {
+        if (!isResizing || !isSideBySide) return;
 
-    this.boundHandlers.splitterMouseUp = /** @type {EventListener} */ (() => {
-      isResizing = false;
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-    });
+        const containerRect = mainContent.getBoundingClientRect();
+        const codeSection = /** @type {HTMLElement | null} */ (
+          mainContent.querySelector(".code-section")
+        );
+        const mouseEvent = /** @type {MouseEvent} */ (e);
+        const newWidth =
+          ((mouseEvent.clientX - containerRect.left) / containerRect.width) *
+          100;
+
+        // Constrain between 20% and 80%
+        const constrainedWidth = Math.max(20, Math.min(80, newWidth));
+
+        if (codeSection) {
+          codeSection.style.flex = `0 0 ${constrainedWidth}%`;
+        }
+
+        e.preventDefault();
+      }
+    );
+
+    this.boundHandlers.splitterMouseUp = /** @type {EventListener} */ (
+      () => {
+        isResizing = false;
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+      }
+    );
 
     // Add event listeners
     layoutToggle.addEventListener("click", this.boundHandlers.layoutToggle, {

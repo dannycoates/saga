@@ -9,12 +9,14 @@ Elevator Saga is a multi-language elevator programming game where users write Ja
 ## Commands
 
 ### Development
+
 - `npm run dev` - Start development server on port 3000 with hot reloading
 - `npm run build` - Build for production (outputs to `dist/`)
 - `npm run preview` - Preview production build
 - Assume the dev server (npm run dev) is already running
 
 ### Testing
+
 - `npm run test:run` - Run tests once
 - `npm run test` - Run tests in watch mode
 
@@ -38,12 +40,14 @@ All components communicate through a shared `EventBus` instance injected via dep
 ### Key Components
 
 **EventBus** (`src/utils/EventBus.js`)
+
 - Central event bus extending `EventTarget` for application-wide events
 - Provides `emit(name, detail)`, `on(name, handler, options)`, `off(name, handler)` methods
 - Events use namespaced naming: `simulation:*`, `game:*`, `viewmodel:*`
 - Injected via dependency injection to all major components
 
 **JSSimulationBackend** (`src/core/JSSimulationBackend.js`)
+
 - Primary simulation engine handling game physics and logic
 - Receives `eventBus` in constructor for event emission
 - Manages passengers, elevators, floors, and their interactions
@@ -51,6 +55,7 @@ All components communicate through a shared `EventBus` instance injected via dep
 - Emits `simulation:state_changed`, `simulation:stats_changed`, `simulation:passenger_spawned`, `simulation:challenge_ended` events
 
 **GameController** (`src/game/GameController.js`)
+
 - Main game orchestrator and controller
 - Receives `eventBus` in constructor, passes it to `JSSimulationBackend`
 - Manages game loops, user code execution, and challenge evaluation
@@ -58,6 +63,7 @@ All components communicate through a shared `EventBus` instance injected via dep
 - Emits `game:challenge_initialized`, `game:simulation_started`, `game:timescale_changed`
 
 **ViewModelManager** (`src/ui/ViewModelManager.js`)
+
 - View model layer separated from simulation logic
 - Manages view models: floors, elevators, passengers
 - Subscribes to `simulation:*` events via eventBus for updates
@@ -67,6 +73,7 @@ All components communicate through a shared `EventBus` instance injected via dep
 ### Multi-Runtime System
 
 **Runtime Architecture** (`src/runtimes/`)
+
 - `BaseRuntime.js` - Abstract base class for language runtimes
 - `RuntimeManager.js` - Handles language switching and code execution coordination
 - Each runtime (`JavaScriptRuntime.js`, `PythonRuntime.js`, `JavaRuntime.js`) implements: `loadRuntime()`, `loadCode()`, `execute()`, `getDefaultTemplate()`
@@ -77,24 +84,28 @@ All components communicate through a shared `EventBus` instance injected via dep
 ### Player Code Interface
 
 All runtimes expose the same API contract:
+
 ```js
 // Elevator API
-elevator.currentFloor        // Current floor number
-elevator.destinationFloor    // Destination or null
-elevator.pressedFloorButtons // Array of pressed floor numbers
-elevator.percentFull         // Load percentage (0-1)
-elevator.goToFloor(floorNum) // Command to move
+elevator.currentFloor; // Current floor number
+elevator.destinationFloor; // Destination or null
+elevator.pressedFloorButtons; // Array of pressed floor numbers
+elevator.percentFull; // Load percentage (0-1)
+elevator.goToFloor(floorNum); // Command to move
 
 // Floor API
-floor.buttons.up   // Boolean - up button pressed
-floor.buttons.down // Boolean - down button pressed
-floor.level        // Floor number
+floor.buttons.up; // Boolean - up button pressed
+floor.buttons.down; // Boolean - down button pressed
+floor.level; // Floor number
 
 // Entry point
-function tick(elevators, floors) { /* player code */ }
+function tick(elevators, floors) {
+  /* player code */
+}
 ```
 
 ### Key Directories
+
 - `/src/core/` - Core simulation engine (JSSimulationBackend, entities)
 - `/src/game/` - Game logic (GameController, challenges)
 - `/src/ui/` - UI presentation layer (ViewModelManager, view models, web components)
@@ -107,6 +118,7 @@ function tick(elevators, floors) { /* player code */ }
 The system uses a centralized **EventBus** for loose coupling between components:
 
 **Event Namespaces:**
+
 - `simulation:*` - Core simulation events from JSSimulationBackend
 - `game:*` - Game lifecycle events from GameController
 - `viewmodel:*` - View model events from ViewModelManager
@@ -125,6 +137,7 @@ The system uses a centralized **EventBus** for loose coupling between components
 | `viewmodel:passenger_created` | ViewModelManager | Passenger view model ready for rendering |
 
 **Pattern Benefits:**
+
 - No event forwarding/re-emission between components
 - All subscribers are equal - no ordering dependencies
 - Components don't need references to each other, just the eventBus
@@ -143,6 +156,7 @@ The system uses a centralized **EventBus** for loose coupling between components
 ## Testing Approach
 
 The project uses Vitest with JSDOM for testing. Test files are in `/tests/` and follow the naming pattern `*.test.js`. Tests focus on:
+
 - Core game mechanics and entity behaviors
 - Architecture components (JSSimulationBackend, ViewModelManager, GameController)
 - Multi-runtime compatibility

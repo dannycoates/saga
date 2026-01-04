@@ -156,14 +156,16 @@ export function tick(elevators, floors) {
       () => {
         const floors = document.querySelectorAll("elevator-floor");
         for (const floor of floors) {
-          if (floor.getAttribute("up-active") === "true" ||
-              floor.getAttribute("down-active") === "true") {
+          if (
+            floor.getAttribute("up-active") === "true" ||
+            floor.getAttribute("down-active") === "true"
+          ) {
             return true;
           }
         }
         return false;
       },
-      { timeout: 10000 }
+      { timeout: 10000 },
     );
 
     // Check for active floor buttons

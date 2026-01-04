@@ -191,7 +191,9 @@ describe("Modern Architecture", () => {
 
     it("should use SimulationBackend internally", () => {
       expect(gameController.backend).toBeDefined();
-      expect(gameController.backend.constructor.name).toBe("JSSimulationBackend");
+      expect(gameController.backend.constructor.name).toBe(
+        "JSSimulationBackend",
+      );
     });
 
     it("should emit challenge_initialized with initialState", () => {

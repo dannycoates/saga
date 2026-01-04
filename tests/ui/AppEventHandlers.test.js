@@ -26,7 +26,10 @@ const mockViewModelManagerInstance = {
 // Mock ViewModelManager
 vi.mock("../../src/ui/ViewModelManager.js", () => ({
   ViewModelManager: {
-    create: vi.fn(() => ({ ...mockViewModelManagerInstance, cleanup: vi.fn() })),
+    create: vi.fn(() => ({
+      ...mockViewModelManagerInstance,
+      cleanup: vi.fn(),
+    })),
   },
 }));
 
@@ -153,7 +156,15 @@ function createMocks() {
     createParamsUrl: vi.fn().mockReturnValue("?challenge=2"),
   };
 
-  return { eventBus, app, dom, editor, runtimeManager, gameController, urlManager };
+  return {
+    eventBus,
+    app,
+    dom,
+    editor,
+    runtimeManager,
+    gameController,
+    urlManager,
+  };
 }
 
 describe("AppEventHandlers", () => {
@@ -468,7 +479,10 @@ describe("AppEventHandlers", () => {
 
       // Should set side-by-side class
       const container = mockElements[".container"];
-      expect(container.classList.toggle).toHaveBeenCalledWith("side-by-side", true);
+      expect(container.classList.toggle).toHaveBeenCalledWith(
+        "side-by-side",
+        true,
+      );
     });
 
     it("should respect saved vertical preference", () => {
@@ -480,7 +494,10 @@ describe("AppEventHandlers", () => {
       handlers.setupLayoutToggle();
 
       const container = mockElements[".container"];
-      expect(container.classList.toggle).toHaveBeenCalledWith("side-by-side", false);
+      expect(container.classList.toggle).toHaveBeenCalledWith(
+        "side-by-side",
+        false,
+      );
     });
   });
 
@@ -569,7 +586,10 @@ describe("AppEventHandlers integration", () => {
       viewModel: mockPassengerVM,
     });
 
-    expect(mockPresentPassenger).toHaveBeenCalledWith(expect.anything(), mockPassengerVM);
+    expect(mockPresentPassenger).toHaveBeenCalledWith(
+      expect.anything(),
+      mockPassengerVM,
+    );
 
     // 4. Challenge ended successfully
     mocks.eventBus.emit("simulation:challenge_ended", { succeeded: true });

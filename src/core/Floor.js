@@ -38,7 +38,7 @@ export class Floor {
   toJSON() {
     return {
       level: this.level,
-      buttons: { ...this.buttons }
+      buttons: { ...this.buttons },
     };
   }
 }

@@ -188,11 +188,9 @@ export class GameController {
     });
 
     // Subscribe to challenge_ended to pause game
-    this.eventBus.on(
-      "simulation:challenge_ended",
-      () => this.end(),
-      { signal: this.abortController.signal },
-    );
+    this.eventBus.on("simulation:challenge_ended", () => this.end(), {
+      signal: this.abortController.signal,
+    });
 
     // Emit challenge initialized event with initial state
     this.eventBus.emit("game:challenge_initialized", {

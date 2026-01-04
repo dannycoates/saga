@@ -31,17 +31,20 @@ export class ThemeManager {
    */
   getInitialTheme() {
     // Check localStorage first
-    const stored = localStorage.getItem('elevator-saga-theme');
-    if (stored && (stored === 'light' || stored === 'dark')) {
+    const stored = localStorage.getItem("elevator-saga-theme");
+    if (stored && (stored === "light" || stored === "dark")) {
       return stored;
     }
 
     // Fall back to system preference
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
+    if (
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+    ) {
+      return "dark";
     }
 
-    return 'light';
+    return "light";
   }
 
   /**
@@ -60,12 +63,12 @@ export class ThemeManager {
    * @returns {void}
    */
   setTheme(theme) {
-    if (theme !== 'light' && theme !== 'dark') {
+    if (theme !== "light" && theme !== "dark") {
       throw new Error('Theme must be "light" or "dark"');
     }
 
     this.currentTheme = theme;
-    localStorage.setItem('elevator-saga-theme', theme);
+    localStorage.setItem("elevator-saga-theme", theme);
     this.applyTheme(theme);
     this.notifyListeners(theme);
   }
@@ -75,7 +78,7 @@ export class ThemeManager {
    * @returns {void}
    */
   toggleTheme() {
-    this.setTheme(this.currentTheme === 'light' ? 'dark' : 'light');
+    this.setTheme(this.currentTheme === "light" ? "dark" : "light");
   }
 
   /**
@@ -85,7 +88,7 @@ export class ThemeManager {
    * @returns {void}
    */
   applyTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute("data-theme", theme);
   }
 
   /**
@@ -106,7 +109,7 @@ export class ThemeManager {
    * @returns {void}
    */
   offThemeChange(callback) {
-    this.listeners = this.listeners.filter(listener => listener !== callback);
+    this.listeners = this.listeners.filter((listener) => listener !== callback);
   }
 
   /**
@@ -116,7 +119,7 @@ export class ThemeManager {
    * @returns {void}
    */
   notifyListeners(theme) {
-    this.listeners.forEach(callback => callback(theme));
+    this.listeners.forEach((callback) => callback(theme));
   }
 
   /**
@@ -126,11 +129,11 @@ export class ThemeManager {
    */
   watchSystemTheme() {
     if (window.matchMedia) {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      mediaQuery.addEventListener('change', (e) => {
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      mediaQuery.addEventListener("change", (e) => {
         // Only auto-switch if user hasn't manually set a preference
-        if (!localStorage.getItem('elevator-saga-theme')) {
-          this.setTheme(e.matches ? 'dark' : 'light');
+        if (!localStorage.getItem("elevator-saga-theme")) {
+          this.setTheme(e.matches ? "dark" : "light");
         }
       });
     }

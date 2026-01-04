@@ -101,7 +101,9 @@ export class Elevator {
    * @readonly
    */
   get direction() {
-    return /** @type {-1 | 0 | 1} */ (Math.sign(this.destination - this.position));
+    return /** @type {-1 | 0 | 1} */ (
+      Math.sign(this.destination - this.position)
+    );
   }
 
   /**
@@ -191,7 +193,10 @@ export class Elevator {
 
     // Starting from rest
     if (this.velocity === 0) {
-      const acceleration = Math.min(distance * ACCELERATION_DISTANCE_FACTOR, ACCELERATION);
+      const acceleration = Math.min(
+        distance * ACCELERATION_DISTANCE_FACTOR,
+        ACCELERATION,
+      );
       return targetDirection * acceleration * dt;
     }
 
@@ -207,12 +212,18 @@ export class Elevator {
 
     if (stoppingDistance * STOPPING_DISTANCE_MARGIN < distance) {
       // Can safely accelerate
-      const acceleration = Math.min(distance * ACCELERATION_DISTANCE_FACTOR, ACCELERATION);
+      const acceleration = Math.min(
+        distance * ACCELERATION_DISTANCE_FACTOR,
+        ACCELERATION,
+      );
       return this.velocity + targetDirection * acceleration * dt;
     } else {
       // Need to decelerate
       const requiredDecel = (this.velocity * this.velocity) / (2 * distance);
-      const deceleration = Math.min(DECELERATION * DECELERATION_CORRECTION, requiredDecel);
+      const deceleration = Math.min(
+        DECELERATION * DECELERATION_CORRECTION,
+        requiredDecel,
+      );
       return this.velocity - targetDirection * deceleration * dt;
     }
   }

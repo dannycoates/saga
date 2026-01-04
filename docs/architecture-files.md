@@ -29,14 +29,14 @@ saga/
 
 ## Root Files
 
-| File | Purpose |
-|------|---------|
-| `index.html` | Main HTML entry point. Loads `src/app.js`, contains DOM structure for the game UI including world container, code editor, controls, and stats display. |
-| `package.json` | NPM configuration with dependencies (CodeMirror, themes) and scripts (dev, build, test). |
-| `vite.config.js` | Vite build configuration. Dev server on port 3000, chunk splitting, sourcemaps. |
-| `CLAUDE.md` | AI assistant guidelines for understanding and working with the codebase. |
-| `README.md` | Project documentation and setup instructions. |
-| `LICENSE.txt` | MIT license. |
+| File             | Purpose                                                                                                                                                |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `index.html`     | Main HTML entry point. Loads `src/app.js`, contains DOM structure for the game UI including world container, code editor, controls, and stats display. |
+| `package.json`   | NPM configuration with dependencies (CodeMirror, themes) and scripts (dev, build, test).                                                               |
+| `vite.config.js` | Vite build configuration. Dev server on port 3000, chunk splitting, sourcemaps.                                                                        |
+| `CLAUDE.md`      | AI assistant guidelines for understanding and working with the codebase.                                                                               |
+| `README.md`      | Project documentation and setup instructions.                                                                                                          |
+| `LICENSE.txt`    | MIT license.                                                                                                                                           |
 
 ---
 
@@ -44,17 +44,17 @@ saga/
 
 ### Entry Point
 
-| File | Purpose |
-|------|---------|
-| `app.js` | **ElevatorApp** class - Main application orchestrator. Composes RuntimeManager, CodeEditor, GameController, AppDOM, and AppEventHandlers. Manages application lifecycle, challenge loading, and user interactions. |
-| `style.css` | Global styles for the application layout, game world, and UI elements. |
+| File        | Purpose                                                                                                                                                                                                            |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `app.js`    | **ElevatorApp** class - Main application orchestrator. Composes RuntimeManager, CodeEditor, GameController, AppDOM, and AppEventHandlers. Manages application lifecycle, challenge loading, and user interactions. |
+| `style.css` | Global styles for the application layout, game world, and UI elements.                                                                                                                                             |
 
 ---
 
 ### Configuration (`src/config/`)
 
-| File | Purpose |
-|------|---------|
+| File           | Purpose                                                                                                         |
+| -------------- | --------------------------------------------------------------------------------------------------------------- |
 | `constants.js` | Application-wide constants including DOM selectors, frame rate settings, localStorage keys, and default values. |
 
 ---
@@ -63,19 +63,19 @@ saga/
 
 The simulation engine that handles game physics and entity management.
 
-| File | Purpose |
-|------|---------|
-| `SimulationBackend.js` | **Abstract base class**. Defines interface for all backend implementations: `initialize()`, `tick()`, `getState()`, `callUserCode()`, `getStats()`, `cleanup()`. Implementations receive EventBus via constructor. |
+| File                     | Purpose                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SimulationBackend.js`   | **Abstract base class**. Defines interface for all backend implementations: `initialize()`, `tick()`, `getState()`, `callUserCode()`, `getStats()`, `cleanup()`. Implementations receive EventBus via constructor.                                                                                                                                                                                              |
 | `JSSimulationBackend.js` | **Main simulation implementation**. Receives EventBus via constructor. Manages floors, elevators, passengers. Handles spawning, physics updates, boarding/exiting logic, statistics tracking. Emits events via eventBus: `simulation:state_changed`, `simulation:stats_changed`, `simulation:passenger_spawned`, `simulation:passengers_exited`, `simulation:passengers_boarded`, `simulation:challenge_ended`. |
-| `Elevator.js` | **Elevator entity class**. Properties: position, velocity, destination, passengers, buttons, indicators. Methods: `tick()` for physics, `goToFloor()`, `addPassenger()`, `removePassenger()`, `toAPI()` for player code, `toJSON()` for display. |
-| `Floor.js` | **Floor entity class**. Properties: level, buttons (up/down). Methods: `pressButton()`, `clearButton()`, `toJSON()`. |
-| `Passenger.js` | **Passenger entity class**. Properties: id, weight, origin, destination, currentFloor, state, elevator, timestamps. Methods: `enterElevator()`, `exitElevator()`, `shouldExitAt()`, `toJSON()`. |
-| `utils.js` | Utility functions: `randomInt()`, `throttle()`. Used throughout the codebase. |
+| `Elevator.js`            | **Elevator entity class**. Properties: position, velocity, destination, passengers, buttons, indicators. Methods: `tick()` for physics, `goToFloor()`, `addPassenger()`, `removePassenger()`, `toAPI()` for player code, `toJSON()` for display.                                                                                                                                                                |
+| `Floor.js`               | **Floor entity class**. Properties: level, buttons (up/down). Methods: `pressButton()`, `clearButton()`, `toJSON()`.                                                                                                                                                                                                                                                                                            |
+| `Passenger.js`           | **Passenger entity class**. Properties: id, weight, origin, destination, currentFloor, state, elevator, timestamps. Methods: `enterElevator()`, `exitElevator()`, `shouldExitAt()`, `toJSON()`.                                                                                                                                                                                                                 |
+| `utils.js`               | Utility functions: `randomInt()`, `throttle()`. Used throughout the codebase.                                                                                                                                                                                                                                                                                                                                   |
 
 #### Backends Subdirectory (`src/core/backends/`)
 
-| File | Purpose |
-|------|---------|
+| File                               | Purpose                                                                                                                                  |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | `WASMSimulationBackend.example.js` | Example skeleton for a future WebAssembly backend implementation. Shows how to extend SimulationBackend for alternative implementations. |
 
 ---
@@ -84,10 +84,10 @@ The simulation engine that handles game physics and entity management.
 
 Game flow, challenges, and world management.
 
-| File | Purpose |
-|------|---------|
+| File                | Purpose                                                                                                                                                                                                                                                                                                          |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `GameController.js` | **Game orchestrator**. Receives EventBus via constructor, passes it to JSSimulationBackend. Manages game loop via `requestAnimationFrame`. Handles: challenge initialization, start/pause/resume, time scaling, user code execution coordination. Emits `game:*` events. Uses AbortController for event cleanup. |
-| `challenges.js` | **Challenge definitions**. Contains 16 progressive challenges with configurations (floors, elevators, spawn rates) and end conditions. Condition functions: `requirePassengerCountWithinTime()`, `requirePassengerCountWithMaxWaitTime()`, `requirePassengerCountWithinMoves()`, `requireDemo()`. |
+| `challenges.js`     | **Challenge definitions**. Contains 16 progressive challenges with configurations (floors, elevators, spawn rates) and end conditions. Condition functions: `requirePassengerCountWithinTime()`, `requirePassengerCountWithMaxWaitTime()`, `requirePassengerCountWithinMoves()`, `requireDemo()`.                |
 
 ---
 
@@ -95,13 +95,13 @@ Game flow, challenges, and world management.
 
 Support for JavaScript, Python, and Java execution.
 
-| File | Purpose |
-|------|---------|
-| `manager.js` | **RuntimeManager** class. Manages three runtime instances. Handles language switching, runtime loading, code compilation, and execution coordination. Provides `defaultTemplates` for each language. |
-| `base.js` | **BaseRuntime** abstract class. Interface for all runtimes: `loadRuntime()`, `loadCode()`, `execute()`, `getDefaultTemplate()`, `cleanup()`. Properties: `isLoaded`, `isLoading`. |
-| `javascript.js` | **JavaScript runtime**. Always ready (native support). Loads user code via ES modules with `data:text/javascript` URLs. Validates exported `tick` function. |
-| `python.js` | **Python runtime**. Loads Pyodide from CDN. Injects wrapper classes (ElevatorAPI, FloorAPI) to bridge Python to JavaScript objects. Handles async execution with timeouts. |
-| `java.js` | **Java runtime**. Loads CheerpJ from CDN. Precompiles base Elevator/Floor classes. Uses JNI callbacks (`Java_Elevator_jsGoToFloor`) to bridge Java to JavaScript. Manages class versioning to avoid conflicts. |
+| File            | Purpose                                                                                                                                                                                                        |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `manager.js`    | **RuntimeManager** class. Manages three runtime instances. Handles language switching, runtime loading, code compilation, and execution coordination. Provides `defaultTemplates` for each language.           |
+| `base.js`       | **BaseRuntime** abstract class. Interface for all runtimes: `loadRuntime()`, `loadCode()`, `execute()`, `getDefaultTemplate()`, `cleanup()`. Properties: `isLoaded`, `isLoading`.                              |
+| `javascript.js` | **JavaScript runtime**. Always ready (native support). Loads user code via ES modules with `data:text/javascript` URLs. Validates exported `tick` function.                                                    |
+| `python.js`     | **Python runtime**. Loads Pyodide from CDN. Injects wrapper classes (ElevatorAPI, FloorAPI) to bridge Python to JavaScript objects. Handles async execution with timeouts.                                     |
+| `java.js`       | **Java runtime**. Loads CheerpJ from CDN. Precompiles base Elevator/Floor classes. Uses JNI callbacks (`Java_Elevator_jsGoToFloor`) to bridge Java to JavaScript. Manages class versioning to avoid conflicts. |
 
 ---
 
@@ -109,45 +109,45 @@ Support for JavaScript, Python, and Java execution.
 
 Presentation layer and user interaction handling.
 
-| File | Purpose |
-|------|---------|
-| `ViewModelManager.js` | **View model orchestrator**. Receives EventBus via constructor. Manages Maps of FloorViewModel, ElevatorViewModel, PassengerViewModel. Subscribes to `simulation:*` events via eventBus. Emits `viewmodel:passenger_created` after creating passenger view models. Can be disabled for headless operation. Uses AbortController for cleanup. |
-| `NullViewModelManager.js` | **No-op view model manager**. Used for headless operation when visual rendering is completely disabled. |
-| `CodeEditor.js` | **CodeMirror integration**. Multi-language editor with syntax highlighting (JavaScript, Python, Java). Features: ESLint linting (JS only), Gruvbox themes, auto-save to localStorage, keyboard shortcuts (Tab indent, Ctrl+S start). Uses Compartments for dynamic reconfiguration. |
-| `AppDOM.js` | **DOM element cache**. Central reference to DOM elements. Methods for showing/hiding runtime loading indicator, clearing feedback. |
-| `AppEventHandlers.js` | **Event coordination**. Receives EventBus via constructor. Subscribes to `simulation:*`, `game:*`, and `viewmodel:*` events. Attaches UI event listeners for buttons, language selector, theme changes. Delegates to presenters for UI updates. |
-| `presenters.js` | **Component factories**. Functions to create and bind Web Components: `presentStats()`, `presentChallenge()`, `presentFeedback()`, `presentCodeStatus()`, `presentWorld()`, `presentFloor()`, `presentElevator()`, `presentPassenger()`. |
-| `PerformanceMonitor.js` | **Performance tracking**. Monitors frame rates and rendering performance. |
-| `ResponsiveScaling.js` | **Layout management**. Handles responsive scaling and layout adjustments for different screen sizes. |
-| `ThemeManager.js` | **Theme handling**. Watches system theme preference (prefers-color-scheme). Provides `onThemeChange()` callback for subscribers. |
+| File                      | Purpose                                                                                                                                                                                                                                                                                                                                      |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ViewModelManager.js`     | **View model orchestrator**. Receives EventBus via constructor. Manages Maps of FloorViewModel, ElevatorViewModel, PassengerViewModel. Subscribes to `simulation:*` events via eventBus. Emits `viewmodel:passenger_created` after creating passenger view models. Can be disabled for headless operation. Uses AbortController for cleanup. |
+| `NullViewModelManager.js` | **No-op view model manager**. Used for headless operation when visual rendering is completely disabled.                                                                                                                                                                                                                                      |
+| `CodeEditor.js`           | **CodeMirror integration**. Multi-language editor with syntax highlighting (JavaScript, Python, Java). Features: ESLint linting (JS only), Gruvbox themes, auto-save to localStorage, keyboard shortcuts (Tab indent, Ctrl+S start). Uses Compartments for dynamic reconfiguration.                                                          |
+| `AppDOM.js`               | **DOM element cache**. Central reference to DOM elements. Methods for showing/hiding runtime loading indicator, clearing feedback.                                                                                                                                                                                                           |
+| `AppEventHandlers.js`     | **Event coordination**. Receives EventBus via constructor. Subscribes to `simulation:*`, `game:*`, and `viewmodel:*` events. Attaches UI event listeners for buttons, language selector, theme changes. Delegates to presenters for UI updates.                                                                                              |
+| `presenters.js`           | **Component factories**. Functions to create and bind Web Components: `presentStats()`, `presentChallenge()`, `presentFeedback()`, `presentCodeStatus()`, `presentWorld()`, `presentFloor()`, `presentElevator()`, `presentPassenger()`.                                                                                                     |
+| `PerformanceMonitor.js`   | **Performance tracking**. Monitors frame rates and rendering performance.                                                                                                                                                                                                                                                                    |
+| `ResponsiveScaling.js`    | **Layout management**. Handles responsive scaling and layout adjustments for different screen sizes.                                                                                                                                                                                                                                         |
+| `ThemeManager.js`         | **Theme handling**. Watches system theme preference (prefers-color-scheme). Provides `onThemeChange()` callback for subscribers.                                                                                                                                                                                                             |
 
 #### View Models (`src/ui/viewmodels/`)
 
 Classes representing visual game elements as view models.
 
-| File | Purpose |
-|------|---------|
-| `ViewModel.js` | **Base view model class**. Extends EventTarget. Methods: `tick()`, `syncUIComponent()`. |
-| `AnimatedViewModel.js` | **Animation support**. Extends ViewModel. Handles smooth interpolated movement. Properties: `x`, `y`, `parent`. Methods: `moveToOverTime()`, `getWorldX/Y()`. Uses custom interpolation functions. |
-| `ElevatorViewModel.js` | **Elevator view model**. Extends AnimatedViewModel. Converts simulation position to screen Y. Calculates passenger slot positions. Emits: `new_current_floor`, `floor_buttons_changed`, `new_display_state`. |
-| `FloorViewModel.js` | **Floor view model**. Extends ViewModel. Tracks button state. Emits: `buttonstate_change`. |
-| `PassengerViewModel.js` | **Passenger view model**. Extends AnimatedViewModel. State machine: new → waiting → riding → exited. Random types (child, female, male). Methods: `animateBoarding()`, `animateExit()`. |
-| `NullViewModel.js` | **No-op view model**. Used for headless operation when rendering is disabled. |
+| File                    | Purpose                                                                                                                                                                                                      |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ViewModel.js`          | **Base view model class**. Extends EventTarget. Methods: `tick()`, `syncUIComponent()`.                                                                                                                      |
+| `AnimatedViewModel.js`  | **Animation support**. Extends ViewModel. Handles smooth interpolated movement. Properties: `x`, `y`, `parent`. Methods: `moveToOverTime()`, `getWorldX/Y()`. Uses custom interpolation functions.           |
+| `ElevatorViewModel.js`  | **Elevator view model**. Extends AnimatedViewModel. Converts simulation position to screen Y. Calculates passenger slot positions. Emits: `new_current_floor`, `floor_buttons_changed`, `new_display_state`. |
+| `FloorViewModel.js`     | **Floor view model**. Extends ViewModel. Tracks button state. Emits: `buttonstate_change`.                                                                                                                   |
+| `PassengerViewModel.js` | **Passenger view model**. Extends AnimatedViewModel. State machine: new → waiting → riding → exited. Random types (child, female, male). Methods: `animateBoarding()`, `animateExit()`.                      |
+| `NullViewModel.js`      | **No-op view model**. Used for headless operation when rendering is disabled.                                                                                                                                |
 
 #### Web Components (`src/ui/components/`)
 
 Custom HTML elements with Shadow DOM.
 
-| File | Purpose |
-|------|---------|
-| `elevator-car.js` | **Elevator component**. Observes position, floor, direction. Renders elevator box with floor indicator and direction arrows. Listens to display events. |
-| `elevator-floor.js` | **Floor component**. Observes floor number, position, button states. Renders floor label with up/down buttons. Click handlers for button interaction. |
-| `elevator-passenger.js` | **Passenger component**. Observes position, type, state. Renders passenger figure in child/female/male variants. |
-| `elevator-stats.js` | **Statistics component**. Displays game metrics: transported count, moves, elapsed time, wait times. |
-| `challenge-control.js` | **Challenge UI component**. Challenge selector dropdown, start/stop button, challenge description display. |
-| `code-status.js` | **Error display component**. Shows compilation and runtime errors from user code. |
-| `game-feedback.js` | **Result overlay component**. Displays challenge success/failure message with next/retry options. |
-| `theme-switcher.js` | **Theme toggle component**. Button to switch between light and dark themes. |
+| File                    | Purpose                                                                                                                                                 |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `elevator-car.js`       | **Elevator component**. Observes position, floor, direction. Renders elevator box with floor indicator and direction arrows. Listens to display events. |
+| `elevator-floor.js`     | **Floor component**. Observes floor number, position, button states. Renders floor label with up/down buttons. Click handlers for button interaction.   |
+| `elevator-passenger.js` | **Passenger component**. Observes position, type, state. Renders passenger figure in child/female/male variants.                                        |
+| `elevator-stats.js`     | **Statistics component**. Displays game metrics: transported count, moves, elapsed time, wait times.                                                    |
+| `challenge-control.js`  | **Challenge UI component**. Challenge selector dropdown, start/stop button, challenge description display.                                              |
+| `code-status.js`        | **Error display component**. Shows compilation and runtime errors from user code.                                                                       |
+| `game-feedback.js`      | **Result overlay component**. Displays challenge success/failure message with next/retry options.                                                       |
+| `theme-switcher.js`     | **Theme toggle component**. Button to switch between light and dark themes.                                                                             |
 
 ---
 
@@ -155,12 +155,12 @@ Custom HTML elements with Shadow DOM.
 
 Helper functions and utilities.
 
-| File | Purpose |
-|------|---------|
-| `EventBus.js` | **Central event bus**. Extends EventTarget. Provides `emit(name, detail)`, `on(name, handler, options)`, `off(name, handler)` methods. All application events flow through a single EventBus instance injected via dependency injection. Events use namespaced naming: `simulation:*`, `game:*`, `viewmodel:*`, `app:*`. |
-| `AsyncUtils.js` | Promise utilities: `sleep()`, `waitFor()`, `timeout()`. Used for async operations and runtime loading. |
-| `common.js` | **Shared utilities**. General-purpose functions: `randomInt()`, `throttle()`, `limitNumber()`. Used across layers. |
-| `URLManager.js` | **URL state management**. Parses URL parameters for challenge index and code. Updates URL on challenge changes. Enables sharing game state via URL. |
+| File            | Purpose                                                                                                                                                                                                                                                                                                                  |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `EventBus.js`   | **Central event bus**. Extends EventTarget. Provides `emit(name, detail)`, `on(name, handler, options)`, `off(name, handler)` methods. All application events flow through a single EventBus instance injected via dependency injection. Events use namespaced naming: `simulation:*`, `game:*`, `viewmodel:*`, `app:*`. |
+| `AsyncUtils.js` | Promise utilities: `sleep()`, `waitFor()`, `timeout()`. Used for async operations and runtime loading.                                                                                                                                                                                                                   |
+| `common.js`     | **Shared utilities**. General-purpose functions: `randomInt()`, `throttle()`, `limitNumber()`. Used across layers.                                                                                                                                                                                                       |
+| `URLManager.js` | **URL state management**. Parses URL parameters for challenge index and code. Updates URL on challenge changes. Enables sharing game state via URL.                                                                                                                                                                      |
 
 ---
 
@@ -168,16 +168,16 @@ Helper functions and utilities.
 
 Test files mirroring source structure.
 
-| File | Purpose |
-|------|---------|
-| `setup.js` | Test setup and configuration for Vitest with JSDOM. |
-| `architecture.test.js` | Tests for main architectural components integration. |
-| `core/Elevator.test.js` | Elevator physics and behavior tests. |
-| `core/Floor.test.js` | Floor button state tests. |
-| `core/Passenger.test.js` | Passenger lifecycle tests. |
-| `core/GameController.test.js` | GameController orchestration tests. |
-| `ui/viewmodels/AnimatedViewModel.test.js` | Animation and view model tests. |
-| `utils/common.test.js` | Common utility function tests. |
+| File                                      | Purpose                                              |
+| ----------------------------------------- | ---------------------------------------------------- |
+| `setup.js`                                | Test setup and configuration for Vitest with JSDOM.  |
+| `architecture.test.js`                    | Tests for main architectural components integration. |
+| `core/Elevator.test.js`                   | Elevator physics and behavior tests.                 |
+| `core/Floor.test.js`                      | Floor button state tests.                            |
+| `core/Passenger.test.js`                  | Passenger lifecycle tests.                           |
+| `core/GameController.test.js`             | GameController orchestration tests.                  |
+| `ui/viewmodels/AnimatedViewModel.test.js` | Animation and view model tests.                      |
+| `utils/common.test.js`                    | Common utility function tests.                       |
 
 ---
 
@@ -185,8 +185,8 @@ Test files mirroring source structure.
 
 Static files served directly.
 
-| File | Purpose |
-|------|---------|
+| File        | Purpose                                                 |
+| ----------- | ------------------------------------------------------- |
 | `tools.jar` | Java tools for CheerpJ compilation (if needed locally). |
 
 ---
@@ -224,20 +224,20 @@ index.html
 
 ## File Counts by Directory
 
-| Directory | File Count | Description |
-|-----------|------------|-------------|
-| `src/` | 2 | Entry point and styles |
-| `src/config/` | 1 | Constants |
-| `src/core/` | 5 | Simulation engine |
-| `src/core/backends/` | 1 | Example backend |
-| `src/game/` | 2 | Game logic |
-| `src/runtimes/` | 5 | Language runtimes |
-| `src/ui/` | 9 | UI management |
-| `src/ui/components/` | 8 | Web components |
-| `src/ui/viewmodels/` | 6 | View model objects |
-| `src/utils/` | 4 | Utilities (inc. EventBus) |
-| `tests/` | 8 | Test files |
-| **Total** | **51** | Source + tests |
+| Directory            | File Count | Description               |
+| -------------------- | ---------- | ------------------------- |
+| `src/`               | 2          | Entry point and styles    |
+| `src/config/`        | 1          | Constants                 |
+| `src/core/`          | 5          | Simulation engine         |
+| `src/core/backends/` | 1          | Example backend           |
+| `src/game/`          | 2          | Game logic                |
+| `src/runtimes/`      | 5          | Language runtimes         |
+| `src/ui/`            | 9          | UI management             |
+| `src/ui/components/` | 8          | Web components            |
+| `src/ui/viewmodels/` | 6          | View model objects        |
+| `src/utils/`         | 4          | Utilities (inc. EventBus) |
+| `tests/`             | 8          | Test files                |
+| **Total**            | **51**     | Source + tests            |
 
 ---
 

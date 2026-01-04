@@ -56,18 +56,22 @@ Elevator Saga is a multi-language elevator programming game where users write Ja
 ## Layer Responsibilities
 
 ### 1. ElevatorApp (Orchestrator)
+
 **File**: `src/app.js`
 
 The top-level application class that:
+
 - Initializes and composes all subsystems
 - Manages application lifecycle (start, stop, reset)
 - Handles user interactions (challenge selection, code execution)
 - Coordinates between runtime, game, and UI layers
 
 ### 2. Runtime System
+
 **Directory**: `src/runtimes/`
 
 Handles multi-language code execution:
+
 - **RuntimeManager**: Coordinates language switching and code loading
 - **JavaScript Runtime**: Native ES module execution
 - **Python Runtime**: Pyodide-based Python interpreter
@@ -76,25 +80,31 @@ Handles multi-language code execution:
 All runtimes expose an identical API to user code, enabling language-agnostic game logic.
 
 ### 3. Game Logic Layer
+
 **Directory**: `src/game/`
 
 Manages game flow and rules:
+
 - **GameController**: Game loop controller, coordinates backend and display
 - **Challenges**: 16 progressive challenges with evaluation criteria
 
 ### 4. UI Layer
+
 **Directory**: `src/ui/`
 
 Pure presentation layer:
+
 - **ViewModelManager**: Manages view model objects for visual representation
 - **View Models**: ElevatorViewModel, FloorViewModel, PassengerViewModel
 - **Web Components**: Custom elements for elevator, floor, passenger, stats
 - **CodeEditor**: CodeMirror-based multi-language editor
 
 ### 5. Core Simulation
+
 **Directory**: `src/core/`
 
 Physics and game state engine:
+
 - **JSSimulationBackend**: Main simulation implementation
 - **Entities**: Elevator, Floor, Passenger classes
 - Event-driven state management
@@ -143,7 +153,9 @@ Physics and game state engine:
 ## Key Design Principles
 
 ### 1. Event-Driven Architecture with EventBus
+
 Components communicate through a centralized **EventBus** rather than direct method calls:
+
 - All events flow through a single EventBus instance
 - Events use namespaced naming: `simulation:*`, `game:*`, `viewmodel:*`
 - Loose coupling - components only need the eventBus reference
@@ -158,24 +170,31 @@ GameController ────────►   ↑   ◄──── AppEventHandl
 ```
 
 ### 2. Composition Over Inheritance
+
 Major systems are composed together rather than inherited:
+
 - GameController coordinates Backend and ViewModelManager
 - ElevatorApp composes all subsystems
 - Easy to swap implementations
 
 ### 3. Backend Abstraction
+
 The `SimulationBackend` interface enables pluggable implementations:
+
 - Current: JSSimulationBackend (JavaScript)
 - Future: WASM backend, Web Worker backend
 - No changes needed to GameController or UI
 
 ### 4. Resource Cleanup with AbortController
+
 All event listeners use AbortController for proper cleanup:
+
 - Prevents memory leaks between challenges
 - Single `abort()` removes all listeners
 - Pattern used throughout codebase
 
 ### 5. Separation of Simulation and Presentation
+
 - Core simulation has no knowledge of rendering
 - ViewModelManager can be completely disabled (headless mode)
 - Enables fast automated testing
@@ -207,12 +226,12 @@ User Code                  Simulation                    EventBus               
 
 ## Entry Points
 
-| Entry Point | Purpose |
-|-------------|---------|
-| `index.html` | Main HTML page, loads app.js |
-| `src/app.js` | Application initialization |
-| `src/game/GameController.js` | Game loop entry |
-| `src/runtimes/manager.js` | Code execution entry |
+| Entry Point                  | Purpose                      |
+| ---------------------------- | ---------------------------- |
+| `index.html`                 | Main HTML page, loads app.js |
+| `src/app.js`                 | Application initialization   |
+| `src/game/GameController.js` | Game loop entry              |
+| `src/runtimes/manager.js`    | Code execution entry         |
 
 ---
 
