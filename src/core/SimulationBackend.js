@@ -110,5 +110,4 @@ export class SimulationBackend extends EventTarget {
   getStats() {
     throw new Error("SimulationBackend.getStats must be implemented");
   }
-
 }

@@ -19,7 +19,10 @@ test.describe("Error Handling", () => {
     await clickStartStop(page);
 
     // Wait for error modal to appear
-    await page.locator("code-status").locator("dialog[open]").waitFor({ timeout: 5000 });
+    await page
+      .locator("code-status")
+      .locator("dialog[open]")
+      .waitFor({ timeout: 5000 });
 
     const hasError = await isErrorModalVisible(page);
     expect(hasError).toBe(true);
@@ -32,7 +35,10 @@ test.describe("Error Handling", () => {
     await clickStartStop(page);
 
     // Wait for error modal
-    await page.locator("code-status").locator("dialog[open]").waitFor({ timeout: 5000 });
+    await page
+      .locator("code-status")
+      .locator("dialog[open]")
+      .waitFor({ timeout: 5000 });
 
     const errorMessage = await getErrorMessage(page);
     expect(errorMessage.length).toBeGreaterThan(0);
@@ -43,7 +49,10 @@ test.describe("Error Handling", () => {
     await clickStartStop(page);
 
     // Wait for error modal
-    await page.locator("code-status").locator("dialog[open]").waitFor({ timeout: 5000 });
+    await page
+      .locator("code-status")
+      .locator("dialog[open]")
+      .waitFor({ timeout: 5000 });
 
     // Verify modal is visible
     let hasError = await isErrorModalVisible(page);
@@ -63,7 +72,10 @@ test.describe("Error Handling", () => {
     await clickStartStop(page);
 
     // Wait for error modal
-    await page.locator("code-status").locator("dialog[open]").waitFor({ timeout: 5000 });
+    await page
+      .locator("code-status")
+      .locator("dialog[open]")
+      .waitFor({ timeout: 5000 });
 
     // Verify modal is visible
     let hasError = await isErrorModalVisible(page);
@@ -83,7 +95,10 @@ test.describe("Error Handling", () => {
     await clickStartStop(page);
 
     // Wait for error modal
-    await page.locator("code-status").locator("dialog[open]").waitFor({ timeout: 5000 });
+    await page
+      .locator("code-status")
+      .locator("dialog[open]")
+      .waitFor({ timeout: 5000 });
 
     // Verify modal is visible
     let hasError = await isErrorModalVisible(page);
@@ -107,12 +122,15 @@ test.describe("Error Handling", () => {
     await clickStartStop(page);
 
     // Wait for runtime error to occur
-    await page.locator("code-status").locator("dialog[open]").waitFor({ timeout: 5000 });
+    await page
+      .locator("code-status")
+      .locator("dialog[open]")
+      .waitFor({ timeout: 5000 });
 
     // Simulation should be stopped after error
     await waitForSimulationStopped(page);
     await expect(
-      page.locator('challenge-control[is-paused="true"]')
+      page.locator('challenge-control[is-paused="true"]'),
     ).toBeVisible();
   });
 
@@ -124,7 +142,10 @@ test.describe("Error Handling", () => {
     await clickStartStop(page);
 
     // Wait for error modal
-    await page.locator("code-status").locator("dialog[open]").waitFor({ timeout: 5000 });
+    await page
+      .locator("code-status")
+      .locator("dialog[open]")
+      .waitFor({ timeout: 5000 });
 
     // Verify error modal appeared
     let hasError = await isErrorModalVisible(page);
@@ -147,7 +168,7 @@ test.describe("Error Handling", () => {
         // Simulation running and no error modal
         return control?.getAttribute("is-paused") === "false" && !dialog;
       },
-      { timeout: 5000 }
+      { timeout: 5000 },
     );
 
     // No error should appear
@@ -156,7 +177,7 @@ test.describe("Error Handling", () => {
 
     // Simulation should be running
     await expect(
-      page.locator('challenge-control[is-paused="false"]')
+      page.locator('challenge-control[is-paused="false"]'),
     ).toBeVisible();
   });
 });

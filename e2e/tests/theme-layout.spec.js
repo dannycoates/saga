@@ -7,7 +7,7 @@ test.describe("Theme & Layout", () => {
   }) => {
     // Get initial theme
     const initialTheme = await page.evaluate(() =>
-      document.documentElement.getAttribute("data-theme")
+      document.documentElement.getAttribute("data-theme"),
     );
 
     // Find and click theme toggle button
@@ -19,13 +19,14 @@ test.describe("Theme & Layout", () => {
       await themeToggle.click();
       // Wait for theme to change
       await page.waitForFunction(
-        (initial) => document.documentElement.getAttribute("data-theme") !== initial,
+        (initial) =>
+          document.documentElement.getAttribute("data-theme") !== initial,
         initialTheme,
-        { timeout: 2000 }
+        { timeout: 2000 },
       );
 
       const newTheme = await page.evaluate(() =>
-        document.documentElement.getAttribute("data-theme")
+        document.documentElement.getAttribute("data-theme"),
       );
 
       // Theme should have changed
@@ -35,13 +36,14 @@ test.describe("Theme & Layout", () => {
       await themeToggle.click();
       // Wait for theme to change back
       await page.waitForFunction(
-        (initial) => document.documentElement.getAttribute("data-theme") === initial,
+        (initial) =>
+          document.documentElement.getAttribute("data-theme") === initial,
         initialTheme,
-        { timeout: 2000 }
+        { timeout: 2000 },
       );
 
       const finalTheme = await page.evaluate(() =>
-        document.documentElement.getAttribute("data-theme")
+        document.documentElement.getAttribute("data-theme"),
       );
 
       // Should be back to initial theme
@@ -63,7 +65,7 @@ test.describe("Theme & Layout", () => {
   test("theme persists across page reload", async ({ cleanPage: page }) => {
     // Get initial theme
     const initialTheme = await page.evaluate(() =>
-      document.documentElement.getAttribute("data-theme")
+      document.documentElement.getAttribute("data-theme"),
     );
 
     // Find and click theme toggle
@@ -73,13 +75,14 @@ test.describe("Theme & Layout", () => {
       await themeToggle.click();
       // Wait for theme to change
       await page.waitForFunction(
-        (initial) => document.documentElement.getAttribute("data-theme") !== initial,
+        (initial) =>
+          document.documentElement.getAttribute("data-theme") !== initial,
         initialTheme,
-        { timeout: 2000 }
+        { timeout: 2000 },
       );
 
       const toggledTheme = await page.evaluate(() =>
-        document.documentElement.getAttribute("data-theme")
+        document.documentElement.getAttribute("data-theme"),
       );
 
       // Reload page
@@ -88,7 +91,7 @@ test.describe("Theme & Layout", () => {
 
       // Theme should be preserved
       const themeAfterReload = await page.evaluate(() =>
-        document.documentElement.getAttribute("data-theme")
+        document.documentElement.getAttribute("data-theme"),
       );
 
       expect(themeAfterReload).toBe(toggledTheme);
@@ -103,7 +106,7 @@ test.describe("Theme & Layout", () => {
 
     // Get initial layout state
     const initialLayout = await page.evaluate(() =>
-      localStorage.getItem("layout-preference")
+      localStorage.getItem("layout-preference"),
     );
 
     // Click layout toggle
@@ -112,19 +115,19 @@ test.describe("Theme & Layout", () => {
     await page.waitForFunction(
       (initial) => localStorage.getItem("layout-preference") !== initial,
       initialLayout,
-      { timeout: 2000 }
+      { timeout: 2000 },
     );
 
     // Layout should change (either via class or localStorage)
     const newLayout = await page.evaluate(() =>
-      localStorage.getItem("layout-preference")
+      localStorage.getItem("layout-preference"),
     );
 
     // If layout preference is used, it should change
     // Or check for CSS class changes on the container
     const mainContent = page.locator(".main-content");
     const hasHorizontalClass = await mainContent.evaluate((el) =>
-      el.classList.contains("horizontal")
+      el.classList.contains("horizontal"),
     );
 
     // Toggle should have changed something
@@ -136,7 +139,7 @@ test.describe("Theme & Layout", () => {
 
     // Get initial layout
     const initialLayout = await page.evaluate(() =>
-      localStorage.getItem("layout-preference")
+      localStorage.getItem("layout-preference"),
     );
 
     // Click layout toggle
@@ -145,12 +148,12 @@ test.describe("Theme & Layout", () => {
     await page.waitForFunction(
       (initial) => localStorage.getItem("layout-preference") !== initial,
       initialLayout,
-      { timeout: 2000 }
+      { timeout: 2000 },
     );
 
     // Get layout state after toggle
     const layoutAfterToggle = await page.evaluate(() =>
-      localStorage.getItem("layout-preference")
+      localStorage.getItem("layout-preference"),
     );
 
     // Reload page
@@ -159,7 +162,7 @@ test.describe("Theme & Layout", () => {
 
     // Layout should be preserved
     const layoutAfterReload = await page.evaluate(() =>
-      localStorage.getItem("layout-preference")
+      localStorage.getItem("layout-preference"),
     );
 
     expect(layoutAfterReload).toBe(layoutAfterToggle);
@@ -180,15 +183,18 @@ test.describe("Theme & Layout", () => {
       await layoutToggle.click();
       // Wait for layout to change
       await page.waitForFunction(
-        () => document.querySelector(".main-content")?.classList.contains("horizontal"),
-        { timeout: 2000 }
+        () =>
+          document
+            .querySelector(".main-content")
+            ?.classList.contains("horizontal"),
+        { timeout: 2000 },
       );
     }
 
     // In side-by-side mode, splitter should be visible
     const mainContent = page.locator(".main-content");
     const hasHorizontal = await mainContent.evaluate((el) =>
-      el.classList.contains("horizontal")
+      el.classList.contains("horizontal"),
     );
 
     if (hasHorizontal) {
@@ -212,7 +218,7 @@ test.describe("Theme & Layout", () => {
         return icon?.textContent !== initial || true; // Always pass after checking
       },
       initialIcon,
-      { timeout: 2000 }
+      { timeout: 2000 },
     );
 
     // Icon might change to indicate different layout state

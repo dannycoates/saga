@@ -27,27 +27,29 @@ export function throttle(func, wait) {
   /** @type {number} */
   let previous = 0;
 
-  return /** @type {T} */ (function throttled() {
-    const now = Date.now();
-    const remaining = wait - (now - previous);
-    const context = this;
-    const args = arguments;
+  return /** @type {T} */ (
+    function throttled() {
+      const now = Date.now();
+      const remaining = wait - (now - previous);
+      const context = this;
+      const args = arguments;
 
-    if (remaining <= 0 || remaining > wait) {
-      if (timeout) {
-        clearTimeout(timeout);
-        timeout = undefined;
-      }
-      previous = now;
-      func.apply(context, args);
-    } else if (!timeout) {
-      timeout = setTimeout(() => {
-        previous = Date.now();
-        timeout = undefined;
+      if (remaining <= 0 || remaining > wait) {
+        if (timeout) {
+          clearTimeout(timeout);
+          timeout = undefined;
+        }
+        previous = now;
         func.apply(context, args);
-      }, remaining);
+      } else if (!timeout) {
+        timeout = setTimeout(() => {
+          previous = Date.now();
+          timeout = undefined;
+          func.apply(context, args);
+        }, remaining);
+      }
     }
-  });
+  );
 }
 
 /**

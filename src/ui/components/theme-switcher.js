@@ -26,8 +26,8 @@ export class ThemeSwitcher {
    * @returns {HTMLDivElement} The switcher container element
    */
   createElement() {
-    const switcher = document.createElement('div');
-    switcher.className = 'theme-switcher';
+    const switcher = document.createElement("div");
+    switcher.className = "theme-switcher";
     switcher.innerHTML = `
       <style>
         .theme-switcher .theme-icon {
@@ -65,8 +65,8 @@ export class ThemeSwitcher {
    * @returns {void}
    */
   bindEvents() {
-    const button = this.element.querySelector('.theme-toggle-btn');
-    button.addEventListener('click', () => {
+    const button = this.element.querySelector(".theme-toggle-btn");
+    button.addEventListener("click", () => {
       this.themeManager.toggleTheme();
     });
 
@@ -87,7 +87,7 @@ export class ThemeSwitcher {
    */
   updateButtonState(theme) {
     // Use CSS classes for better performance and cleaner code
-    this.element.classList.remove('theme-dark', 'theme-light');
+    this.element.classList.remove("theme-dark", "theme-light");
     this.element.classList.add(`theme-${theme}`);
   }
 

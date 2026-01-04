@@ -55,10 +55,18 @@ export class AppDOM {
       codeArea: document.getElementById(selectors.CODE_AREA),
       saveMessage: document.getElementById(selectors.SAVE_MESSAGE),
       runtimeLoading: document.getElementById(selectors.RUNTIME_LOADING),
-      languageSelect: /** @type {HTMLSelectElement | null} */ (document.getElementById(selectors.LANGUAGE_SELECT)),
-      buttonReset: /** @type {HTMLButtonElement | null} */ (document.getElementById(selectors.BUTTON_RESET)),
-      buttonResetUndo: /** @type {HTMLButtonElement | null} */ (document.getElementById(selectors.BUTTON_RESET_UNDO)),
-      buttonApply: /** @type {HTMLButtonElement | null} */ (document.getElementById(selectors.BUTTON_APPLY)),
+      languageSelect: /** @type {HTMLSelectElement | null} */ (
+        document.getElementById(selectors.LANGUAGE_SELECT)
+      ),
+      buttonReset: /** @type {HTMLButtonElement | null} */ (
+        document.getElementById(selectors.BUTTON_RESET)
+      ),
+      buttonResetUndo: /** @type {HTMLButtonElement | null} */ (
+        document.getElementById(selectors.BUTTON_RESET_UNDO)
+      ),
+      buttonApply: /** @type {HTMLButtonElement | null} */ (
+        document.getElementById(selectors.BUTTON_APPLY)
+      ),
     };
   }
 
@@ -73,7 +81,7 @@ export class AppDOM {
 
     // Create and add theme switcher to header-controls
     this.themeSwitcher = new ThemeSwitcher(themeManager);
-    const headerControls = document.querySelector('.header-controls');
+    const headerControls = document.querySelector(".header-controls");
     if (headerControls) {
       headerControls.appendChild(this.themeSwitcher.getElement());
     }
@@ -162,7 +170,7 @@ export class AppDOM {
    */
   isRuntimeLoading() {
     const loadingIndicator = this.elements.runtimeLoading;
-    return (loadingIndicator?.style.display === "inline-flex") || false;
+    return loadingIndicator?.style.display === "inline-flex" || false;
   }
 
   /**

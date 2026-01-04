@@ -119,14 +119,19 @@ export class ViewModelManager {
       return sum + viewModel.width + elevatorGutter;
     }, 0);
 
-    const innerWorld = /** @type {HTMLElement | null} */ (document.querySelector(".innerworld"));
+    const innerWorld = /** @type {HTMLElement | null} */ (
+      document.querySelector(".innerworld")
+    );
     if (innerWorld) {
       innerWorld.style.minWidth = `${totalElevatorWidth + initialXOffset}px`;
     }
 
     let currentX = initialXOffset;
     elevatorViewModels.forEach((viewModel, i) => {
-      viewModel.moveTo(currentX, viewModel.getDisplayYPos(initialState.elevators[i].position));
+      viewModel.moveTo(
+        currentX,
+        viewModel.getDisplayYPos(initialState.elevators[i].position),
+      );
       this.elevatorViewModels.set(initialState.elevators[i].index, viewModel);
       currentX += viewModel.width + elevatorGutter;
     });
@@ -148,7 +153,9 @@ export class ViewModelManager {
     this.eventBus.on(
       "simulation:state_changed",
       (e) => {
-        const detail = /** @type {CustomEvent<SimulationState & {dt?: number}>} */ (e).detail;
+        const detail =
+          /** @type {CustomEvent<SimulationState & {dt?: number}>} */ (e)
+            .detail;
         const dt = detail.dt ?? 0;
         this.updateViewModels(detail, dt);
       },
@@ -158,7 +165,9 @@ export class ViewModelManager {
     this.eventBus.on(
       "simulation:passenger_spawned",
       (e) => {
-        const detail = /** @type {CustomEvent<{passenger: PassengerStateData}>} */ (e).detail;
+        const detail =
+          /** @type {CustomEvent<{passenger: PassengerStateData}>} */ (e)
+            .detail;
         this.handlePassengerSpawned(detail.passenger);
       },
       { signal },
@@ -167,7 +176,9 @@ export class ViewModelManager {
     this.eventBus.on(
       "simulation:passengers_exited",
       (e) => {
-        const detail = /** @type {CustomEvent<{passengers: PassengerStateData[]}>} */ (e).detail;
+        const detail =
+          /** @type {CustomEvent<{passengers: PassengerStateData[]}>} */ (e)
+            .detail;
         this.handlePassengersExited(detail.passengers);
       },
       { signal },

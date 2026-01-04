@@ -11,7 +11,9 @@ import {
 } from "../helpers/simulation-helpers.js";
 
 test.describe("Persistence", () => {
-  test("JavaScript code persists across reload", async ({ cleanPage: page }) => {
+  test("JavaScript code persists across reload", async ({
+    cleanPage: page,
+  }) => {
     const testCode = "// JS persistence test " + Date.now();
     await setEditorCode(page, testCode);
 
@@ -93,7 +95,7 @@ test.describe("Persistence", () => {
   }) => {
     // Get initial theme
     const initialTheme = await page.evaluate(() =>
-      document.documentElement.getAttribute("data-theme")
+      document.documentElement.getAttribute("data-theme"),
     );
 
     // Toggle theme
@@ -102,13 +104,14 @@ test.describe("Persistence", () => {
       await themeToggle.click();
       // Wait for theme to change
       await page.waitForFunction(
-        (initial) => document.documentElement.getAttribute("data-theme") !== initial,
+        (initial) =>
+          document.documentElement.getAttribute("data-theme") !== initial,
         initialTheme,
-        { timeout: 2000 }
+        { timeout: 2000 },
       );
 
       const toggledTheme = await page.evaluate(() =>
-        document.documentElement.getAttribute("data-theme")
+        document.documentElement.getAttribute("data-theme"),
       );
 
       // Reload page
@@ -117,7 +120,7 @@ test.describe("Persistence", () => {
 
       // Theme should be preserved
       const themeAfterReload = await page.evaluate(() =>
-        document.documentElement.getAttribute("data-theme")
+        document.documentElement.getAttribute("data-theme"),
       );
 
       expect(themeAfterReload).toBe(toggledTheme);
@@ -129,7 +132,7 @@ test.describe("Persistence", () => {
   }) => {
     // Get initial layout
     const initialLayout = await page.evaluate(() =>
-      localStorage.getItem("layout-preference")
+      localStorage.getItem("layout-preference"),
     );
 
     // Toggle layout
@@ -139,11 +142,11 @@ test.describe("Persistence", () => {
     await page.waitForFunction(
       (initial) => localStorage.getItem("layout-preference") !== initial,
       initialLayout,
-      { timeout: 2000 }
+      { timeout: 2000 },
     );
 
     const toggledLayout = await page.evaluate(() =>
-      localStorage.getItem("layout-preference")
+      localStorage.getItem("layout-preference"),
     );
 
     // Reload page
@@ -152,7 +155,7 @@ test.describe("Persistence", () => {
 
     // Layout should be preserved
     const layoutAfterReload = await page.evaluate(() =>
-      localStorage.getItem("layout-preference")
+      localStorage.getItem("layout-preference"),
     );
 
     expect(layoutAfterReload).toBe(toggledLayout);

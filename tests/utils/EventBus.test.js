@@ -156,11 +156,9 @@ describe("EventBus", () => {
 
       eventBus.on("test:event", handler, { signal: controller.signal });
 
-      expect(addEventListenerSpy).toHaveBeenCalledWith(
-        "test:event",
-        handler,
-        { signal: controller.signal }
-      );
+      expect(addEventListenerSpy).toHaveBeenCalledWith("test:event", handler, {
+        signal: controller.signal,
+      });
     });
 
     it("should support multiple handlers with different abort controllers", () => {
@@ -237,7 +235,9 @@ describe("EventBus", () => {
       const handler = vi.fn();
 
       eventBus.on("test:event", handler);
-      eventBus.dispatchEvent(new CustomEvent("test:event", { detail: "direct" }));
+      eventBus.dispatchEvent(
+        new CustomEvent("test:event", { detail: "direct" }),
+      );
 
       expect(handler).toHaveBeenCalledTimes(1);
       expect(handler.mock.calls[0][0].detail).toBe("direct");

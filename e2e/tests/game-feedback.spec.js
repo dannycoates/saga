@@ -57,7 +57,7 @@ test.describe("Game Feedback", () => {
     const title = await getFeedbackTitle(page);
     expect(
       title.toLowerCase().includes("completed") ||
-        title.toLowerCase().includes("success")
+        title.toLowerCase().includes("success"),
     ).toBe(true);
   });
 
@@ -112,7 +112,7 @@ test.describe("Game Feedback", () => {
         // Wait for URL to change to challenge 2
         await page.waitForFunction(
           () => window.location.href.includes("challenge=2"),
-          { timeout: 5000 }
+          { timeout: 5000 },
         );
         const url = page.url();
         expect(url).toContain("challenge=2");
@@ -125,7 +125,7 @@ test.describe("Game Feedback", () => {
             const h3 = control.shadowRoot.querySelector("h3");
             return h3?.textContent?.includes("Challenge #2:");
           },
-          { timeout: 5000 }
+          { timeout: 5000 },
         );
 
         // Challenge control should show Challenge #2
@@ -164,7 +164,7 @@ test.describe("Game Feedback", () => {
       expect(
         title.toLowerCase().includes("fail") ||
           title.toLowerCase().includes("try again") ||
-          !title.toLowerCase().includes("completed")
+          !title.toLowerCase().includes("completed"),
       ).toBe(true);
     }
   });

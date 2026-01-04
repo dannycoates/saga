@@ -64,7 +64,7 @@ test.describe("Python Runtime", () => {
         const control = document.querySelector("challenge-control");
         return control?.getAttribute("is-paused") === "false";
       },
-      { timeout: 5000 }
+      { timeout: 5000 },
     );
 
     // Should not show error modal
@@ -91,11 +91,13 @@ def tick(elevators, floors):
       () => {
         const control = document.querySelector("challenge-control");
         const stats = document.querySelector("elevator-stats");
-        const elapsed = stats?.shadowRoot?.querySelector('[data-stat="elapsed-time"]');
+        const elapsed = stats?.shadowRoot?.querySelector(
+          '[data-stat="elapsed-time"]',
+        );
         const time = parseFloat(elapsed?.textContent?.replace("s", "") || "0");
         return control?.getAttribute("is-paused") === "false" && time >= 0.5;
       },
-      { timeout: 5000 }
+      { timeout: 5000 },
     );
 
     // We can't directly check Python variables from JS,
@@ -125,7 +127,7 @@ def tick(elevators, floors):
         const el = stats?.shadowRoot?.querySelector('[data-stat="move-count"]');
         return parseInt(el?.textContent || "0", 10) >= 1;
       },
-      { timeout: 10000 }
+      { timeout: 10000 },
     );
 
     // Check stats - move count should increase if elevator moved
@@ -146,7 +148,10 @@ def tick(elevators, floors):
     await clickStartStop(page);
 
     // Wait for error modal to appear
-    await page.locator("code-status").locator("dialog[open]").waitFor({ timeout: 10000 });
+    await page
+      .locator("code-status")
+      .locator("dialog[open]")
+      .waitFor({ timeout: 10000 });
 
     const hasError = await isErrorModalVisible(page);
     expect(hasError).toBe(true);
@@ -164,7 +169,10 @@ def tick(elevators, floors):
     await clickStartStop(page);
 
     // Wait for error modal to appear
-    await page.locator("code-status").locator("dialog[open]").waitFor({ timeout: 10000 });
+    await page
+      .locator("code-status")
+      .locator("dialog[open]")
+      .waitFor({ timeout: 10000 });
 
     const hasError = await isErrorModalVisible(page);
     expect(hasError).toBe(true);

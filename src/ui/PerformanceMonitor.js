@@ -35,8 +35,8 @@ export class PerformanceMonitor {
    * @returns {void}
    */
   setupObservers() {
-    if (!('PerformanceObserver' in window)) {
-      console.warn('PerformanceObserver not supported');
+    if (!("PerformanceObserver" in window)) {
+      console.warn("PerformanceObserver not supported");
       return;
     }
 
@@ -44,13 +44,13 @@ export class PerformanceMonitor {
     try {
       const layoutObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          if (entry.entryType === 'layout-shift') {
+          if (entry.entryType === "layout-shift") {
             // @ts-ignore - LayoutShift entries have a value property
-            this.recordMetric('layoutShift', entry.value);
+            this.recordMetric("layoutShift", entry.value);
           }
         }
       });
-      layoutObserver.observe({ entryTypes: ['layout-shift'] });
+      layoutObserver.observe({ entryTypes: ["layout-shift"] });
       this.observers.push(layoutObserver);
     } catch (e) {
       // Layout shift might not be supported
@@ -60,15 +60,16 @@ export class PerformanceMonitor {
     try {
       const longTaskObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          if (entry.duration > 50) { // Tasks longer than 50ms
-            this.recordMetric('longTask', {
+          if (entry.duration > 50) {
+            // Tasks longer than 50ms
+            this.recordMetric("longTask", {
               duration: entry.duration,
-              startTime: entry.startTime
+              startTime: entry.startTime,
             });
           }
         }
       });
-      longTaskObserver.observe({ entryTypes: ['longtask'] });
+      longTaskObserver.observe({ entryTypes: ["longtask"] });
       this.observers.push(longTaskObserver);
     } catch (e) {
       // Long task might not be supported
@@ -81,7 +82,7 @@ export class PerformanceMonitor {
           this.recordMetric(entry.name, entry.startTime);
         }
       });
-      paintObserver.observe({ entryTypes: ['paint'] });
+      paintObserver.observe({ entryTypes: ["paint"] });
       this.observers.push(paintObserver);
     } catch (e) {
       // Paint timing might not be supported
@@ -101,7 +102,7 @@ export class PerformanceMonitor {
     }
     this.metrics.get(name).push({
       value,
-      timestamp: performance.now()
+      timestamp: performance.now(),
     });
 
     // Keep only last 100 entries to prevent memory leaks
@@ -144,16 +145,17 @@ export class PerformanceMonitor {
     for (const [name, values] of this.metrics) {
       if (values.length === 0) continue;
 
-      const numericValues = values.map(v =>
-        typeof v.value === 'number' ? v.value : v.value.duration || 0
+      const numericValues = values.map((v) =>
+        typeof v.value === "number" ? v.value : v.value.duration || 0,
       );
 
       summary[name] = {
         count: values.length,
-        average: numericValues.reduce((a, b) => a + b, 0) / numericValues.length,
+        average:
+          numericValues.reduce((a, b) => a + b, 0) / numericValues.length,
         max: Math.max(...numericValues),
         min: Math.min(...numericValues),
-        latest: values[values.length - 1]
+        latest: values[values.length - 1],
       };
     }
 
@@ -180,12 +182,12 @@ export class PerformanceMonitor {
   measure(name, startMark, endMark) {
     try {
       performance.measure(name, startMark, endMark);
-      const measure = performance.getEntriesByName(name, 'measure')[0];
+      const measure = performance.getEntriesByName(name, "measure")[0];
       if (measure) {
         this.recordMetric(`measure-${name}`, measure.duration);
       }
     } catch (e) {
-      console.warn('Performance measure failed:', e);
+      console.warn("Performance measure failed:", e);
     }
   }
 
@@ -194,7 +196,7 @@ export class PerformanceMonitor {
    * @returns {void}
    */
   cleanup() {
-    this.observers.forEach(observer => observer.disconnect());
+    this.observers.forEach((observer) => observer.disconnect());
     this.observers = [];
     this.metrics.clear();
   }

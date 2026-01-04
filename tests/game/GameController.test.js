@@ -311,7 +311,9 @@ describe("GameController", () => {
       const listener = vi.fn();
       eventBus.on("simulation:passenger_spawned", listener);
 
-      eventBus.emit("simulation:passenger_spawned", { passenger: { id: "test" } });
+      eventBus.emit("simulation:passenger_spawned", {
+        passenger: { id: "test" },
+      });
 
       expect(listener).toHaveBeenCalled();
     });

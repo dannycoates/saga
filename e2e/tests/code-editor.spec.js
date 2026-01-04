@@ -64,7 +64,7 @@ test.describe("Code Editor", () => {
   test("Ctrl+S starts simulation when paused", async ({ appPage: page }) => {
     // Verify simulation is paused initially
     await expect(
-      page.locator('challenge-control[is-paused="true"]')
+      page.locator('challenge-control[is-paused="true"]'),
     ).toBeVisible();
 
     // Set valid code
@@ -78,7 +78,7 @@ test.describe("Code Editor", () => {
     // Simulation should start
     await waitForSimulationRunning(page);
     await expect(
-      page.locator('challenge-control[is-paused="false"]')
+      page.locator('challenge-control[is-paused="false"]'),
     ).toBeVisible();
   });
 
@@ -89,7 +89,7 @@ test.describe("Code Editor", () => {
 
     // Verify simulation is running
     await expect(
-      page.locator('challenge-control[is-paused="false"]')
+      page.locator('challenge-control[is-paused="false"]'),
     ).toBeVisible();
 
     // Wait for elapsed time to reach at least 0.5 seconds
@@ -103,7 +103,7 @@ test.describe("Code Editor", () => {
     // Simulation should still be running after restart
     await waitForSimulationRunning(page);
     await expect(
-      page.locator('challenge-control[is-paused="false"]')
+      page.locator('challenge-control[is-paused="false"]'),
     ).toBeVisible();
   });
 

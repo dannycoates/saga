@@ -109,6 +109,7 @@ SimulationBackend (Abstract)
 ## 2. Event System
 
 The application uses a centralized **EventBus** for all inter-component communication. Events are namespaced with prefixes:
+
 - `simulation:*` - Core simulation events from JSSimulationBackend
 - `game:*` - Game lifecycle events from GameController
 - `viewmodel:*` - View model events from ViewModelManager
