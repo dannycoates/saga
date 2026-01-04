@@ -1,99 +1,92 @@
 <!doctype html>
 <html>
-    <head>
-        <title>Elevator Saga - the elevator programming game</title>
-        <meta charset="UTF-8" />
-        <link
-            rel="icon"
-            href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛗</text></svg>"
-        />
-        <link rel="stylesheet" href="./src/style.css" media="all" />
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1>
-                    Elevator Saga
-                    <em class="emphasis-color"
-                        >The elevator programming game</em
-                    >
-                </h1>
-                <div class="header-controls">
-                    <div class="layout-controls">
-                        <button
-                            id="layout-toggle"
-                            class="layout-toggle-btn"
-                            title="Toggle Layout"
-                        >
-                            <span class="layout-icon">⚎</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="challenge">
-                <h3>
-                    Challenge: <span class="emphasis-color">Loading...</span>
-                </h3>
-            </div>
-
-            <div class="statscontainer">
-                <!-- Stats will be populated by web component -->
-            </div>
-            <div class="main-content">
-                <div class="world-container">
-                    <div class="world">
-                        <div class="feedbackcontainer"></div>
-                        <div class="innerworld"></div>
-                    </div>
-                </div>
-
-                <div class="splitter" id="layout-splitter"></div>
-
-                <div class="code-section">
-                    <div class="code">
-                        <div class="language-selector">
-                            <label for="language-select">Language:</label>
-                            <select id="language-select">
-                                <option value="javascript">JavaScript</option>
-                                <option value="python">Python</option>
-                                <option value="java">Java</option>
-                                <option value="zig">Zig</option>
-                            </select>
-                            <div
-                                class="loading-indicator"
-                                id="runtime-loading"
-                                style="display: none"
-                            >
-                                <span class="spinner"></span>
-                                <span class="loading-text"
-                                    >Loading runtime...</span
-                                >
-                            </div>
-                        </div>
-                        <div id="code"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="controls">
-                <div>
-                    <button id="button_reset">Reset</button>
-                    <button id="button_resetundo">Undo reset</button>
-                </div>
-                <div>
-                    <span id="save_message"></span>
-                </div>
-            </div>
-            <div class="footer">
-                <h4>
-                    <a href="https://github.com/dannycoates/saga"
-                        >Source code</a
-                    >
-                    on GitHub
-                </h4>
-            </div>
-            <div class="codestatus"></div>
+  <head>
+    <title>Elevator Saga - the elevator programming game</title>
+    <meta charset="UTF-8" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛗</text></svg>"
+    />
+    <link rel="stylesheet" href="./src/style.css" media="all" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>
+          Elevator Saga
+          <em class="emphasis-color">The elevator programming game</em>
+        </h1>
+        <div class="header-controls">
+          <div class="layout-controls">
+            <button
+              id="layout-toggle"
+              class="layout-toggle-btn"
+              title="Toggle Layout"
+            >
+              <span class="layout-icon">⚎</span>
+            </button>
+          </div>
         </div>
-        <script type="module" src="./src/app.js"></script>
-    </body>
+      </div>
+
+      <div class="challenge">
+        <h3>Challenge: <span class="emphasis-color">Loading...</span></h3>
+      </div>
+
+      <div class="statscontainer">
+        <!-- Stats will be populated by web component -->
+      </div>
+      <div class="main-content">
+        <div class="world-container">
+          <div class="world">
+            <div class="feedbackcontainer"></div>
+            <div class="innerworld"></div>
+          </div>
+        </div>
+
+        <div class="splitter" id="layout-splitter"></div>
+
+        <div class="code-section">
+          <div class="code">
+            <div class="language-selector">
+              <label for="language-select">Language:</label>
+              <select id="language-select">
+                <option value="javascript">JavaScript</option>
+                <option value="python">Python</option>
+                <option value="java">Java</option>
+                <option value="zig">Zig</option>
+                <option value="tcl">Tcl</option>
+              </select>
+              <div
+                class="loading-indicator"
+                id="runtime-loading"
+                style="display: none"
+              >
+                <span class="spinner"></span>
+                <span class="loading-text">Loading runtime...</span>
+              </div>
+            </div>
+            <div id="code"></div>
+          </div>
+        </div>
+      </div>
+      <div class="controls">
+        <div>
+          <button id="button_reset">Reset</button>
+          <button id="button_resetundo">Undo reset</button>
+        </div>
+        <div>
+          <span id="save_message"></span>
+        </div>
+      </div>
+      <div class="footer">
+        <h4>
+          <a href="https://github.com/dannycoates/saga">Source code</a>
+          on GitHub
+        </h4>
+      </div>
+      <div class="codestatus"></div>
+    </div>
+    <script type="module" src="./src/app.js"></script>
+  </body>
 </html>

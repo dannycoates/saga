@@ -1,5 +1,5 @@
 /**
- * @typedef {'javascript' | 'python' | 'java' | 'zig'} LanguageId
+ * @typedef {'javascript' | 'python' | 'java' | 'zig' | 'tcl'} LanguageId
  */
 
 /**
