@@ -4,6 +4,7 @@ import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
 import { java } from "@codemirror/lang-java";
 import { zig } from "codemirror-lang-zig";
+import { tcl } from "@sourcebot/codemirror-lang-tcl";
 import { gruvboxLight } from "cm6-theme-gruvbox-light";
 import { gruvboxDark } from "cm6-theme-gruvbox-dark";
 import { keymap } from "@codemirror/view";
@@ -77,7 +78,9 @@ function createJavaScriptLinter() {
           diagnostics.push({
             from,
             to,
-            severity: /** @type {"error" | "warning"} */ (message.severity === 2 ? "error" : "warning"),
+            severity: /** @type {"error" | "warning"} */ (
+              message.severity === 2 ? "error" : "warning"
+            ),
             message: message.message,
           });
         });
@@ -184,6 +187,9 @@ export class CodeEditor extends EventTarget {
         break;
       case "zig":
         langExtension = zig();
+        break;
+      case "tcl":
+        langExtension = tcl();
         break;
       default:
         langExtension = javascript();
@@ -297,6 +303,8 @@ export class CodeEditor extends EventTarget {
         return java();
       case "zig":
         return zig();
+      case "tcl":
+        return tcl();
       default:
         return javascript();
     }

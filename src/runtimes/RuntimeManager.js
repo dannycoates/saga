@@ -2,6 +2,7 @@ import { JavaScriptRuntime } from "./JavaScriptRuntime.js";
 import { PythonRuntime } from "./PythonRuntime.js";
 import { JavaRuntime } from "./JavaRuntime.js";
 import { ZigRuntime } from "./ZigRuntime.js";
+import { TclRuntime } from "./TclRuntime.js";
 
 /**
  * @typedef {import('./BaseRuntime.js').LanguageId} LanguageId
@@ -25,6 +26,7 @@ export class RuntimeManager {
       python: new PythonRuntime(),
       java: new JavaRuntime(),
       zig: new ZigRuntime(),
+      tcl: new TclRuntime(),
     };
 
     /** @type {LanguageId} Currently selected language */
