@@ -3,3 +3,6 @@ node_modules
 dist
 playwright-report
 test-results
+.zig-cache
+zig-source
+.playwright-mcp

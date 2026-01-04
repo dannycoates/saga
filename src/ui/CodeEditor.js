@@ -3,6 +3,7 @@ import { basicSetup, EditorView } from "codemirror";
 import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
 import { java } from "@codemirror/lang-java";
+import { zig } from "codemirror-lang-zig";
 import { gruvboxLight } from "cm6-theme-gruvbox-light";
 import { gruvboxDark } from "cm6-theme-gruvbox-dark";
 import { keymap } from "@codemirror/view";
@@ -181,6 +182,9 @@ export class CodeEditor extends EventTarget {
       case "java":
         langExtension = java();
         break;
+      case "zig":
+        langExtension = zig();
+        break;
       default:
         langExtension = javascript();
     }
@@ -291,6 +295,8 @@ export class CodeEditor extends EventTarget {
         return python();
       case "java":
         return java();
+      case "zig":
+        return zig();
       default:
         return javascript();
     }

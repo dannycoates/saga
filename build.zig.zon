@@ -1,0 +1,12 @@
+.{
+    .name = .saga,
+    .version = "0.0.0",
+    .fingerprint = 0x1d2ddd73310d465,
+    .minimum_zig_version = "0.15.2",
+    .dependencies = .{
+        .zig = .{
+            .path = "zig-source",
+        },
+    },
+    .paths = .{""},
+}
