@@ -71,6 +71,13 @@ export class URLManager {
   }
 
   /**
+   * Supported language IDs for URL parameter validation.
+   * @type {readonly string[]}
+   * @private
+   */
+  static SUPPORTED_LANGUAGES = ["javascript", "python", "java", "zig", "tcl"];
+
+  /**
    * Loads challenge and settings from current URL hash.
    * @returns {void}
    */
@@ -88,6 +95,23 @@ export class URLManager {
       parseFloat(localStorage.getItem(APP_CONSTANTS.TIME_SCALE_KEY)) ||
       parseFloat(params.timescale) ||
       APP_CONSTANTS.DEFAULT_TIME_SCALE;
+
+    // Parse language (if valid)
+    const lang = params.lang;
+    if (lang && URLManager.SUPPORTED_LANGUAGES.includes(lang)) {
+      // Update editor language (which also saves to localStorage)
+      this.app.editor.setLanguage(lang);
+      // Update runtime manager's current language
+      this.app.runtimeManager.currentLanguage =
+        /** @type {import('../runtimes/BaseRuntime.js').LanguageId} */ (lang);
+      // Update language selector UI
+      const languageSelect = /** @type {HTMLSelectElement | null} */ (
+        this.app.dom.getElement("languageSelect")
+      );
+      if (languageSelect) {
+        languageSelect.value = lang;
+      }
+    }
 
     // Apply settings and start challenge
     this.app.loadChallenge(challengeIndex);
