@@ -193,7 +193,7 @@ export class ZigRuntime extends BaseRuntime {
       console.log(chunk);
       stderrChunks.push(chunk);
     });
-    stderrOutput.fd_pwrite = (data, offset) => {
+    stderrOutput.fd_pwrite = (_data, _offset) => {
       return { ret: wasiDefs.ERRNO_SPIPE, nwritten: 0 };
     };
 
@@ -278,33 +278,42 @@ export class ZigRuntime extends BaseRuntime {
     return {
       ...other,
       env: {
+        /** @param {number} id @param {number} floor */
         js_goToFloor: (id, floor) => {
           if (this.elevators[id]) {
             this.elevators[id].goToFloor(floor);
           }
         },
+        /** @param {number} id */
         js_getCurrentFloor: (id) => {
           return this.elevators[id]?.currentFloor ?? 0;
         },
+        /** @param {number} id */
         js_getDestinationFloor: (id) => {
           const dest = this.elevators[id]?.destinationFloor;
           return dest === null || dest === undefined ? -1 : dest;
         },
+        /** @param {number} id */
         js_getPercentFull: (id) => {
           return this.elevators[id]?.percentFull ?? 0;
         },
+        /** @param {number} id */
         js_getPressedButtonCount: (id) => {
           return this.elevators[id]?.pressedFloorButtons?.length ?? 0;
         },
+        /** @param {number} id @param {number} idx */
         js_getPressedButton: (id, idx) => {
           return this.elevators[id]?.pressedFloorButtons?.[idx] ?? -1;
         },
+        /** @param {number} id */
         js_getFloorButtonUp: (id) => {
           return this.floors[id]?.buttons?.up ? 1 : 0;
         },
+        /** @param {number} id */
         js_getFloorButtonDown: (id) => {
           return this.floors[id]?.buttons?.down ? 1 : 0;
         },
+        /** @param {number} id */
         js_getFloorLevel: (id) => {
           return this.floors[id]?.level ?? 0;
         },

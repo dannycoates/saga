@@ -60,21 +60,21 @@ export class BaseRuntime {
   /**
    * Loads and compiles user code for execution.
    * @abstract
-   * @param {string} code - User code to load
+   * @param {string} _code - User code to load
    * @returns {Promise<void>}
    */
-  async loadCode(code) {
+  async loadCode(_code) {
     throw new Error("loadCode() must be implemented by subclass");
   }
 
   /**
    * Executes the user's tick function with current game state.
    * @abstract
-   * @param {ElevatorAPI[]} elevators - Array of elevator API objects
-   * @param {FloorAPI[]} floors - Array of floor API objects
+   * @param {ElevatorAPI[]} _elevators - Array of elevator API objects
+   * @param {FloorAPI[]} _floors - Array of floor API objects
    * @returns {Promise<void>}
    */
-  async execute(elevators, floors) {
+  async execute(_elevators, _floors) {
     throw new Error("execute() must be implemented by subclass");
   }
 
