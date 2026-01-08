@@ -2,11 +2,11 @@
   "compilerOptions": {
     "checkJs": true,
     "noEmit": true,
-    "target": "ES2022",
+    "target": "ES2024",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "allowJs": true,
-    "lib": ["ES2022", "DOM"],
+    "lib": ["ES2024", "DOM"],
     "skipLibCheck": true,
     "noImplicitAny": false,
     "strictNullChecks": false

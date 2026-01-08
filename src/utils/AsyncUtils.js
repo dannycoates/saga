@@ -15,54 +15,55 @@ export async function loadExternalScript(src, timeout = 30000, signal = null) {
     ? AbortSignal.any([signal, controller.signal])
     : controller.signal;
 
-  const loadPromise = new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = src;
+  // Load promise - resolves when script loads, rejects on error or abort
+  const { promise: loadPromise, resolve, reject } = Promise.withResolvers();
+  const script = document.createElement("script");
+  script.src = src;
 
-    const cleanup = () => {
-      script.onload = null;
-      script.onerror = null;
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
-    };
+  const cleanup = () => {
+    script.onload = null;
+    script.onerror = null;
+    if (script.parentNode) {
+      script.parentNode.removeChild(script);
+    }
+  };
 
-    script.onload = () => {
+  script.onload = () => {
+    cleanup();
+    resolve();
+  };
+
+  script.onerror = () => {
+    cleanup();
+    reject(new Error(`Failed to load script: ${src}`));
+  };
+
+  combinedSignal.addEventListener(
+    "abort",
+    () => {
       cleanup();
-      resolve();
-    };
+      reject(new Error(`Loading ${src} was aborted`));
+    },
+    { once: true },
+  );
 
-    script.onerror = () => {
-      cleanup();
-      reject(new Error(`Failed to load script: ${src}`));
-    };
+  document.head.appendChild(script);
 
-    combinedSignal.addEventListener(
-      "abort",
-      () => {
-        cleanup();
-        reject(new Error(`Loading ${src} was aborted`));
-      },
-      { once: true },
-    );
+  // Timeout promise - rejects after timeout
+  const { promise: timeoutPromise, reject: rejectTimeout } =
+    Promise.withResolvers();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+    rejectTimeout(new Error(`Timeout loading ${src} after ${timeout}ms`));
+  }, timeout);
 
-    document.head.appendChild(script);
-  });
-
-  const timeoutPromise = new Promise((_, reject) => {
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-      reject(new Error(`Timeout loading ${src} after ${timeout}ms`));
-    }, timeout);
-
-    combinedSignal.addEventListener(
-      "abort",
-      () => {
-        clearTimeout(timeoutId);
-      },
-      { once: true },
-    );
-  });
+  combinedSignal.addEventListener(
+    "abort",
+    () => {
+      clearTimeout(timeoutId);
+    },
+    { once: true },
+  );
 
   return Promise.race([loadPromise, timeoutPromise]);
 }
@@ -87,20 +88,21 @@ export async function executeWithTimeout(fn, timeout, signal = null) {
     return await fn(combinedSignal);
   })();
 
-  const timeoutPromise = new Promise((_, reject) => {
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-      reject(new Error(`Operation timeout after ${timeout}ms`));
-    }, timeout);
+  // Timeout promise - rejects after timeout
+  const { promise: timeoutPromise, reject: rejectTimeout } =
+    Promise.withResolvers();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+    rejectTimeout(new Error(`Operation timeout after ${timeout}ms`));
+  }, timeout);
 
-    combinedSignal.addEventListener(
-      "abort",
-      () => {
-        clearTimeout(timeoutId);
-      },
-      { once: true },
-    );
-  });
+  combinedSignal.addEventListener(
+    "abort",
+    () => {
+      clearTimeout(timeoutId);
+    },
+    { once: true },
+  );
 
   return Promise.race([executionPromise, timeoutPromise]);
 }
