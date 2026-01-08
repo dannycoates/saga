@@ -1,5 +1,6 @@
 import { challenges } from "../game/challenges.js";
 import { APP_CONSTANTS } from "../config/constants.js";
+import { isLanguageSupported } from "virtual:runtime-registry";
 
 /**
  * @typedef {import('../app.js').ElevatorApp} ElevatorApp
@@ -71,13 +72,6 @@ export class URLManager {
   }
 
   /**
-   * Supported language IDs for URL parameter validation.
-   * @type {readonly string[]}
-   * @private
-   */
-  static SUPPORTED_LANGUAGES = ["javascript", "python", "java", "zig", "tcl"];
-
-  /**
    * Loads challenge and settings from current URL hash.
    * @returns {void}
    */
@@ -98,8 +92,8 @@ export class URLManager {
 
     // Parse language (if valid)
     const lang = params.lang;
-    if (lang && URLManager.SUPPORTED_LANGUAGES.includes(lang)) {
-      // Update editor language (which also saves to localStorage)
+    if (lang && isLanguageSupported(lang)) {
+      // Update editor language (async, but we don't need to wait)
       this.app.editor.setLanguage(lang);
       // Update runtime manager's current language
       this.app.runtimeManager.currentLanguage =

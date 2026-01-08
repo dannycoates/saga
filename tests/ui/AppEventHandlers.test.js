@@ -49,6 +49,28 @@ vi.mock("../../src/ui/ResponsiveScaling.js", () => ({
   },
 }));
 
+// Mock the virtual runtime registry
+vi.mock("virtual:runtime-registry", () => ({
+  runtimeRegistry: [
+    { id: "javascript", displayName: "JavaScript", fileExtension: ".js" },
+    { id: "python", displayName: "Python", fileExtension: ".py" },
+    { id: "java", displayName: "Java", fileExtension: ".java" },
+    { id: "zig", displayName: "Zig", fileExtension: ".zig" },
+    { id: "tcl", displayName: "Tcl", fileExtension: ".tcl" },
+  ],
+  runtimeImports: {
+    javascript: () => Promise.resolve({ default: class {} }),
+    python: () => Promise.resolve({ default: class {} }),
+    java: () => Promise.resolve({ default: class {} }),
+    zig: () => Promise.resolve({ default: class {} }),
+    tcl: () => Promise.resolve({ default: class {} }),
+  },
+  getSupportedLanguages: () => ["javascript", "python", "java", "zig", "tcl"],
+  getRuntimeInfo: (id) => ({ id, displayName: id, fileExtension: `.${id}` }),
+  isLanguageSupported: (id) =>
+    ["javascript", "python", "java", "zig", "tcl"].includes(id),
+}));
+
 // Import after mocks are set up
 import { AppEventHandlers } from "../../src/ui/AppEventHandlers.js";
 import { ViewModelManager } from "../../src/ui/ViewModelManager.js";
@@ -71,6 +93,8 @@ const createMockElement = (id) => {
     style: {},
     value: "javascript",
     textContent: "",
+    innerHTML: "",
+    appendChild: vi.fn(),
   };
   mockElements[id] = element;
   return element;
@@ -95,6 +119,18 @@ beforeEach(() => {
   vi.stubGlobal("document", {
     getElementById: vi.fn((id) => createMockElement(id)),
     querySelector: vi.fn((selector) => createMockElement(selector)),
+    createElement: vi.fn((tag) => {
+      const element = {
+        tagName: tag.toUpperCase(),
+        value: "",
+        textContent: "",
+        appendChild: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        style: {},
+      };
+      return element;
+    }),
     addEventListener: vi.fn(),
     body: {
       style: {},

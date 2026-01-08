@@ -1,4 +1,11 @@
 import { defineConfig } from "vite";
+import {
+  runtimeRegistryPlugin,
+  getDiscoveredRuntimeDirs,
+} from "./vite-plugin-runtime-registry.js";
+
+// Get discovered runtime directories at config load time
+const runtimeDirs = getDiscoveredRuntimeDirs();
 
 // Custom plugin to control bundling behavior
 const selectiveBundlePlugin = () => {
@@ -59,6 +66,7 @@ const selectiveSourcemapPlugin = () => {
 };
 
 export default defineConfig(({ mode }) => ({
+  plugins: [runtimeRegistryPlugin()],
   base: mode === "production" ? "/saga/" : "/",
   root: ".",
   define: {
@@ -78,14 +86,21 @@ export default defineConfig(({ mode }) => ({
         exports: "named",
         preserveModules: false,
         minifyInternalExports: false,
-        // Split code into chunks more aggressively
+        // Split code into chunks - group runtime modules for dynamic loading
         manualChunks: (id) => {
           // Bundle all node_modules
           if (id.includes("node_modules")) {
             return "vendor";
           }
 
-          // Create separate chunks for each source file
+          // Create separate chunks for each discovered runtime directory
+          for (const dir of runtimeDirs) {
+            if (id.includes(`/src/runtimes/${dir}/`)) {
+              return `runtime-${dir}`;
+            }
+          }
+
+          // Create separate chunks for other source files
           if (id.includes("/src/")) {
             // Extract the relative path from src
             const match = id.match(/\/src\/(.*?)\.js/);

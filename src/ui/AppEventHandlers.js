@@ -9,6 +9,7 @@ import {
 import { ResponsiveScaling } from "./ResponsiveScaling.js";
 import { ViewModelManager } from "./ViewModelManager.js";
 import { EventBus } from "../utils/EventBus.js";
+import { runtimeRegistry } from "virtual:runtime-registry";
 
 /**
  * @typedef {import('../app.js').ElevatorApp} ElevatorApp
@@ -168,6 +169,28 @@ export class AppEventHandlers {
   }
 
   /**
+   * Populates the language selector dropdown from the runtime registry.
+   * @private
+   * @param {HTMLSelectElement} selectElement - The select element to populate
+   * @param {string} currentLanguage - The currently selected language
+   */
+  populateLanguageSelector(selectElement, currentLanguage) {
+    // Clear existing options
+    selectElement.innerHTML = "";
+
+    // Add options from registry
+    for (const runtime of runtimeRegistry) {
+      const option = document.createElement("option");
+      option.value = runtime.id;
+      option.textContent = runtime.displayName;
+      selectElement.appendChild(option);
+    }
+
+    // Set current value
+    selectElement.value = currentLanguage;
+  }
+
+  /**
    * Sets up language selection handler.
    * @private
    * @returns {void}
@@ -178,7 +201,11 @@ export class AppEventHandlers {
       this.dom.getElement("languageSelect")
     );
     if (languageSelect) {
-      languageSelect.value = this.editor.currentLanguage;
+      // Populate dropdown from registry
+      this.populateLanguageSelector(
+        languageSelect,
+        this.editor.currentLanguage,
+      );
 
       this.boundHandlers.languageChange = /** @type {EventListener} */ (
         async (e) => {
@@ -190,8 +217,8 @@ export class AppEventHandlers {
               true,
               `Loading ${newLanguage} runtime...`,
             );
-            // Update editor language
-            this.editor.setLanguage(newLanguage);
+            // Update editor language (async)
+            await this.editor.setLanguage(newLanguage);
             // Select the language in runtime manager
             // Note: not using withStatusIfSlow because pyodide blocks the event loop
             await this.runtimeManager.selectLanguage(

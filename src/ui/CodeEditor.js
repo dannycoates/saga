@@ -1,112 +1,14 @@
 import { throttle } from "../utils/common.js";
 import { basicSetup, EditorView } from "codemirror";
-import { javascript } from "@codemirror/lang-javascript";
-import { python } from "@codemirror/lang-python";
-import { java } from "@codemirror/lang-java";
-import { zig } from "codemirror-lang-zig";
-import { tcl } from "@sourcebot/codemirror-lang-tcl";
 import { gruvboxLight } from "cm6-theme-gruvbox-light";
 import { gruvboxDark } from "cm6-theme-gruvbox-dark";
 import { keymap } from "@codemirror/view";
 import { indentWithTab } from "@codemirror/commands";
 import { Compartment } from "@codemirror/state";
 import { indentUnit } from "@codemirror/language";
-import { linter, lintGutter } from "@codemirror/lint";
-import * as eslint from "eslint-linter-browserify";
+import { lintGutter } from "@codemirror/lint";
 import { themeManager } from "./ThemeManager.js";
-
-/**
- * Creates an ESLint-based linter for JavaScript code in CodeMirror.
- * Falls back to basic syntax checking if ESLint fails.
- * @returns {import('@codemirror/state').Extension | null} Linter extension or null if creation fails
- */
-function createJavaScriptLinter() {
-  try {
-    const eslintLinter = new eslint.Linter();
-
-    return linter((view) => {
-      /** @type {import('@codemirror/lint').Diagnostic[]} */
-      const diagnostics = [];
-      const code = view.state.doc.toString();
-
-      try {
-        const messages = eslintLinter.verify(
-          code,
-          {
-            // ESLint flat config format
-            languageOptions: {
-              ecmaVersion: 2022,
-              sourceType: "module",
-              globals: {
-                // Browser globals
-                window: "readonly",
-                document: "readonly",
-                console: "readonly",
-              },
-            },
-            rules: {
-              // Error-level rules
-              "no-undef": "error",
-              "no-redeclare": "error",
-              "no-unreachable": "error",
-              "no-dupe-keys": "error",
-              "no-dupe-args": "error",
-              "valid-typeof": "error",
-              "use-isnan": "error",
-              "no-unexpected-multiline": "error",
-
-              // Warning-level rules
-              "no-unused-vars": "warn",
-              "no-empty": "warn",
-              "no-extra-semi": "warn",
-            },
-          },
-          { filename: "elevator.js" },
-        );
-
-        // Convert ESLint messages to CodeMirror diagnostics
-        messages.forEach((message) => {
-          const doc = view.state.doc;
-          const line = Math.max(1, Math.min(message.line || 1, doc.lines));
-          const lineObj = doc.line(line);
-          const column =
-            Math.max(0, Math.min(message.column || 1, lineObj.length)) - 1;
-
-          const from = lineObj.from + column;
-          const to = Math.min(from + 5, lineObj.to); // Highlight a few characters
-
-          diagnostics.push({
-            from,
-            to,
-            severity: /** @type {"error" | "warning"} */ (
-              message.severity === 2 ? "error" : "warning"
-            ),
-            message: message.message,
-          });
-        });
-      } catch (eslintError) {
-        console.warn("ESLint error:", eslintError);
-        // Fall back to basic syntax checking
-        try {
-          new Function(code);
-        } catch (syntaxError) {
-          const doc = view.state.doc;
-          diagnostics.push({
-            from: 0,
-            to: Math.min(10, doc.length),
-            severity: "error",
-            message: syntaxError.message,
-          });
-        }
-      }
-
-      return diagnostics;
-    });
-  } catch (error) {
-    console.warn("Failed to create ESLint linter, linting disabled:", error);
-    return null;
-  }
-}
+import { runtimeImports } from "virtual:runtime-registry";
 
 /**
  * @typedef {import('../runtimes/RuntimeManager.js').RuntimeManager} RuntimeManager
@@ -114,7 +16,7 @@ function createJavaScriptLinter() {
  */
 
 /**
- * CodeMirror editor wrapper.
+ * CodeMirror editor wrapper with dynamic language loading.
  * @extends EventTarget
  */
 export class CodeEditor extends EventTarget {
@@ -122,20 +24,26 @@ export class CodeEditor extends EventTarget {
    * Creates a code editor instance.
    * @param {HTMLElement} element - Parent element for the editor
    * @param {string} storageKey - LocalStorage key prefix
-   * @param {Record<string, string>} defaultTemplates - Default code templates by language
+   * @param {RuntimeManager} runtimeManager - Runtime manager for templates and editor configs
    * @param {ElevatorApp | null} [app=null] - Application instance
    */
-  constructor(element, storageKey, defaultTemplates, app = null) {
+  constructor(element, storageKey, runtimeManager, app = null) {
     super();
     /** @type {string} LocalStorage key prefix */
     this.storageKey = storageKey;
-    /** @type {Record<string, string>} Default code templates by language */
-    this.defaultTemplates = defaultTemplates;
+    /** @type {RuntimeManager} Runtime manager for dynamic loading */
+    this.runtimeManager = runtimeManager;
     /** @type {ElevatorApp | null} Application instance */
     this.app = app;
     /** @type {string} Current language */
     this.currentLanguage =
       localStorage.getItem(`${storageKey}_language`) || "javascript";
+
+    /** @type {Map<string, object>} Cached editor configs by language */
+    this.editorConfigs = new Map();
+
+    /** @type {Map<string, string>} Cached default templates by language */
+    this.templateCache = new Map();
 
     // Create compartments for extensions
     this.languageCompartment = new Compartment();
@@ -143,19 +51,9 @@ export class CodeEditor extends EventTarget {
     this.themeCompartment = new Compartment();
     this.layoutCompartment = new Compartment();
 
-    // Get the appropriate default code based on language
-    const defaultCode = defaultTemplates[this.currentLanguage];
-
-    const existingCode =
-      localStorage.getItem(`${storageKey}_${this.currentLanguage}`) ||
-      defaultCode;
-
-    this.view = new EditorView({
-      doc: existingCode,
-      extensions: this.getExtensions(),
-      parent: element,
-    });
-
+    // Store element for deferred view creation
+    this.element = element;
+    this.view = null;
     this.autoSave = throttle(() => this.saveCode(), 1000);
 
     // Listen for theme changes
@@ -165,36 +63,73 @@ export class CodeEditor extends EventTarget {
   }
 
   /**
-   * Gets all CodeMirror extensions for the current language.
-   * Includes syntax highlighting, theme, linting, and keymaps.
-   * @private
-   * @returns {import('@codemirror/state').Extension[]} Array of CodeMirror extensions
+   * Initializes the editor asynchronously.
+   * Must be called after construction to load initial language config.
+   * @returns {Promise<void>}
    */
-  getExtensions() {
-    let langExtension;
-    let lintExtension = null;
+  async initialize() {
+    // Load initial template and editor config
+    const [defaultCode, config] = await Promise.all([
+      this.getDefaultTemplate(this.currentLanguage),
+      this.loadEditorConfig(this.currentLanguage),
+    ]);
 
-    switch (this.currentLanguage) {
-      case "javascript":
-        langExtension = javascript();
-        lintExtension = createJavaScriptLinter();
-        break;
-      case "python":
-        langExtension = python();
-        break;
-      case "java":
-        langExtension = java();
-        break;
-      case "zig":
-        langExtension = zig();
-        break;
-      case "tcl":
-        langExtension = tcl();
-        break;
-      default:
-        langExtension = javascript();
+    const existingCode =
+      localStorage.getItem(`${this.storageKey}_${this.currentLanguage}`) ||
+      defaultCode;
+
+    this.view = new EditorView({
+      doc: existingCode,
+      extensions: this.getExtensions(config),
+      parent: this.element,
+    });
+  }
+
+  /**
+   * Gets the default template for a language.
+   * Caches templates to avoid repeated loads.
+   * @param {string} language - Language identifier
+   * @returns {Promise<string>}
+   */
+  async getDefaultTemplate(language) {
+    if (this.templateCache.has(language)) {
+      return this.templateCache.get(language);
     }
 
+    const template = await this.runtimeManager.getDefaultTemplate(language);
+    this.templateCache.set(language, template);
+    return template;
+  }
+
+  /**
+   * Loads editor configuration for a language from its runtime module.
+   * @param {string} language - Language identifier
+   * @returns {Promise<{langExtension: import('@codemirror/state').Extension, linterExtension: import('@codemirror/state').Extension|null}>}
+   */
+  async loadEditorConfig(language) {
+    if (this.editorConfigs.has(language)) {
+      return this.editorConfigs.get(language);
+    }
+
+    // Import the runtime module to get editor config
+    const module = await runtimeImports[language]();
+
+    const config = {
+      langExtension: await module.editorConfig.getLanguageExtension(),
+      linterExtension: await module.editorConfig.getLinter(),
+    };
+
+    this.editorConfigs.set(language, config);
+    return config;
+  }
+
+  /**
+   * Gets all CodeMirror extensions for the current language.
+   * @private
+   * @param {{langExtension: import('@codemirror/state').Extension, linterExtension: import('@codemirror/state').Extension|null}} config - Editor config
+   * @returns {import('@codemirror/state').Extension[]} Array of CodeMirror extensions
+   */
+  getExtensions(config) {
     const currentTheme = themeManager.getCurrentTheme();
     const themeExtension = currentTheme === "dark" ? gruvboxDark : gruvboxLight;
 
@@ -203,12 +138,12 @@ export class CodeEditor extends EventTarget {
 
     const extensions = [
       basicSetup,
-      this.languageCompartment.of(langExtension),
+      this.languageCompartment.of(config.langExtension),
       this.themeCompartment.of(themeExtension),
       this.layoutCompartment.of(defaultLayoutTheme),
       indentUnit.of("    "), // 4 spaces for indentation
       lintGutter(), // Add lint gutter for error indicators
-      this.linterCompartment.of(lintExtension || []), // Use compartment for linter
+      this.linterCompartment.of(config.linterExtension || []),
       keymap.of([
         indentWithTab,
         {
@@ -241,6 +176,7 @@ export class CodeEditor extends EventTarget {
    * @returns {void}
    */
   updateTheme(theme) {
+    if (!this.view) return;
     const themeExtension = theme === "dark" ? gruvboxDark : gruvboxLight;
     this.view.dispatch({
       effects: this.themeCompartment.reconfigure(themeExtension),
@@ -250,11 +186,12 @@ export class CodeEditor extends EventTarget {
   /**
    * Switches the editor to a different programming language.
    * Saves current code, loads saved code for new language, and reconfigures extensions.
-   * @param {string} language - Language identifier ('javascript', 'python', or 'java')
-   * @returns {void}
+   * @param {string} language - Language identifier
+   * @returns {Promise<void>}
    */
-  setLanguage(language) {
+  async setLanguage(language) {
     if (language === this.currentLanguage) return;
+    if (!this.view) return;
 
     // Save current code
     this.saveCode();
@@ -263,23 +200,20 @@ export class CodeEditor extends EventTarget {
     this.currentLanguage = language;
     localStorage.setItem(`${this.storageKey}_language`, language);
 
-    // Load code for new language
-    const defaultCode = this.defaultTemplates[language];
+    // Load editor config and template for new language
+    const [config, defaultCode] = await Promise.all([
+      this.loadEditorConfig(language),
+      this.getDefaultTemplate(language),
+    ]);
+
     const existingCode =
       localStorage.getItem(`${this.storageKey}_${language}`) || defaultCode;
 
     // Reconfigure both language and linter compartments
-    let lintExtension = null;
-    if (language === "javascript") {
-      lintExtension = createJavaScriptLinter();
-    }
-
     this.view.dispatch({
       effects: [
-        this.languageCompartment.reconfigure(
-          this.getLanguageExtension(language),
-        ),
-        this.linterCompartment.reconfigure(lintExtension || []),
+        this.languageCompartment.reconfigure(config.langExtension),
+        this.linterCompartment.reconfigure(config.linterExtension || []),
       ],
     });
 
@@ -288,34 +222,12 @@ export class CodeEditor extends EventTarget {
   }
 
   /**
-   * Gets the CodeMirror language extension for a given language.
-   * @private
-   * @param {string} language - Language identifier
-   * @returns {import('@codemirror/state').Extension} Language extension
-   */
-  getLanguageExtension(language) {
-    switch (language) {
-      case "javascript":
-        return javascript();
-      case "python":
-        return python();
-      case "java":
-        return java();
-      case "zig":
-        return zig();
-      case "tcl":
-        return tcl();
-      default:
-        return javascript();
-    }
-  }
-
-  /**
    * Resets the editor content to the default template for the current language.
-   * @returns {void}
+   * @returns {Promise<void>}
    */
-  reset() {
-    const defaultCode = this.defaultTemplates[this.currentLanguage];
+  async reset() {
+    if (!this.view) return;
+    const defaultCode = await this.getDefaultTemplate(this.currentLanguage);
 
     this.view.dispatch({
       changes: { from: 0, to: this.view.state.doc.length, insert: defaultCode },
@@ -327,6 +239,7 @@ export class CodeEditor extends EventTarget {
    * @returns {void}
    */
   saveCode() {
+    if (!this.view) return;
     localStorage.setItem(
       `${this.storageKey}_${this.currentLanguage}`,
       this.getCode(),
@@ -341,6 +254,7 @@ export class CodeEditor extends EventTarget {
    * @returns {string} Current editor content
    */
   getCode() {
+    if (!this.view) return "";
     return this.view.state.doc.toString();
   }
 
@@ -350,6 +264,7 @@ export class CodeEditor extends EventTarget {
    * @returns {void}
    */
   setCode(code) {
+    if (!this.view) return;
     this.view.dispatch({
       changes: { from: 0, to: this.view.state.doc.length, insert: code },
     });
@@ -362,6 +277,7 @@ export class CodeEditor extends EventTarget {
    * @returns {void}
    */
   setLayoutMode(isSideBySide) {
+    if (!this.view) return;
     const layoutTheme = isSideBySide
       ? EditorView.theme({
           "&": { height: "100%" },

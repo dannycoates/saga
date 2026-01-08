@@ -1,29 +1,108 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { RuntimeManager } from "../../src/runtimes/RuntimeManager.js";
+
+// Mock the virtual runtime registry for testing
+vi.mock("virtual:runtime-registry", () => {
+  // Create mock runtime classes
+  const createMockRuntimeClass = (language) => {
+    return class MockRuntime {
+      constructor() {
+        this.language = language;
+        this.isLoaded = language === "javascript"; // JS is always loaded
+        this.isLoading = false;
+        this.loadedCode = null;
+      }
+      async loadRuntime() {
+        this.isLoaded = true;
+      }
+      async loadCode(code) {
+        this.loadedCode = code;
+      }
+      async execute(elevators, floors) {
+        return { elevators, floors };
+      }
+      async start() {}
+      cleanup() {}
+      getDefaultTemplate() {
+        return `// ${language} template\nexport function tick(elevators, floors) {}`;
+      }
+    };
+  };
+
+  // Mock metadata matching the real runtime structure
+  const runtimeRegistry = [
+    { id: "javascript", displayName: "JavaScript", fileExtension: ".js" },
+    { id: "python", displayName: "Python", fileExtension: ".py" },
+    { id: "java", displayName: "Java", fileExtension: ".java" },
+    { id: "zig", displayName: "Zig", fileExtension: ".zig" },
+    { id: "tcl", displayName: "Tcl", fileExtension: ".tcl" },
+  ];
+
+  return {
+    runtimeRegistry,
+    getSupportedLanguages: () => runtimeRegistry.map((r) => r.id),
+    getRuntimeInfo: (id) => runtimeRegistry.find((r) => r.id === id),
+    isLanguageSupported: (id) => runtimeRegistry.some((r) => r.id === id),
+    runtimeImports: {
+      javascript: () =>
+        Promise.resolve({
+          default: createMockRuntimeClass("javascript"),
+          editorConfig: {
+            getLanguageExtension: () => Promise.resolve({}),
+            getLinter: () => Promise.resolve(null),
+          },
+        }),
+      python: () =>
+        Promise.resolve({
+          default: createMockRuntimeClass("python"),
+          editorConfig: {
+            getLanguageExtension: () => Promise.resolve({}),
+            getLinter: () => Promise.resolve(null),
+          },
+        }),
+      java: () =>
+        Promise.resolve({
+          default: createMockRuntimeClass("java"),
+          editorConfig: {
+            getLanguageExtension: () => Promise.resolve({}),
+            getLinter: () => Promise.resolve(null),
+          },
+        }),
+      zig: () =>
+        Promise.resolve({
+          default: createMockRuntimeClass("zig"),
+          editorConfig: {
+            getLanguageExtension: () => Promise.resolve({}),
+            getLinter: () => Promise.resolve(null),
+          },
+        }),
+      tcl: () =>
+        Promise.resolve({
+          default: createMockRuntimeClass("tcl"),
+          editorConfig: {
+            getLanguageExtension: () => Promise.resolve({}),
+            getLinter: () => Promise.resolve(null),
+          },
+        }),
+    },
+  };
+});
 
 describe("RuntimeManager", () => {
   let manager;
 
   beforeEach(() => {
     manager = new RuntimeManager();
-    // Mock python and java runtimes to avoid loading Pyodide/CheerpJ
-    vi.spyOn(manager.runtimes.python, "loadRuntime").mockImplementation(
-      async () => {
-        manager.runtimes.python.isLoaded = true;
-      },
-    );
-    vi.spyOn(manager.runtimes.java, "loadRuntime").mockImplementation(
-      async () => {
-        manager.runtimes.java.isLoaded = true;
-      },
-    );
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
   });
 
   describe("constructor", () => {
-    it("should create all runtime instances", () => {
-      expect(manager.runtimes.javascript).toBeDefined();
-      expect(manager.runtimes.python).toBeDefined();
-      expect(manager.runtimes.java).toBeDefined();
+    it("should start with empty runtimes Map", () => {
+      expect(manager.runtimes).toBeInstanceOf(Map);
+      expect(manager.runtimes.size).toBe(0);
     });
 
     it("should default to javascript language", () => {
@@ -31,46 +110,80 @@ describe("RuntimeManager", () => {
     });
 
     it("should start with empty loading promises", () => {
-      expect(manager.loadingPromises).toEqual({});
+      expect(manager.moduleLoadingPromises).toBeInstanceOf(Map);
+      expect(manager.moduleLoadingPromises.size).toBe(0);
+      expect(manager.runtimeLoadingPromises).toBeInstanceOf(Map);
+      expect(manager.runtimeLoadingPromises.size).toBe(0);
+    });
+
+    it("should start with empty loaded modules", () => {
+      expect(manager.loadedModules).toBeInstanceOf(Map);
+      expect(manager.loadedModules.size).toBe(0);
     });
   });
 
-  describe("defaultTemplates", () => {
-    it("should return templates for all languages", () => {
-      const templates = manager.defaultTemplates;
+  describe("getDefaultTemplate", () => {
+    it("should return template for javascript", async () => {
+      const template = await manager.getDefaultTemplate("javascript");
+      expect(template).toContain("tick");
+    });
+
+    it("should return template for python", async () => {
+      const template = await manager.getDefaultTemplate("python");
+      expect(template).toContain("tick");
+    });
+
+    it("should return template for java", async () => {
+      const template = await manager.getDefaultTemplate("java");
+      expect(template).toContain("tick");
+    });
+  });
+
+  describe("getDefaultTemplates", () => {
+    it("should return templates for all languages", async () => {
+      const templates = await manager.getDefaultTemplates();
 
       expect(templates.javascript).toBeDefined();
       expect(templates.python).toBeDefined();
       expect(templates.java).toBeDefined();
+      expect(templates.zig).toBeDefined();
+      expect(templates.tcl).toBeDefined();
     });
 
-    it("should return non-empty templates", () => {
-      const templates = manager.defaultTemplates;
+    it("should return non-empty templates", async () => {
+      const templates = await manager.getDefaultTemplates();
 
       expect(templates.javascript.length).toBeGreaterThan(0);
       expect(templates.python.length).toBeGreaterThan(0);
       expect(templates.java.length).toBeGreaterThan(0);
     });
-
-    it("should contain tick function in templates", () => {
-      const templates = manager.defaultTemplates;
-
-      expect(templates.javascript).toContain("tick");
-      expect(templates.python).toContain("tick");
-      expect(templates.java).toContain("tick");
-    });
   });
 
   describe("getCurrentRuntime", () => {
-    it("should return javascript runtime by default", () => {
+    it("should return null when no runtime is loaded", () => {
       const runtime = manager.getCurrentRuntime();
-      expect(runtime).toBe(manager.runtimes.javascript);
+      expect(runtime).toBeNull();
     });
 
-    it("should return correct runtime after language change", () => {
-      manager.currentLanguage = "python";
+    it("should return runtime after it is loaded", async () => {
+      await manager.getOrCreateRuntime("javascript");
       const runtime = manager.getCurrentRuntime();
-      expect(runtime).toBe(manager.runtimes.python);
+      expect(runtime).toBeDefined();
+      expect(runtime.language).toBe("javascript");
+    });
+  });
+
+  describe("getCurrentRuntimeAsync", () => {
+    it("should load and return javascript runtime by default", async () => {
+      const runtime = await manager.getCurrentRuntimeAsync();
+      expect(runtime).toBeDefined();
+      expect(runtime.language).toBe("javascript");
+    });
+
+    it("should return correct runtime after language change", async () => {
+      manager.currentLanguage = "python";
+      const runtime = await manager.getCurrentRuntimeAsync();
+      expect(runtime.language).toBe("python");
     });
   });
 
@@ -88,88 +201,87 @@ describe("RuntimeManager", () => {
 
     it("should return the selected runtime", async () => {
       const runtime = await manager.selectLanguage("javascript");
-      expect(runtime).toBe(manager.runtimes.javascript);
+      expect(runtime).toBeDefined();
+      expect(runtime.language).toBe("javascript");
+    });
+  });
+
+  describe("loadRuntimeModule", () => {
+    it("should load a runtime module", async () => {
+      const module = await manager.loadRuntimeModule("javascript");
+      expect(module).toBeDefined();
+      expect(module.default).toBeDefined();
+    });
+
+    it("should cache loaded modules", async () => {
+      const module1 = await manager.loadRuntimeModule("javascript");
+      const module2 = await manager.loadRuntimeModule("javascript");
+      expect(module1).toBe(module2);
+    });
+
+    it("should throw for unsupported language", async () => {
+      await expect(manager.loadRuntimeModule("ruby")).rejects.toThrow(
+        "Unsupported language: ruby",
+      );
+    });
+  });
+
+  describe("getOrCreateRuntime", () => {
+    it("should create a runtime instance", async () => {
+      const runtime = await manager.getOrCreateRuntime("javascript");
+      expect(runtime).toBeDefined();
+      expect(runtime.language).toBe("javascript");
+    });
+
+    it("should cache runtime instances", async () => {
+      const runtime1 = await manager.getOrCreateRuntime("javascript");
+      const runtime2 = await manager.getOrCreateRuntime("javascript");
+      expect(runtime1).toBe(runtime2);
+    });
+
+    it("should create different instances for different languages", async () => {
+      const jsRuntime = await manager.getOrCreateRuntime("javascript");
+      const pyRuntime = await manager.getOrCreateRuntime("python");
+      expect(jsRuntime).not.toBe(pyRuntime);
+      expect(jsRuntime.language).toBe("javascript");
+      expect(pyRuntime.language).toBe("python");
     });
   });
 
   describe("loadCurrentRuntime", () => {
-    it("should return already loaded javascript runtime", async () => {
+    it("should load the current runtime", async () => {
       const runtime = await manager.loadCurrentRuntime();
-      expect(runtime).toBe(manager.runtimes.javascript);
+      expect(runtime).toBeDefined();
       expect(runtime.isLoaded).toBe(true);
     });
 
-    it("should cache loading promises", async () => {
-      // Force python to need loading
-      manager.currentLanguage = "python";
-      const pythonRuntime = manager.runtimes.python;
+    it("should cache loading promises for modules", async () => {
+      // Call loadRuntimeModule twice concurrently
+      const promise1 = manager.loadRuntimeModule("javascript");
+      const promise2 = manager.loadRuntimeModule("javascript");
 
-      // Mock loadRuntime to track calls
-      const loadSpy = vi
-        .spyOn(pythonRuntime, "loadRuntime")
-        .mockResolvedValue();
-      pythonRuntime.isLoaded = false;
-      pythonRuntime.isLoading = false;
+      const [module1, module2] = await Promise.all([promise1, promise2]);
 
-      // Call loadCurrentRuntime twice
-      const promise1 = manager.loadCurrentRuntime();
-      const promise2 = manager.loadCurrentRuntime();
-
-      await Promise.all([promise1, promise2]);
-
-      // Should only call loadRuntime once due to caching
-      expect(loadSpy).toHaveBeenCalledTimes(1);
-    });
-
-    it("should not reload already loaded runtime", async () => {
-      const jsRuntime = manager.runtimes.javascript;
-      const loadSpy = vi.spyOn(jsRuntime, "loadRuntime");
-
-      await manager.loadCurrentRuntime();
-
-      expect(loadSpy).not.toHaveBeenCalled();
+      // Should return the same module
+      expect(module1).toBe(module2);
     });
   });
 
   describe("loadCode", () => {
     it("should load code into current runtime", async () => {
       const code = 'export function tick() { console.log("test"); }';
-      const loadSpy = vi
-        .spyOn(manager.runtimes.javascript, "loadCode")
-        .mockResolvedValue();
-
       await manager.loadCode(code);
 
-      expect(loadSpy).toHaveBeenCalledWith(code);
-    });
-
-    it("should ensure runtime is loaded before loading code", async () => {
-      manager.currentLanguage = "python";
-      const pythonRuntime = manager.runtimes.python;
-      pythonRuntime.isLoaded = false;
-      pythonRuntime.isLoading = false;
-
-      const loadRuntimeSpy = vi
-        .spyOn(pythonRuntime, "loadRuntime")
-        .mockImplementation(async () => {
-          pythonRuntime.isLoaded = true;
-        });
-      const loadCodeSpy = vi
-        .spyOn(pythonRuntime, "loadCode")
-        .mockResolvedValue();
-
-      await manager.loadCode("def tick(): pass");
-
-      expect(loadRuntimeSpy).toHaveBeenCalled();
-      expect(loadCodeSpy).toHaveBeenCalled();
+      const runtime = manager.getCurrentRuntime();
+      expect(runtime.loadedCode).toBe(code);
     });
   });
 
   describe("start", () => {
     it("should call start on current runtime", async () => {
-      const startSpy = vi
-        .spyOn(manager.runtimes.javascript, "start")
-        .mockResolvedValue();
+      await manager.loadCurrentRuntime();
+      const runtime = manager.getCurrentRuntime();
+      const startSpy = vi.spyOn(runtime, "start");
 
       await manager.start();
 
@@ -182,37 +294,29 @@ describe("RuntimeManager", () => {
       const elevators = [{ currentFloor: 0, goToFloor: vi.fn() }];
       const floors = [{ level: 0, buttons: { up: false, down: false } }];
 
-      const executeSpy = vi
-        .spyOn(manager.runtimes.javascript, "execute")
-        .mockResolvedValue();
+      await manager.loadCurrentRuntime();
+      const result = await manager.execute(elevators, floors);
 
-      await manager.execute(elevators, floors);
-
-      expect(executeSpy).toHaveBeenCalledWith(elevators, floors);
-    });
-
-    it("should return execution result", async () => {
-      vi.spyOn(manager.runtimes.javascript, "execute").mockResolvedValue(
-        "result",
-      );
-
-      const result = await manager.execute([], []);
-
-      expect(result).toBe("result");
+      expect(result).toEqual({ elevators, floors });
     });
   });
 
   describe("cleanup", () => {
-    it("should cleanup all runtimes", () => {
-      const jsCleanup = vi.spyOn(manager.runtimes.javascript, "cleanup");
-      const pyCleanup = vi.spyOn(manager.runtimes.python, "cleanup");
-      const javaCleanup = vi.spyOn(manager.runtimes.java, "cleanup");
+    it("should cleanup all loaded runtimes", async () => {
+      // Load multiple runtimes
+      await manager.getOrCreateRuntime("javascript");
+      await manager.getOrCreateRuntime("python");
+
+      const jsRuntime = manager.runtimes.get("javascript");
+      const pyRuntime = manager.runtimes.get("python");
+
+      const jsCleanup = vi.spyOn(jsRuntime, "cleanup");
+      const pyCleanup = vi.spyOn(pyRuntime, "cleanup");
 
       manager.cleanup();
 
       expect(jsCleanup).toHaveBeenCalled();
       expect(pyCleanup).toHaveBeenCalled();
-      expect(javaCleanup).toHaveBeenCalled();
     });
   });
 
@@ -222,15 +326,17 @@ describe("RuntimeManager", () => {
 
       await manager.selectLanguage("python");
       expect(manager.currentLanguage).toBe("python");
-      expect(manager.getCurrentRuntime()).toBe(manager.runtimes.python);
+      expect((await manager.getCurrentRuntimeAsync()).language).toBe("python");
 
       await manager.selectLanguage("java");
       expect(manager.currentLanguage).toBe("java");
-      expect(manager.getCurrentRuntime()).toBe(manager.runtimes.java);
+      expect((await manager.getCurrentRuntimeAsync()).language).toBe("java");
 
       await manager.selectLanguage("javascript");
       expect(manager.currentLanguage).toBe("javascript");
-      expect(manager.getCurrentRuntime()).toBe(manager.runtimes.javascript);
+      expect((await manager.getCurrentRuntimeAsync()).language).toBe(
+        "javascript",
+      );
     });
   });
 });

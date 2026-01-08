@@ -21,7 +21,8 @@ import { EventBus } from "./utils/EventBus.js";
  */
 export class ElevatorApp {
   /**
-   * Creates and initializes the application.
+   * Creates the application instance.
+   * Call initialize() after construction to complete setup.
    */
   constructor() {
     /** @type {EventBus} Application event bus */
@@ -34,7 +35,7 @@ export class ElevatorApp {
     this.editor = new CodeEditor(
       this.dom.getElement("codeArea"),
       APP_CONSTANTS.STORAGE_KEY,
-      this.runtimeManager.defaultTemplates,
+      this.runtimeManager,
       this,
     );
     /** @type {number} Current challenge index */
@@ -53,8 +54,18 @@ export class ElevatorApp {
       this.gameController,
       this.urlManager,
     );
+  }
 
-    // Setup all event handlers
+  /**
+   * Initializes the application asynchronously.
+   * Sets up event handlers, editor, and loads initial runtime.
+   * @returns {Promise<void>}
+   */
+  async initialize() {
+    // Initialize editor first (loads initial language config and creates view)
+    await this.editor.initialize();
+
+    // Setup all event handlers (must happen after editor.initialize so setLayoutMode works)
     this.eventHandlers.setupAllHandlers();
 
     // Set the runtime manager to the editor's current language
@@ -64,7 +75,7 @@ export class ElevatorApp {
       );
 
     // Initialize with runtime
-    this.initializeWithRuntime();
+    await this.initializeWithRuntime();
   }
 
   /**
@@ -244,11 +255,25 @@ export class ElevatorApp {
   }
 }
 
+/**
+ * Creates and initializes the application.
+ * @returns {Promise<ElevatorApp>}
+ */
+async function createApp() {
+  const app = new ElevatorApp();
+  await app.initialize();
+  return app;
+}
+
 // Initialize app when DOM is ready
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", () => {
-    window.app = new ElevatorApp();
+    createApp().then((app) => {
+      window.app = app;
+    });
   });
 } else {
-  window.app = new ElevatorApp();
+  createApp().then((app) => {
+    window.app = app;
+  });
 }
