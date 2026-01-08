@@ -41,16 +41,10 @@ export class URLManager {
    * @returns {Record<string, string>} Parsed parameters
    */
   parseParams() {
-    /** @type {Record<string, string>} */
-    const params = {};
     const hashParams = window.location.hash.replace(/^#/, "").split(",");
-
-    hashParams.forEach((p) => {
-      const [key, val] = p.split("=");
-      params[key] = val;
-    });
-
-    return params;
+    return Object.fromEntries(
+      hashParams.filter((p) => p.includes("=")).map((p) => p.split("=")),
+    );
   }
 
   /**
