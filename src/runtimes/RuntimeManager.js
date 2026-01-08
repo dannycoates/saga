@@ -1,8 +1,8 @@
-import { JavaScriptRuntime } from "./JavaScriptRuntime.js";
-import { PythonRuntime } from "./PythonRuntime.js";
-import { JavaRuntime } from "./JavaRuntime.js";
-import { ZigRuntime } from "./ZigRuntime.js";
-import { TclRuntime } from "./TclRuntime.js";
+import {
+  runtimeRegistry,
+  runtimeImports,
+  isLanguageSupported,
+} from "virtual:runtime-registry";
 
 /**
  * @typedef {import('./BaseRuntime.js').LanguageId} LanguageId
@@ -14,38 +14,103 @@ import { TclRuntime } from "./TclRuntime.js";
 /**
  * Manages multiple language runtimes and coordinates code execution.
  * Handles language switching, runtime loading, and code execution.
+ * Uses dynamic imports to load runtime modules on demand.
  */
 export class RuntimeManager {
   /**
-   * Creates a runtime manager with all available language runtimes.
+   * Creates a runtime manager.
+   * Runtime modules are loaded dynamically when needed.
    */
   constructor() {
-    /** @type {Record<LanguageId, BaseRuntime>} Map of language ID to runtime instance */
-    this.runtimes = {
-      javascript: new JavaScriptRuntime(),
-      python: new PythonRuntime(),
-      java: new JavaRuntime(),
-      zig: new ZigRuntime(),
-      tcl: new TclRuntime(),
-    };
+    /** @type {Map<string, BaseRuntime>} Loaded runtime instances */
+    this.runtimes = new Map();
+
+    /** @type {Map<string, object>} Loaded runtime modules */
+    this.loadedModules = new Map();
+
+    /** @type {Map<string, Promise<object>>} Module loading promises to avoid duplicate loads */
+    this.moduleLoadingPromises = new Map();
+
+    /** @type {Map<string, Promise<void>>} Runtime initialization promises */
+    this.runtimeLoadingPromises = new Map();
 
     /** @type {LanguageId} Currently selected language */
     this.currentLanguage = "javascript";
-    /** @type {Partial<Record<LanguageId, Promise<void>>>} Cached loading promises to avoid duplicate loads */
-    this.loadingPromises = {};
   }
 
   /**
-   * Default code templates for all languages.
-   * @type {Record<string, string>}
-   * @readonly
+   * Dynamically imports a runtime module.
+   * @param {string} language - Language identifier
+   * @returns {Promise<object>} The runtime module
    */
-  get defaultTemplates() {
-    return Object.fromEntries(
-      Object.entries(this.runtimes).map(([name, rt]) => {
-        return [name, rt.getDefaultTemplate()];
-      }),
-    );
+  async loadRuntimeModule(language) {
+    // Return cached module if already loaded
+    if (this.loadedModules.has(language)) {
+      return this.loadedModules.get(language);
+    }
+
+    // Return existing loading promise if in progress
+    if (this.moduleLoadingPromises.has(language)) {
+      return this.moduleLoadingPromises.get(language);
+    }
+
+    if (!isLanguageSupported(language)) {
+      throw new Error(`Unsupported language: ${language}`);
+    }
+
+    // Start loading and cache the promise
+    const loadPromise = runtimeImports[language]().then((module) => {
+      this.loadedModules.set(language, module);
+      this.moduleLoadingPromises.delete(language);
+      return module;
+    });
+
+    this.moduleLoadingPromises.set(language, loadPromise);
+    return loadPromise;
+  }
+
+  /**
+   * Gets or creates a runtime instance for a language.
+   * @param {string} language - Language identifier
+   * @returns {Promise<BaseRuntime>} The runtime instance
+   */
+  async getOrCreateRuntime(language) {
+    if (this.runtimes.has(language)) {
+      return this.runtimes.get(language);
+    }
+
+    const module = await this.loadRuntimeModule(language);
+
+    // Get the runtime class (default export)
+    const RuntimeClass = module.default;
+    const instance = new RuntimeClass();
+
+    this.runtimes.set(language, instance);
+    return instance;
+  }
+
+  /**
+   * Gets the default template for a specific language.
+   * @param {string} language - Language identifier
+   * @returns {Promise<string>} The default code template
+   */
+  async getDefaultTemplate(language) {
+    const runtime = await this.getOrCreateRuntime(language);
+    return runtime.getDefaultTemplate();
+  }
+
+  /**
+   * Gets default templates for all languages.
+   * Loads all runtime modules to get their templates.
+   * @returns {Promise<Record<string, string>>}
+   */
+  async getDefaultTemplates() {
+    /** @type {Record<string, string>} */
+    const templates = {};
+    for (const info of runtimeRegistry) {
+      templates[info.id] = await this.getDefaultTemplate(info.id);
+    }
+    return templates;
   }
 
   /**
@@ -55,14 +120,14 @@ export class RuntimeManager {
    */
   async loadCurrentRuntime() {
     const language = this.currentLanguage;
-    // Load the runtime if needed
-    const runtime = this.runtimes[language];
+    const runtime = await this.getOrCreateRuntime(language);
+
     if (!runtime.isLoaded && !runtime.isLoading) {
       // Cache loading promises to avoid multiple loads
-      if (!this.loadingPromises[language]) {
-        this.loadingPromises[language] = runtime.loadRuntime();
+      if (!this.runtimeLoadingPromises.has(language)) {
+        this.runtimeLoadingPromises.set(language, runtime.loadRuntime());
       }
-      await this.loadingPromises[language];
+      await this.runtimeLoadingPromises.get(language);
     }
     return runtime;
   }
@@ -74,7 +139,7 @@ export class RuntimeManager {
    * @throws {Error} If language is not supported
    */
   async selectLanguage(language) {
-    if (!this.runtimes[language]) {
+    if (!isLanguageSupported(language)) {
       throw new Error(`Unsupported language: ${language}`);
     }
 
@@ -85,10 +150,19 @@ export class RuntimeManager {
 
   /**
    * Gets the currently selected runtime.
-   * @returns {BaseRuntime} Current runtime instance
+   * Returns null if runtime hasn't been loaded yet.
+   * @returns {BaseRuntime|null} Current runtime instance or null
    */
   getCurrentRuntime() {
-    return this.runtimes[this.currentLanguage];
+    return this.runtimes.get(this.currentLanguage) || null;
+  }
+
+  /**
+   * Gets the currently selected runtime, loading it if necessary.
+   * @returns {Promise<BaseRuntime>} Current runtime instance
+   */
+  async getCurrentRuntimeAsync() {
+    return this.getOrCreateRuntime(this.currentLanguage);
   }
 
   /**
@@ -98,11 +172,11 @@ export class RuntimeManager {
    * @returns {Promise<void>}
    */
   async loadCode(code) {
-    const runtime = this.getCurrentRuntime();
+    const runtime = await this.getCurrentRuntimeAsync();
 
     // Ensure runtime is loaded
     if (!runtime.isLoaded) {
-      await this.selectLanguage(this.currentLanguage);
+      await this.loadCurrentRuntime();
     }
 
     // Load the code into the runtime
@@ -114,7 +188,8 @@ export class RuntimeManager {
    * @returns {Promise<void>}
    */
   async start() {
-    await this.getCurrentRuntime().start();
+    const runtime = await this.getCurrentRuntimeAsync();
+    await runtime.start();
   }
 
   /**
@@ -124,18 +199,15 @@ export class RuntimeManager {
    * @returns {Promise<void>}
    */
   async execute(elevators, floors) {
-    const runtime = this.getCurrentRuntime();
-
-    // Execute the loaded code
+    const runtime = await this.getCurrentRuntimeAsync();
     return await runtime.execute(elevators, floors);
   }
 
   /**
-   * Cleans up all runtimes.
+   * Cleans up all loaded runtimes.
    * @returns {void}
    */
   cleanup() {
-    // Cleanup all runtimes
-    Object.values(this.runtimes).forEach((runtime) => runtime.cleanup());
+    this.runtimes.forEach((runtime) => runtime.cleanup());
   }
 }

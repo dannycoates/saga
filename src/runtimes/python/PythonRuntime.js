@@ -1,9 +1,12 @@
-import { BaseRuntime } from "./BaseRuntime.js";
-import { loadExternalScript, executeWithTimeout } from "../utils/AsyncUtils.js";
+import { BaseRuntime } from "../BaseRuntime.js";
+import {
+  loadExternalScript,
+  executeWithTimeout,
+} from "../../utils/AsyncUtils.js";
 
 /**
- * @typedef {import('./BaseRuntime.js').ElevatorAPI} ElevatorAPI
- * @typedef {import('./BaseRuntime.js').FloorAPI} FloorAPI
+ * @typedef {import('../BaseRuntime.js').ElevatorAPI} ElevatorAPI
+ * @typedef {import('../BaseRuntime.js').FloorAPI} FloorAPI
  */
 
 /**

@@ -1,4 +1,4 @@
-import { BaseRuntime } from "./BaseRuntime.js";
+import { BaseRuntime } from "../BaseRuntime.js";
 import { untar } from "@andrewbranch/untar.js";
 import {
   WASI,
@@ -11,8 +11,8 @@ import {
 } from "@bjorn3/browser_wasi_shim";
 
 /**
- * @typedef {import('./BaseRuntime.js').ElevatorAPI} ElevatorAPI
- * @typedef {import('./BaseRuntime.js').FloorAPI} FloorAPI
+ * @typedef {import('../BaseRuntime.js').ElevatorAPI} ElevatorAPI
+ * @typedef {import('../BaseRuntime.js').FloorAPI} FloorAPI
  */
 
 const DEFAULT_TEMPLATE = `const game = @import("game.zig");

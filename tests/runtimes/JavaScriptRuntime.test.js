@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { JavaScriptRuntime } from "../../src/runtimes/JavaScriptRuntime.js";
+import { JavaScriptRuntime } from "../../src/runtimes/javascript/JavaScriptRuntime.js";
 
 describe("JavaScriptRuntime", () => {
   let runtime;
