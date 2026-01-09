@@ -33,6 +33,7 @@
     "@codemirror/lang-java": "^6.0.2",
     "@codemirror/lang-javascript": "^6.2.4",
     "@codemirror/lang-python": "^6.2.1",
+    "@codemirror/legacy-modes": "^6.5.2",
     "@codemirror/lint": "^6.8.5",
     "@sourcebot/codemirror-lang-tcl": "^1.0.12",
     "cm6-theme-gruvbox-dark": "^0.2.0",

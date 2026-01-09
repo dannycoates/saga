@@ -1,0 +1,30 @@
+; Generate export list for toplevel with stdlib and dependencies
+(rule
+ (targets export.txt)
+ (deps
+  (package js_of_ocaml)
+  (package js_of_ocaml-compiler)
+  (package js_of_ocaml-toplevel))
+ (action
+  (run
+   jsoo_listunits
+   -o
+   %{targets}
+   stdlib
+   dynlink
+   js_of_ocaml-compiler.runtime
+   js_of_ocaml
+   js_of_ocaml-toplevel)))
+
+(executable
+ (name toplevel)
+ (libraries
+  js_of_ocaml-compiler
+  js_of_ocaml-toplevel
+  compiler-libs.toplevel
+  dynlink)
+ (link_flags (:standard -linkall))
+ (modes byte js)
+ (js_of_ocaml
+  (flags (:standard +dynlink.js +toplevel.js --toplevel --export %{dep:export.txt} --opt 3 --no-sourcemap --target-env browser --effects=disabled)))
+ (preprocess (pps js_of_ocaml-ppx)))

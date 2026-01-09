@@ -6,3 +6,6 @@ test-results
 .zig-cache
 zig-source
 .playwright-mcp
+
+# OCaml build artifacts
+ocaml-toplevel/_build/
