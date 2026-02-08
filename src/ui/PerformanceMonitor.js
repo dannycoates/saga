@@ -100,13 +100,13 @@ export class PerformanceMonitor {
     if (!this.metrics.has(name)) {
       this.metrics.set(name, []);
     }
-    this.metrics.get(name).push({
+    const entries = /** @type {MetricEntry[]} */ (this.metrics.get(name));
+    entries.push({
       value,
       timestamp: performance.now(),
     });
 
     // Keep only last 100 entries to prevent memory leaks
-    const entries = this.metrics.get(name);
     if (entries.length > 100) {
       entries.splice(0, entries.length - 100);
     }

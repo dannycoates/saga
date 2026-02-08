@@ -87,8 +87,8 @@ export class ElevatorFloor extends HTMLElement {
       this.setAttribute("y-position", String(model.yPosition));
 
       // Listen for button state changes
-      const buttonStateHandler = (event) => {
-        const buttons = event.detail || event;
+      const buttonStateHandler = (/** @type {Event} */ event) => {
+        const buttons = /** @type {CustomEvent} */ (event).detail || event;
         this.setAttribute("up-active", String(buttons.up));
         this.setAttribute("down-active", String(buttons.down));
       };
@@ -104,8 +104,8 @@ export class ElevatorFloor extends HTMLElement {
    * @returns {void}
    */
   attachEventListeners() {
-    const upButton = this.shadowRoot.querySelector(".up");
-    const downButton = this.shadowRoot.querySelector(".down");
+    const upButton = this.shadowRoot?.querySelector(".up");
+    const downButton = this.shadowRoot?.querySelector(".down");
 
     upButton?.addEventListener("click", () => {
       if (this.#model) {
@@ -133,25 +133,25 @@ export class ElevatorFloor extends HTMLElement {
         this.style.top = value + "px";
         break;
       case "up-active":
-        const upBtn = this.shadowRoot.querySelector(".up");
+        const upBtn = this.shadowRoot?.querySelector(".up");
         if (upBtn) {
           upBtn.classList.toggle("activated", value === "true");
         }
         break;
       case "down-active":
-        const downBtn = this.shadowRoot.querySelector(".down");
+        const downBtn = this.shadowRoot?.querySelector(".down");
         if (downBtn) {
           downBtn.classList.toggle("activated", value === "true");
         }
         break;
       case "hide-up":
-        const upBtnHide = this.shadowRoot.querySelector(".up");
+        const upBtnHide = this.shadowRoot?.querySelector(".up");
         if (upBtnHide) {
           upBtnHide.classList.toggle("invisible", value === "true");
         }
         break;
       case "hide-down":
-        const downBtnHide = this.shadowRoot.querySelector(".down");
+        const downBtnHide = this.shadowRoot?.querySelector(".down");
         if (downBtnHide) {
           downBtnHide.classList.toggle("invisible", value === "true");
         }
@@ -175,7 +175,7 @@ export class ElevatorFloor extends HTMLElement {
     // Set position on host element
     this.style.top = yPosition + "px";
 
-    this.shadowRoot.innerHTML = `
+    /** @type {ShadowRoot} */ (this.shadowRoot).innerHTML = `
       <style>
         :host {
           position: absolute;

@@ -5,5 +5,5 @@ export class NullViewModel extends ViewModel {
     super();
   }
 
-  tick(dt) {}
+  tick(/** @type {number} */ dt) {}
 }

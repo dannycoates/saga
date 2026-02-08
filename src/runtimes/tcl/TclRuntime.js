@@ -143,7 +143,12 @@ export class TclRuntime extends BaseRuntime {
     // Helper to create a Tcl proc that calls a jswrapped JS function.
     // Note: WACL jscall only supports single arguments, so multi-arg functions
     // use string packing (e.g., "id floor") and parse in JavaScript.
-    const registerCommand = (name, fn, returnType, argType) => {
+    const registerCommand = (
+      /** @type {string} */ name,
+      /** @type {Function} */ fn,
+      /** @type {string} */ returnType,
+      /** @type {string} */ argType,
+    ) => {
       const jswrapResult = interp.jswrap(fn, returnType, argType || "").trim();
 
       if (!argType) {
@@ -172,7 +177,7 @@ export class TclRuntime extends BaseRuntime {
     // Elevator current floor (1 arg: id, returns int)
     registerCommand(
       "_js_elevator_current_floor",
-      (id) => self.elevators[id]?.currentFloor ?? 0,
+      (/** @type {number} */ id) => self.elevators[id]?.currentFloor ?? 0,
       "int",
       "int",
     );
@@ -180,7 +185,7 @@ export class TclRuntime extends BaseRuntime {
     // Elevator destination floor (1 arg: id, returns int, -1 if null)
     registerCommand(
       "_js_elevator_destination_floor",
-      (id) => self.elevators[id]?.destinationFloor ?? -1,
+      (/** @type {number} */ id) => self.elevators[id]?.destinationFloor ?? -1,
       "int",
       "int",
     );
@@ -188,7 +193,8 @@ export class TclRuntime extends BaseRuntime {
     // Elevator pressed button count (1 arg: id, returns int)
     registerCommand(
       "_js_elevator_pressed_count",
-      (id) => self.elevators[id]?.pressedFloorButtons?.length ?? 0,
+      (/** @type {number} */ id) =>
+        self.elevators[id]?.pressedFloorButtons?.length ?? 0,
       "int",
       "int",
     );
@@ -197,7 +203,7 @@ export class TclRuntime extends BaseRuntime {
     // WACL jscall only supports single args, so we pass as string and parse
     registerCommand(
       "_js_elevator_pressed_button",
-      (argsStr) => {
+      (/** @type {number} */ argsStr) => {
         const args = interp.ptr2str(argsStr).split(" ");
         const id = parseInt(args[0], 10);
         const idx = parseInt(args[1], 10);
@@ -210,7 +216,7 @@ export class TclRuntime extends BaseRuntime {
     // Elevator percent full (1 arg: id, returns double for decimal values)
     registerCommand(
       "_js_elevator_percent_full",
-      (id) => self.elevators[id]?.percentFull ?? 0,
+      (/** @type {number} */ id) => self.elevators[id]?.percentFull ?? 0,
       "double",
       "int",
     );
@@ -219,7 +225,7 @@ export class TclRuntime extends BaseRuntime {
     // WACL jscall only supports single args, so we pass as string and parse
     registerCommand(
       "_js_elevator_go_to_floor",
-      (argsStr) => {
+      (/** @type {number} */ argsStr) => {
         const args = interp.ptr2str(argsStr).split(" ");
         const id = parseInt(args[0], 10);
         const floor = parseInt(args[1], 10);
@@ -233,7 +239,7 @@ export class TclRuntime extends BaseRuntime {
     // Floor level (1 arg: id, returns int)
     registerCommand(
       "_js_floor_level",
-      (id) => self.floors[id]?.level ?? 0,
+      (/** @type {number} */ id) => self.floors[id]?.level ?? 0,
       "int",
       "int",
     );
@@ -241,7 +247,7 @@ export class TclRuntime extends BaseRuntime {
     // Floor button up (1 arg: id, returns int 0/1)
     registerCommand(
       "_js_floor_button_up",
-      (id) => (self.floors[id]?.buttons?.up ? 1 : 0),
+      (/** @type {number} */ id) => (self.floors[id]?.buttons?.up ? 1 : 0),
       "int",
       "int",
     );
@@ -249,7 +255,7 @@ export class TclRuntime extends BaseRuntime {
     // Floor button down (1 arg: id, returns int 0/1)
     registerCommand(
       "_js_floor_button_down",
-      (id) => (self.floors[id]?.buttons?.down ? 1 : 0),
+      (/** @type {number} */ id) => (self.floors[id]?.buttons?.down ? 1 : 0),
       "int",
       "int",
     );

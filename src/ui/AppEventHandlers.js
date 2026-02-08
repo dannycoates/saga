@@ -100,7 +100,7 @@ export class AppEventHandlers {
           );
           this.editor.reset();
         }
-        this.editor.view.focus();
+        this.editor.view?.focus();
       },
       { signal },
     );
@@ -120,7 +120,7 @@ export class AppEventHandlers {
             alert(APP_CONSTANTS.MESSAGES.NO_BACKUP_FOUND);
           }
         }
-        this.editor.view.focus();
+        this.editor.view?.focus();
       },
       { signal },
     );
@@ -160,7 +160,7 @@ export class AppEventHandlers {
       "app:user_code_error",
       (e) => {
         presentCodeStatus(
-          this.dom.getElement("codeStatus"),
+          /** @type {HTMLElement} */ (this.dom.getElement("codeStatus")),
           /** @type {CustomEvent} */ (e).detail,
         );
       },
@@ -228,10 +228,12 @@ export class AppEventHandlers {
             );
 
             // Clear status
-            presentCodeStatus(this.dom.getElement("codeStatus"));
+            presentCodeStatus(
+              /** @type {HTMLElement} */ (this.dom.getElement("codeStatus")),
+            );
           } catch (error) {
             presentCodeStatus(
-              this.dom.getElement("codeStatus"),
+              /** @type {HTMLElement} */ (this.dom.getElement("codeStatus")),
               /** @type {Error} */ (error),
             );
             // Revert language selector
@@ -280,12 +282,15 @@ export class AppEventHandlers {
 
         if (clearStats) {
           presentStats(
-            this.dom.getElement("stats"),
+            /** @type {HTMLElement} */ (this.dom.getElement("stats")),
             this.gameController,
             this.eventBus,
           );
         }
-        presentWorld(this.dom.getElement("world"), this.viewModelManager);
+        presentWorld(
+          /** @type {HTMLElement} */ (this.dom.getElement("world")),
+          this.viewModelManager,
+        );
         this.responsiveScaling.initialize();
       },
       { signal },
@@ -296,7 +301,7 @@ export class AppEventHandlers {
       "game:simulation_started",
       () => {
         presentStats(
-          this.dom.getElement("stats"),
+          /** @type {HTMLElement} */ (this.dom.getElement("stats")),
           this.gameController,
           this.eventBus,
         );
@@ -312,7 +317,10 @@ export class AppEventHandlers {
           /** @type {CustomEvent<{passengerId: string, viewModel: import('./viewmodels/PassengerViewModel.js').PassengerViewModel}>} */ (
             e
           ).detail;
-        presentPassenger(this.dom.getElement("world"), viewModel);
+        presentPassenger(
+          /** @type {HTMLElement} */ (this.dom.getElement("world")),
+          viewModel,
+        );
       },
       { signal },
     );
@@ -326,7 +334,7 @@ export class AppEventHandlers {
         ).detail;
         if (succeeded) {
           presentFeedback(
-            this.dom.getElement("feedback"),
+            /** @type {HTMLElement} */ (this.dom.getElement("feedback")),
             APP_CONSTANTS.MESSAGES.SUCCESS_TITLE,
             APP_CONSTANTS.MESSAGES.SUCCESS_MESSAGE,
             this.urlManager.createParamsUrl({
@@ -335,7 +343,7 @@ export class AppEventHandlers {
           );
         } else {
           presentFeedback(
-            this.dom.getElement("feedback"),
+            /** @type {HTMLElement} */ (this.dom.getElement("feedback")),
             APP_CONSTANTS.MESSAGES.FAILURE_TITLE,
             APP_CONSTANTS.MESSAGES.FAILURE_MESSAGE,
             "",

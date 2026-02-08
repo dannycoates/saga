@@ -80,7 +80,7 @@ export class URLManager {
 
     // Parse time scale
     const timeScale =
-      parseFloat(localStorage.getItem(APP_CONSTANTS.TIME_SCALE_KEY)) ||
+      parseFloat(localStorage.getItem(APP_CONSTANTS.TIME_SCALE_KEY) ?? "") ||
       parseFloat(params.timescale) ||
       APP_CONSTANTS.DEFAULT_TIME_SCALE;
 

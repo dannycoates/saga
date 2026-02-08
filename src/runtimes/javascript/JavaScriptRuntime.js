@@ -51,7 +51,7 @@ export class JavaScriptRuntime extends BaseRuntime {
       /* @vite-ignore */ `data:text/javascript,${encodeURIComponent(code.trim())}`
     );
 
-    if (typeof this.loadedModule.tick !== "function") {
+    if (!this.loadedModule || typeof this.loadedModule.tick !== "function") {
       throw new Error("Code must export a tick function");
     }
 

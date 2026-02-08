@@ -109,7 +109,7 @@ export class PassengerViewModel extends AnimatedViewModel {
       if (parent) {
         this.setParent(parent);
         const [x, y] = parent.getPassengerPosition(
-          this.passengerState.slotInElevator,
+          this.passengerState.slotInElevator ?? 0,
         );
         this.moveToOverTime(x, y, 1, LINEAR_INTERPOLATE);
       }

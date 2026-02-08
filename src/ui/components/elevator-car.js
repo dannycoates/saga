@@ -100,9 +100,11 @@ export class ElevatorCar extends HTMLElement {
       // Floor buttons handler
       this.#floorButtonsHandler = (event) => {
         const buttons = /** @type {CustomEvent} */ (event).detail;
-        buttons.forEach((button, i) => {
-          this.updateFloorButton(i, button);
-        });
+        buttons.forEach(
+          (/** @type {boolean} */ button, /** @type {number} */ i) => {
+            this.updateFloorButton(i, button);
+          },
+        );
       };
 
       // Attach listeners with abort signal
@@ -200,7 +202,7 @@ export class ElevatorCar extends HTMLElement {
     const width = this.getAttribute("width") ?? "60";
     const currentFloor = this.getAttribute("current-floor") ?? "0";
 
-    this.shadowRoot.innerHTML = `
+    /** @type {ShadowRoot} */ (this.shadowRoot).innerHTML = `
       <style>
         :host {
           --elevator-width: ${width}px;

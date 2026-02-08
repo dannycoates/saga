@@ -56,7 +56,7 @@ export function createJavaScriptLinter() {
         );
 
         // Convert ESLint messages to CodeMirror diagnostics
-        messages.forEach((message) => {
+        messages.forEach((/** @type {any} */ message) => {
           const doc = view.state.doc;
           const line = Math.max(1, Math.min(message.line || 1, doc.lines));
           const lineObj = doc.line(line);

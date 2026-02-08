@@ -67,7 +67,7 @@ export class GameFeedback extends HTMLElement {
     this.#abortController = new AbortController();
     const { signal } = this.#abortController;
 
-    const link = this.shadowRoot.querySelector("a");
+    const link = this.shadowRoot?.querySelector("a");
     if (link) {
       link.addEventListener(
         "click",
@@ -95,7 +95,7 @@ export class GameFeedback extends HTMLElement {
     const message = this.getAttribute("message") || "";
     const nextUrl = this.getAttribute("next-url") || "";
 
-    this.shadowRoot.innerHTML = `
+    /** @type {ShadowRoot} */ (this.shadowRoot).innerHTML = `
       <style>
         :host {
           display: block;

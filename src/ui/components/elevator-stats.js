@@ -135,7 +135,7 @@ export class ElevatorStats extends HTMLElement {
    * @returns {void}
    */
   updateStat(name, value) {
-    const elem = this.shadowRoot.querySelector(`[data-stat="${name}"]`);
+    const elem = this.shadowRoot?.querySelector(`[data-stat="${name}"]`);
     if (elem) {
       elem.textContent = value || "";
     }
@@ -147,7 +147,7 @@ export class ElevatorStats extends HTMLElement {
    * @returns {void}
    */
   initializeDOM() {
-    this.shadowRoot.innerHTML = `
+    /** @type {ShadowRoot} */ (this.shadowRoot).innerHTML = `
       <style>
         :host {
           display: flex;

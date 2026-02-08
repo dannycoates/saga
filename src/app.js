@@ -33,7 +33,7 @@ export class ElevatorApp {
     this.runtimeManager = new RuntimeManager();
     /** @type {CodeEditor} Code editor instance */
     this.editor = new CodeEditor(
-      this.dom.getElement("codeArea"),
+      /** @type {HTMLElement} */ (this.dom.getElement("codeArea")),
       APP_CONSTANTS.STORAGE_KEY,
       this.runtimeManager,
       this,
@@ -99,7 +99,7 @@ export class ElevatorApp {
     this.currentChallengeIndex = index;
     this.dom.clearElements("feedback");
     presentChallenge(
-      this.dom.getElement("challenge"),
+      /** @type {HTMLElement} */ (this.dom.getElement("challenge")),
       this.currentChallenge,
       this,
       this.gameController,
@@ -207,7 +207,10 @@ export class ElevatorApp {
       // Return a wrapper object that calls the runtime manager
       return {
         start: this.runtimeManager.start.bind(this.runtimeManager),
-        safeTick: async (elevators, floors) => {
+        safeTick: async (
+          /** @type {any[]} */ elevators,
+          /** @type {any[]} */ floors,
+        ) => {
           try {
             await this.runtimeManager.execute(elevators, floors);
           } catch (e) {

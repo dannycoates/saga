@@ -6,17 +6,25 @@
  * Load external script with timeout and abort support
  * @param {string} src - Script source URL
  * @param {number} timeout - Timeout in milliseconds (default: 30s)
- * @param {AbortSignal} signal - Optional abort signal
+ * @param {AbortSignal} [signal] - Optional abort signal
  * @returns {Promise<void>}
  */
-export async function loadExternalScript(src, timeout = 30000, signal = null) {
+export async function loadExternalScript(
+  src,
+  timeout = 30000,
+  signal = undefined,
+) {
   const controller = new AbortController();
   const combinedSignal = signal
     ? AbortSignal.any([signal, controller.signal])
     : controller.signal;
 
   // Load promise - resolves when script loads, rejects on error or abort
-  const { promise: loadPromise, resolve, reject } = Promise.withResolvers();
+  const {
+    promise: loadPromise,
+    resolve,
+    reject,
+  } = /** @type {PromiseWithResolvers<void>} */ (Promise.withResolvers());
   const script = document.createElement("script");
   script.src = src;
 
@@ -72,10 +80,10 @@ export async function loadExternalScript(src, timeout = 30000, signal = null) {
  * Execute a function with timeout protection using AbortController
  * @param {Function} fn - Function to execute (can be async)
  * @param {number} timeout - Timeout in milliseconds
- * @param {AbortSignal} signal - Optional abort signal
+ * @param {AbortSignal} [signal] - Optional abort signal
  * @returns {Promise<any>}
  */
-export async function executeWithTimeout(fn, timeout, signal = null) {
+export async function executeWithTimeout(fn, timeout, signal = undefined) {
   const controller = new AbortController();
   const combinedSignal = signal
     ? AbortSignal.any([signal, controller.signal])

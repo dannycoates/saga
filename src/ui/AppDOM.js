@@ -46,12 +46,24 @@ export class AppDOM {
 
     // Cache DOM elements
     this.elements = {
-      world: document.querySelector(selectors.INNER_WORLD),
-      stats: document.querySelector(selectors.STATS_CONTAINER),
-      feedback: document.querySelector(selectors.FEEDBACK_CONTAINER),
-      challenge: document.querySelector(selectors.CHALLENGE),
-      codeStatus: document.querySelector(selectors.CODE_STATUS),
-      header: document.querySelector(selectors.HEADER),
+      world: /** @type {HTMLElement | null} */ (
+        document.querySelector(selectors.INNER_WORLD)
+      ),
+      stats: /** @type {HTMLElement | null} */ (
+        document.querySelector(selectors.STATS_CONTAINER)
+      ),
+      feedback: /** @type {HTMLElement | null} */ (
+        document.querySelector(selectors.FEEDBACK_CONTAINER)
+      ),
+      challenge: /** @type {HTMLElement | null} */ (
+        document.querySelector(selectors.CHALLENGE)
+      ),
+      codeStatus: /** @type {HTMLElement | null} */ (
+        document.querySelector(selectors.CODE_STATUS)
+      ),
+      header: /** @type {HTMLElement | null} */ (
+        document.querySelector(selectors.HEADER)
+      ),
       codeArea: document.getElementById(selectors.CODE_AREA),
       saveMessage: document.getElementById(selectors.SAVE_MESSAGE),
       runtimeLoading: document.getElementById(selectors.RUNTIME_LOADING),
@@ -93,7 +105,7 @@ export class AppDOM {
    * @returns {HTMLElement | null} The element or null
    */
   getElement(name) {
-    return this.elements[name];
+    return this.elements[name] ?? null;
   }
 
   /**
@@ -139,8 +151,10 @@ export class AppDOM {
       APP_CONSTANTS.SELECTORS.CHALLENGE_CONTROLS,
     );
     challengeControls.forEach((control) => {
-      const button = control.shadowRoot?.querySelector(
-        APP_CONSTANTS.SELECTORS.START_STOP_BUTTON,
+      const button = /** @type {HTMLButtonElement | null} */ (
+        control.shadowRoot?.querySelector(
+          APP_CONSTANTS.SELECTORS.START_STOP_BUTTON,
+        )
       );
       if (button) {
         button.disabled = !enabled;

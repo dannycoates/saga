@@ -95,7 +95,7 @@ export class CodeStatus extends HTMLElement {
           this.dialog.showModal();
           // Focus the close button for accessibility
           const closeButton = /** @type {HTMLButtonElement | null} */ (
-            this.shadowRoot.querySelector(".close-button")
+            this.shadowRoot?.querySelector(".close-button")
           );
           if (closeButton) {
             closeButton.focus();
@@ -118,7 +118,7 @@ export class CodeStatus extends HTMLElement {
   initializeDOM() {
     const errorMessage = this.getAttribute("error-message") || "";
 
-    this.shadowRoot.innerHTML = `
+    /** @type {ShadowRoot} */ (this.shadowRoot).innerHTML = `
       <style>
         :host {
           display: block;
@@ -258,7 +258,7 @@ export class CodeStatus extends HTMLElement {
     `;
 
     // Store reference to dialog
-    this.dialog = this.shadowRoot.querySelector("dialog");
+    this.dialog = this.shadowRoot?.querySelector("dialog") ?? null;
 
     // Set up event handlers after rendering (only once)
     if (!this.eventHandlersSetup) {
@@ -267,7 +267,7 @@ export class CodeStatus extends HTMLElement {
     }
 
     // Set HTML content for error message to preserve formatting
-    const errorContent = this.shadowRoot.querySelector("#error-content");
+    const errorContent = this.shadowRoot?.querySelector("#error-content");
     if (errorContent && errorMessage) {
       errorContent.innerHTML = errorMessage;
     }
@@ -286,7 +286,7 @@ export class CodeStatus extends HTMLElement {
    */
   setupEventHandlers() {
     // Handle close button click and dismiss button click
-    this.shadowRoot.addEventListener("click", (e) => {
+    this.shadowRoot?.addEventListener("click", (e) => {
       const target = /** @type {Element} */ (e.target);
       if (target.classList.contains("close-button")) {
         this.closeDialog();
@@ -294,7 +294,7 @@ export class CodeStatus extends HTMLElement {
     });
 
     // Handle dialog backdrop click (click outside modal content)
-    this.shadowRoot.addEventListener("click", (e) => {
+    this.shadowRoot?.addEventListener("click", (e) => {
       const target = /** @type {Element} */ (e.target);
       if (target.tagName === "DIALOG") {
         this.closeDialog();

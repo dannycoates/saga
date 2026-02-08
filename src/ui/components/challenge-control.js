@@ -67,8 +67,8 @@ export class ChallengeControl extends HTMLElement {
   cacheElements() {
     // Cache frequently accessed elements for better performance
     this.#cachedElements = {
-      startStopButton: this.shadowRoot.querySelector(".startstop"),
-      timeDisplay: this.shadowRoot.querySelector(".time-scale-value"),
+      startStopButton: this.shadowRoot?.querySelector(".startstop") ?? null,
+      timeDisplay: this.shadowRoot?.querySelector(".time-scale-value") ?? null,
     };
   }
 
@@ -148,7 +148,7 @@ export class ChallengeControl extends HTMLElement {
    */
   attachEventListeners() {
     // Use event delegation for better performance and cleaner code
-    this.shadowRoot.addEventListener("click", (e) => {
+    this.shadowRoot?.addEventListener("click", (e) => {
       const target = /** @type {Element} */ (e.target);
       const button = target.closest("button");
       if (!button) return;
@@ -205,7 +205,7 @@ export class ChallengeControl extends HTMLElement {
     const timeScale = this.getAttribute("time-scale") || "1x";
     const isPaused = this.getAttribute("is-paused") === "true";
 
-    this.shadowRoot.innerHTML = `
+    /** @type {ShadowRoot} */ (this.shadowRoot).innerHTML = `
       <style>
         :host {
           display: flex;
@@ -353,7 +353,7 @@ export class ChallengeControl extends HTMLElement {
     this.cacheElements();
 
     // Set HTML content for description to preserve formatting
-    const descElem = this.shadowRoot.querySelector("#description");
+    const descElem = this.shadowRoot?.querySelector("#description");
     if (descElem) {
       descElem.innerHTML = description;
     }

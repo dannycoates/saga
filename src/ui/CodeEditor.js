@@ -93,7 +93,7 @@ export class CodeEditor extends EventTarget {
    */
   async getDefaultTemplate(language) {
     if (this.templateCache.has(language)) {
-      return this.templateCache.get(language);
+      return /** @type {string} */ (this.templateCache.get(language));
     }
 
     const template = await this.runtimeManager.getDefaultTemplate(language);
@@ -108,11 +108,13 @@ export class CodeEditor extends EventTarget {
    */
   async loadEditorConfig(language) {
     if (this.editorConfigs.has(language)) {
-      return this.editorConfigs.get(language);
+      return /** @type {{langExtension: import('@codemirror/state').Extension, linterExtension: import('@codemirror/state').Extension | null}} */ (
+        this.editorConfigs.get(language)
+      );
     }
 
     // Import the runtime module to get editor config
-    const module = await runtimeImports[language]();
+    const module = /** @type {any} */ (await runtimeImports[language]());
 
     const config = {
       langExtension: await module.editorConfig.getLanguageExtension(),
@@ -244,8 +246,10 @@ export class CodeEditor extends EventTarget {
       `${this.storageKey}_${this.currentLanguage}`,
       this.getCode(),
     );
-    document.getElementById("save_message").textContent =
-      "Code saved " + new Date().toTimeString();
+    const saveMsg = document.getElementById("save_message");
+    if (saveMsg) {
+      saveMsg.textContent = "Code saved " + new Date().toTimeString();
+    }
     this.dispatchEvent(new CustomEvent("change"));
   }
 

@@ -8,8 +8,8 @@
     "allowJs": true,
     "lib": ["ES2024", "DOM"],
     "skipLibCheck": true,
-    "noImplicitAny": false,
-    "strictNullChecks": false
+    "noImplicitAny": true,
+    "strictNullChecks": true
   },
   "include": ["src/**/*.js", "src/**/*.d.ts"],
   "exclude": ["node_modules", "dist", "src/core/backends/*.example.js"]

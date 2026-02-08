@@ -54,7 +54,7 @@ export function loadWacl() {
 
     // Shim AMD define() to capture the module
     const define = /** @type {AMDDefine & Function} */ (
-      function (_name, factory) {
+      function (/** @type {string} */ _name, /** @type {Function} */ factory) {
         // Mark as AMD-compatible (some modules check this)
         define.amd = true;
 

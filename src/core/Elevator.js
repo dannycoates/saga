@@ -21,6 +21,22 @@ const STOPPING_DISTANCE_MARGIN = 1.05;
 const DECELERATION_CORRECTION = 1.1;
 
 /**
+ * @typedef {Object} ElevatorState
+ * @property {number} index
+ * @property {number} position
+ * @property {number} currentFloor
+ * @property {number | null} destinationFloor
+ * @property {number} velocity
+ * @property {boolean[]} buttons
+ * @property {({passengerId: string, slot: number} | null)[]} passengers
+ * @property {boolean} goingUpIndicator
+ * @property {boolean} goingDownIndicator
+ * @property {number} capacity
+ * @property {number} percentFull
+ * @property {number} moves
+ */
+
+/**
  * Represents an elevator in the simulation with physics-based movement.
  * Manages passenger loading/unloading, floor buttons, and direction indicators.
  */
@@ -291,20 +307,7 @@ export class Elevator {
 
   /**
    * Serializes elevator state for simulation snapshots.
-   * @returns {{
-   *   index: number,
-   *   position: number,
-   *   currentFloor: number,
-   *   destinationFloor: number | null,
-   *   velocity: number,
-   *   buttons: boolean[],
-   *   passengers: ({passengerId: string, slot: number} | null)[],
-   *   goingUpIndicator: boolean,
-   *   goingDownIndicator: boolean,
-   *   capacity: number,
-   *   percentFull: number,
-   *   moves: number
-   * }}
+   * @returns {ElevatorState}
    */
   toJSON() {
     return {

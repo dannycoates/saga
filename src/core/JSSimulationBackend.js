@@ -346,7 +346,8 @@ export class JSSimulationBackend extends SimulationBackend {
    * @returns {void}
    */
   recalculateStats() {
-    this.transportedPerSec = this.transportedCount / this.elapsedTime;
+    this.transportedPerSec =
+      this.elapsedTime > 0 ? this.transportedCount / this.elapsedTime : 0;
     this.moveCount = this.elevators.reduce(
       (sum, elevator) => sum + elevator.moves,
       0,

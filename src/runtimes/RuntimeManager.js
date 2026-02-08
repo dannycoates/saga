@@ -46,12 +46,14 @@ export class RuntimeManager {
   async loadRuntimeModule(language) {
     // Return cached module if already loaded
     if (this.loadedModules.has(language)) {
-      return this.loadedModules.get(language);
+      return /** @type {object} */ (this.loadedModules.get(language));
     }
 
     // Return existing loading promise if in progress
     if (this.moduleLoadingPromises.has(language)) {
-      return this.moduleLoadingPromises.get(language);
+      return /** @type {Promise<object>} */ (
+        this.moduleLoadingPromises.get(language)
+      );
     }
 
     if (!isLanguageSupported(language)) {
@@ -76,13 +78,13 @@ export class RuntimeManager {
    */
   async getOrCreateRuntime(language) {
     if (this.runtimes.has(language)) {
-      return this.runtimes.get(language);
+      return /** @type {BaseRuntime} */ (this.runtimes.get(language));
     }
 
     const module = await this.loadRuntimeModule(language);
 
     // Get the runtime class (default export)
-    const RuntimeClass = module.default;
+    const RuntimeClass = /** @type {any} */ (module).default;
     const instance = new RuntimeClass();
 
     this.runtimes.set(language, instance);

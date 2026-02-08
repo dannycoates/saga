@@ -106,9 +106,9 @@ export class ZigRuntime extends BaseRuntime {
       const magicNumber = new Uint8Array(arrayBuffer).slice(0, 2);
       if (magicNumber[0] === 0x1f && magicNumber[1] === 0x8b) {
         const ds = new DecompressionStream("gzip");
-        const response = new Response(
-          new Response(arrayBuffer).body.pipeThrough(ds),
-        );
+        const body = new Response(arrayBuffer).body;
+        if (!body) throw new Error("Failed to create response body");
+        const response = new Response(body.pipeThrough(ds));
         arrayBuffer = await response.arrayBuffer();
       }
 
@@ -126,7 +126,7 @@ export class ZigRuntime extends BaseRuntime {
 
   /**
    * Builds a Directory tree from tarball entries.
-   * @param {Array} entries - Tarball entries
+   * @param {Array<{filename: string, fileData: Uint8Array}>} entries - Tarball entries
    * @returns {Directory}
    */
   #buildDirectoryTree(entries) {
@@ -158,7 +158,7 @@ export class ZigRuntime extends BaseRuntime {
 
   /**
    * Converts a nested Map structure to WASI Directory.
-   * @param {Map} node
+   * @param {Map<string, any>} node
    * @returns {Directory}
    */
   #convertToDirectory(node) {
@@ -185,6 +185,7 @@ export class ZigRuntime extends BaseRuntime {
     }
 
     // Collect stderr output for error messages
+    /** @type {string[]} */
     const stderrChunks = [];
     const decoder = new TextDecoder("utf-8", { fatal: false });
 
@@ -200,7 +201,10 @@ export class ZigRuntime extends BaseRuntime {
     // Set up virtual filesystem with user code and elevator API library
     const sourceDir = new Map([
       ["main.zig", new File(new TextEncoder().encode(code))],
-      ["game.zig", new File(new TextEncoder().encode(this.elevatorLibSource))],
+      [
+        "game.zig",
+        new File(new TextEncoder().encode(this.elevatorLibSource ?? undefined)),
+      ],
     ]);
 
     const fds = [
@@ -208,7 +212,10 @@ export class ZigRuntime extends BaseRuntime {
       stderrOutput, // stdout
       stderrOutput, // stderr
       new PreopenDirectory(".", sourceDir),
-      new PreopenDirectory("/lib", this.zigStdlib.contents),
+      new PreopenDirectory(
+        "/lib",
+        /** @type {Directory} */ (this.zigStdlib).contents,
+      ),
       new PreopenDirectory("/cache", new Map()),
     ];
 
@@ -225,9 +232,12 @@ export class ZigRuntime extends BaseRuntime {
     const wasi = new WASI(args, [], fds, { debug: false });
 
     // Instantiate compiler from cached module
-    const zigInstance = await WebAssembly.instantiate(this.zigModule, {
-      wasi_snapshot_preview1: wasi.wasiImport,
-    });
+    const zigInstance = await WebAssembly.instantiate(
+      /** @type {WebAssembly.Module} */ (this.zigModule),
+      {
+        wasi_snapshot_preview1: wasi.wasiImport,
+      },
+    );
 
     const exitCode = wasi.start(/** @type {any} */ (zigInstance));
 
@@ -253,7 +263,10 @@ export class ZigRuntime extends BaseRuntime {
     const wasmImports = this.#createImports({
       wasi_snapshot_preview1: wasi.wasiImport,
     });
-    const result = await WebAssembly.instantiate(mainWasm.data, wasmImports);
+    const result = await WebAssembly.instantiate(
+      /** @type {BufferSource} */ (mainWasm.data),
+      wasmImports,
+    );
     const instance = /** @type {WebAssembly.Instance} */ (
       "instance" in result ? result.instance : result
     );
@@ -271,8 +284,8 @@ export class ZigRuntime extends BaseRuntime {
 
   /**
    * Creates the WASM imports object for the game API.
-   * @param {object} other - Other globals to inject, like wasi
-   * @returns {object}
+   * @param {WebAssembly.Imports} other - Other globals to inject, like wasi
+   * @returns {WebAssembly.Imports}
    */
   #createImports(other = {}) {
     return {

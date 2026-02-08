@@ -82,7 +82,9 @@ export class GameController {
         // This await is a little bit perilous since runFrame can't be awaited.
         // `this.anything` after the await MAY HAVE CHANGED in the meantime,
         // which is why we capture backend.
-        await backend?.callUserCode(this.codeObj, dt);
+        if (this.codeObj) {
+          await backend?.callUserCode(this.codeObj, dt);
+        }
         while (scaledDt > 0.0) {
           const thisDt = Math.min(this.dtMax, scaledDt);
           backend?.tick(thisDt);

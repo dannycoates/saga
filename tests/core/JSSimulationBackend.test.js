@@ -508,6 +508,13 @@ describe("JSSimulationBackend", () => {
       expect(backend.transportedPerSec).toBe(2);
     });
 
+    it("should return transportedPerSec as 0 when elapsedTime is 0", () => {
+      backend.recalculateStats();
+
+      expect(backend.transportedPerSec).toBe(0);
+      expect(Number.isNaN(backend.transportedPerSec)).toBe(false);
+    });
+
     it("should sum elevator moves", () => {
       backend.elevators[0].goToFloor(2);
       backend.elevators[1].goToFloor(1);

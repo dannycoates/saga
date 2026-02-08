@@ -131,7 +131,9 @@ export class JavaRuntime extends BaseRuntime {
       }
 
       // Call the original console.log
-      self.originalConsoleLog.apply(console, args);
+      if (self.originalConsoleLog) {
+        self.originalConsoleLog.apply(console, args);
+      }
     };
   }
 
@@ -285,6 +287,7 @@ export class JavaRuntime extends BaseRuntime {
 
       // Find all class definitions in the code
       const classRegex = /class\s+(\w+)/g;
+      /** @type {string[]} */
       const classNames = [];
       let match;
 

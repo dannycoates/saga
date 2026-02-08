@@ -66,7 +66,7 @@ export class ThemeSwitcher {
    */
   bindEvents() {
     const button = this.element.querySelector(".theme-toggle-btn");
-    button.addEventListener("click", () => {
+    button?.addEventListener("click", () => {
       this.themeManager.toggleTheme();
     });
 

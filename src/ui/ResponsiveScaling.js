@@ -99,7 +99,9 @@ export class ResponsiveScaling {
       }
     });
 
-    this.resizeObserver.observe(this.worldContainer);
+    if (this.worldContainer) {
+      this.resizeObserver.observe(this.worldContainer);
+    }
   }
 
   /**

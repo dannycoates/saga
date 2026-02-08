@@ -21,15 +21,15 @@
 /**
  * @typedef {Object} SimulationState
  * @property {Array<{level: number, buttons: {up: boolean, down: boolean}}>} floors - Floor states
- * @property {Array<Object>} elevators - Elevator states
- * @property {Array<Object>} passengers - Passenger states
+ * @property {Array<import('./Elevator.js').ElevatorState>} elevators - Elevator states
+ * @property {Array<import('./Passenger.js').PassengerStateData>} passengers - Passenger states
  * @property {SimulationStats} stats - Current statistics
  * @property {boolean} isChallengeEnded - Whether challenge has ended
  */
 
 /**
  * @typedef {Object} UserCodeObject
- * @property {(elevators: Array<Object>, floors: Array<Object>, dt: number) => Promise<void>} safeTick - User tick function with error handling
+ * @property {(elevators: Array<import('../runtimes/BaseRuntime.js').ElevatorAPI>, floors: Array<import('../runtimes/BaseRuntime.js').FloorAPI>, dt: number) => Promise<void>} safeTick - User tick function with error handling
  * @property {() => Promise<void>} [start] - Optional start function
  */
 
