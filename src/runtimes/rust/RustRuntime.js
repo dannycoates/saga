@@ -19,9 +19,22 @@ import {
 
 const DEFAULT_TEMPLATE = `use game::*;
 
+/// Floor API:
+///   level() -> i32              - floor number
+///   button_up() -> bool         - true if up button is pressed
+///   button_down() -> bool       - true if down button is pressed
+///
+/// Elevator API:
+///   current_floor() -> i32              - current floor number
+///   destination_floor() -> Option<i32>  - destination or None if idle
+///   pressed_floor_buttons() -> &[i32]   - floors requested by passengers
+///   percent_full() -> f32               - load percentage (0.0 to 1.0)
+///   go_to_floor(floor: i32)             - command elevator to a floor
+
 fn main() {
     let mut next_floor: i32 = 1;
 
+    /// The closure passed to game::run is called on every game loop iteration.
     game::run(|elevators: &mut [Elevator], floors: &[Floor]| {
         let floor_count = floors.len() as i32;
         if let Some(elevator) = elevators.first_mut() {
