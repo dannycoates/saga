@@ -37,7 +37,18 @@ let stateData = null;
  * Uses Atomics.wait() to block until the main thread signals data is ready.
  */
 class BlockingStdin extends Fd {
+  constructor() {
+    super();
+    /** @type {boolean} */
+    this.firstRead = true;
+  }
+
   fd_read(/** @type {number} */ size) {
+    if (this.firstRead) {
+      this.firstRead = false;
+      postMessage({ type: "code_loaded" });
+    }
+
     const sv = /** @type {Int32Array} */ (syncView);
 
     // Loop until we see TICK_READY or SHUTDOWN.
@@ -201,8 +212,10 @@ function handleLoadCode(e) {
   const stderrChunks = [];
   const decoder = new TextDecoder("utf-8", { fatal: false });
 
+  const stdin = new BlockingStdin();
+
   const fds = [
-    new BlockingStdin(), // fd 0: stdin
+    stdin, // fd 0: stdin
     new BufferedStdout(), // fd 1: stdout
     new ConsoleStdout((buffer) => {
       // fd 2: stderr
@@ -235,9 +248,6 @@ function handleLoadCode(e) {
 
   const wasiInstance = new WASI(args, [], fds, { debug: false });
 
-  // Post code_loaded BEFORE calling wasi.start() since Miri blocks the event loop
-  postMessage({ type: "code_loaded" });
-
   let threadCount = 1;
 
   try {
@@ -268,6 +278,13 @@ function handleLoadCode(e) {
       postMessage({
         type: "error",
         message: `Miri exited with code ${exitCode}\n${errorMsg}`,
+      });
+    } else if (stdin.firstRead) {
+      postMessage({
+        type: "error",
+        message:
+          "Code compiled but never called game::run(). " +
+          "Your main() function must call game::run() with a tick closure.",
       });
     }
   } catch (err) {

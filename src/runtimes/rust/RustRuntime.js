@@ -189,6 +189,10 @@ export class RustRuntime extends BaseRuntime {
     // Wrap game.rs as a module and prepend to user code
     const mainRsSource = `mod game {\n${this.gameRsSource}\n}\n\n${code}`;
 
+    // Calculate line offset for error message adjustment
+    const prefix = `mod game {\n${this.gameRsSource}\n}\n\n`;
+    const lineOffset = prefix.split("\n").length - 1;
+
     const { promise, resolve, reject } =
       /** @type {PromiseWithResolvers<void>} */ (Promise.withResolvers());
 
@@ -198,7 +202,15 @@ export class RustRuntime extends BaseRuntime {
         resolve();
       } else if (e.data.type === "error") {
         this.worker?.removeEventListener("message", onMessage);
-        reject(new Error(e.data.message));
+        // Adjust main.rs line numbers to match user's editor lines
+        const adjustedMessage = e.data.message.replace(
+          /main\.rs:(\d+)/g,
+          (/** @type {string} */ _, /** @type {string} */ lineStr) => {
+            const adjusted = parseInt(lineStr, 10) - lineOffset;
+            return `main.rs:${Math.max(1, adjusted)}`;
+          },
+        );
+        reject(new Error(adjustedMessage));
       }
     };
     /** @type {Worker} */ (this.worker).addEventListener("message", onMessage);
