@@ -175,7 +175,13 @@ async function handleInit(e) {
  * @param {MessageEvent} e
  */
 function handleLoadCode(e) {
-  const { mainRsSource } = e.data;
+  const { mainRsSource, sab } = e.data;
+
+  // Update SAB references (new buffer for each run after the first)
+  if (sab) {
+    syncView = new Int32Array(sab);
+    stateData = new Uint8Array(sab);
+  }
 
   // Build rlib directory
   const libDir = new Directory(
@@ -294,6 +300,9 @@ function handleLoadCode(e) {
       message: `Miri error: ${err.message}\n${errorMsg}`,
     });
   }
+
+  // Signal that the worker is ready for new code
+  postMessage({ type: "ready" });
 }
 
 self.onmessage = (e) => {
@@ -303,6 +312,10 @@ self.onmessage = (e) => {
       break;
     case "loadCode":
       handleLoadCode(e);
+      break;
+    case "reset":
+      // Fallback: if Miri already exited, handleLoadCode's "ready" was missed
+      postMessage({ type: "ready" });
       break;
   }
 };

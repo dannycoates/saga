@@ -166,6 +166,29 @@ export class RustRuntime extends BaseRuntime {
   }
 
   /**
+   * Waits for the worker to signal readiness after Miri exits.
+   * Sends a "reset" message as a fallback in case Miri already exited
+   * (and its "ready" message was already dispatched with no listener).
+   * @returns {Promise<void>}
+   */
+  async #waitForReady() {
+    const { promise, resolve } = /** @type {PromiseWithResolvers<void>} */ (
+      Promise.withResolvers()
+    );
+
+    const onMessage = (/** @type {MessageEvent} */ e) => {
+      if (e.data.type === "ready") {
+        this.worker?.removeEventListener("message", onMessage);
+        resolve();
+      }
+    };
+    /** @type {Worker} */ (this.worker).addEventListener("message", onMessage);
+    /** @type {Worker} */ (this.worker).postMessage({ type: "reset" });
+
+    await promise;
+  }
+
+  /**
    * Loads user Rust code by wrapping it with game.rs as a module
    * and sending it to the Miri worker.
    * @override
@@ -177,13 +200,15 @@ export class RustRuntime extends BaseRuntime {
       throw new Error("Rust runtime not loaded");
     }
 
-    // If we have an existing worker from a previous run, clean up and re-init
+    // If we have an existing worker from a previous run, reset it (reuse worker
+    // to avoid re-fetching/recompiling miri.wasm and rlib files)
     if (this.loadedCode !== null) {
-      this.cleanup();
+      Atomics.store(this.syncView, 0, SIGNAL_SHUTDOWN);
+      Atomics.notify(this.syncView, 0);
+      await this.#waitForReady();
       this.sab = new SharedArrayBuffer(65536);
       this.syncView = new Int32Array(this.sab, SYNC_OFFSET, 1);
       this.stateData = new Uint8Array(this.sab);
-      await this.#initWorker();
     }
 
     // Wrap game.rs as a module and prepend to user code
@@ -218,6 +243,7 @@ export class RustRuntime extends BaseRuntime {
     /** @type {Worker} */ (this.worker).postMessage({
       type: "loadCode",
       mainRsSource,
+      sab: this.sab,
     });
 
     await promise;
