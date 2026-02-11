@@ -45,7 +45,6 @@ const RLIB_FILES = [
   "libcfg_if-c7fd2cef50341546.rlib",
   "libcompiler_builtins-a99947d020d809d6.rlib",
   "libcore-4b8e8a815d049db3.rlib",
-  "libgetopts-bbb75529e85d129d.rlib",
   "libgimli-598847d27d7a3cbf.rlib",
   "libhashbrown-d2ff91fdf93cacb2.rlib",
   "liblibc-dc63949c664c3fce.rlib",
@@ -54,7 +53,6 @@ const RLIB_FILES = [
   "libobject-7b48def7544c748b.rlib",
   "libpanic_abort-c93441899b93b849.rlib",
   "libpanic_unwind-11d9ba05b60bf694.rlib",
-  "libproc_macro-1a7f7840bb9983dc.rlib",
   "librustc_demangle-59342a335246393d.rlib",
   "librustc_std_workspace_alloc-552b185085090ff6.rlib",
   "librustc_std_workspace_core-5d8a121daa7eeaa9.rlib",
@@ -62,8 +60,6 @@ const RLIB_FILES = [
   "libstd_detect-cca21eebc4281add.rlib",
   "libstd-bdedb7706a556da2.rlib",
   "libsysroot-f654e185be3ffebd.rlib",
-  "libtest-f06fa3fbc201c558.rlib",
-  "libunicode_width-19a0dcd589fa0877.rlib",
   "libunwind-747b693f90af9445.rlib",
 ];
 
