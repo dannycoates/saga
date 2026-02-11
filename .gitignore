@@ -6,3 +6,5 @@ test-results
 .zig-cache
 zig-source
 .playwright-mcp
+.playwright-cli/
+.claude/

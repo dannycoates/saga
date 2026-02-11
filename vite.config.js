@@ -137,6 +137,10 @@ export default defineConfig(({ mode }) => ({
   server: {
     open: true,
     port: 3000,
+    headers: {
+      "Cross-Origin-Opener-Policy": "same-origin",
+      "Cross-Origin-Embedder-Policy": "credentialless",
+    },
   },
   test: {
     globals: true,
