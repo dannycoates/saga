@@ -29,12 +29,13 @@ commands = [
 #
 #   ## Rust
 #   # "cargo", "rustc", "rustup", "rustfmt", "clippy-driver",
+"wasm-objdump", "wasm-strip", "wasm-opt",
 #
 #   ## Go
 #   # "go", "gofmt", "gopls",
 #
 #   ## Node.js / JavaScript
- "node", "npm", "npx", "yarn", "pnpm", "bun", "deno", "playwright-cli",
+ "node", "npm", "npx", "yarn", "pnpm", "bun", "deno", "playwright-cli", "docker",
 #
 #   ## Python
 #   # "python", "python3", "pip", "pip3", "uv", "poetry", "pytest", "ruff", "mypy", "black",

@@ -249,7 +249,6 @@ function handleLoadCode(e) {
     "-Zmiri-disable-validation",
     "-Zmir-emit-retag=false",
     "-Zmiri-disable-isolation",
-    "-Zmiri-panic-on-unsupported",
   ];
 
   const wasiInstance = new WASI(args, [], fds, { debug: false });
@@ -263,6 +262,8 @@ function handleLoadCode(e) {
       {
         env: {
           memory: new WebAssembly.Memory({ initial: 256, shared: false }),
+          // Stub for lld linker callback — Miri never invokes the linker
+          RustRunLld: () => 1,
         },
         wasi: {
           "thread-spawn": (/** @type {unknown} */ startArg) => {
