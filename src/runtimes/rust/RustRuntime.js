@@ -241,13 +241,30 @@ export class RustRuntime extends BaseRuntime {
       } else if (e.data.type === "error") {
         this.worker?.removeEventListener("message", onMessage);
         // Adjust main.rs line numbers to match user's editor lines
-        const adjustedMessage = e.data.message.replace(
-          /main\.rs:(\d+)/g,
-          (/** @type {string} */ _, /** @type {string} */ lineStr) => {
-            const adjusted = parseInt(lineStr, 10) - lineOffset;
-            return `main.rs:${Math.max(1, adjusted)}`;
-          },
-        );
+        const adjustedMessage = e.data.message
+          .replace(
+            /main\.rs:(\d+)/g,
+            (/** @type {string} */ _, /** @type {string} */ lineStr) => {
+              const adjusted = parseInt(lineStr, 10) - lineOffset;
+              return `main.rs:${Math.max(1, adjusted)}`;
+            },
+          )
+          .replace(
+            /^(\s*)(\d+)(\s*\|)/gm,
+            (
+              /** @type {string} */ _,
+              /** @type {string} */ leading,
+              /** @type {string} */ lineStr,
+              /** @type {string} */ rest,
+            ) => {
+              const adjusted = parseInt(lineStr, 10) - lineOffset;
+              const numStr = String(Math.max(1, adjusted));
+              // Preserve alignment: pad to same total width as original
+              const totalWidth = leading.length + lineStr.length;
+              const padded = numStr.padStart(totalWidth);
+              return `${padded}${rest}`;
+            },
+          );
         reject(new Error(adjustedMessage));
       }
     };
