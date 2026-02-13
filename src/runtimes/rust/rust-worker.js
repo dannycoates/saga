@@ -203,7 +203,11 @@ function handleLoadCode(e) {
           [
             "rustlib",
             new Directory([
-              ["x86_64-unknown-linux-gnu", new Directory([["lib", libDir]])],
+              ["aarch64-unknown-linux-gnu", new Directory([["lib", libDir]])],
+              [
+                "wasm32-wasip1",
+                new Directory([["codegen-backends", new Directory([])]]),
+              ],
             ]),
           ],
         ]),
@@ -238,8 +242,10 @@ function handleLoadCode(e) {
     "--sysroot",
     "/sysroot",
     "main.rs",
+    "--edition",
+    "2024",
     "--target",
-    "x86_64-unknown-linux-gnu",
+    "aarch64-unknown-linux-gnu",
     "-Zmiri-ignore-leaks",
     "-Zmiri-permissive-provenance",
     "-Zmiri-preemption-rate=0",
