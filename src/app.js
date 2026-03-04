@@ -9,6 +9,7 @@ import { APP_CONSTANTS } from "./config/constants.js";
 import { performanceMonitor } from "./ui/PerformanceMonitor.js";
 import { presentChallenge } from "./ui/presenters.js";
 import { EventBus } from "./utils/EventBus.js";
+import { getRuntimeInfo } from "virtual:runtime-registry";
 
 /**
  * @typedef {import('./game/GameController.js').Challenge} Challenge
@@ -148,12 +149,46 @@ export class ElevatorApp {
   }
 
   /**
+   * Sends coepEnabled state to the service worker, waits for acknowledgement,
+   * then reloads the page.
+   * @param {boolean} value
+   */
+  setCoepAndReload(value) {
+    const sw = navigator.serviceWorker?.controller;
+    if (sw) {
+      const mc = new MessageChannel();
+      mc.port1.onmessage = () => window.location.reload();
+      sw.postMessage({ type: "coepEnabled", value }, [mc.port2]);
+      setTimeout(() => window.location.reload(), 200);
+    } else {
+      window.location.reload();
+    }
+  }
+
+  /**
    * Initializes app by loading challenge and runtime.
    * @returns {Promise<void>}
    */
   async initializeWithRuntime() {
     // Load challenge and render world area immediately, before waiting for runtime
     this.urlManager.loadFromUrl();
+
+    // Ensure cross-origin isolation matches the selected language's requirements.
+    // This may trigger a page reload (e.g., switching to Rust needs COEP for
+    // SharedArrayBuffer, but Java/CheerpJ breaks under COEP).
+    const info = getRuntimeInfo(this.runtimeManager.currentLanguage);
+    const needsCOI = info?.crossOriginIsolated === "required";
+    const hasCOI = !!window.crossOriginIsolated;
+    if (needsCOI && !hasCOI) {
+      document.cookie = "coepEnabled=1; path=/; SameSite=Strict";
+      this.setCoepAndReload(true);
+      return;
+    }
+    if (!needsCOI && hasCOI) {
+      document.cookie = "coepEnabled=; path=/; max-age=0";
+      this.setCoepAndReload(false);
+      return;
+    }
 
     try {
       await this.withStatusIfSlow(

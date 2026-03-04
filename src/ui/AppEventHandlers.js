@@ -9,7 +9,7 @@ import {
 import { ResponsiveScaling } from "./ResponsiveScaling.js";
 import { ViewModelManager } from "./ViewModelManager.js";
 import { EventBus } from "../utils/EventBus.js";
-import { runtimeRegistry } from "virtual:runtime-registry";
+import { runtimeRegistry, getRuntimeInfo } from "virtual:runtime-registry";
 
 /**
  * @typedef {import('../app.js').ElevatorApp} ElevatorApp
@@ -19,6 +19,56 @@ import { runtimeRegistry } from "virtual:runtime-registry";
  * @typedef {import('../game/GameController.js').GameController} GameController
  * @typedef {import('../utils/URLManager.js').URLManager} URLManager
  */
+
+/**
+ * Checks if a language requires cross-origin isolation and ensures the
+ * page is in the correct state. Returns true if a reload was triggered
+ * (caller should abort the current operation).
+ * @param {string} language - Language identifier
+ * @returns {boolean} Whether a page reload was triggered
+ */
+/**
+ * Sends a coepEnabled message to the service worker and waits for acknowledgement
+ * before reloading. Falls back to immediate reload if SW is unavailable.
+ * @param {boolean} value
+ */
+function setCoepAndReload(value) {
+  const sw = navigator.serviceWorker?.controller;
+  if (sw) {
+    const mc = new MessageChannel();
+    mc.port1.onmessage = () => window.location.reload();
+    sw.postMessage({ type: "coepEnabled", value }, [mc.port2]);
+    // Fallback in case the SW doesn't respond
+    setTimeout(() => window.location.reload(), 200);
+  } else {
+    window.location.reload();
+  }
+}
+
+/**
+ * Checks if a language requires cross-origin isolation and ensures the
+ * page is in the correct state. Returns true if a reload was triggered
+ * (caller should abort the current operation).
+ * @param {string} language - Language identifier
+ * @returns {boolean} Whether a page reload was triggered
+ */
+function ensureCrossOriginIsolation(language) {
+  const info = getRuntimeInfo(language);
+  const needsCOI = info?.crossOriginIsolated === "required";
+  const hasCOI = !!window.crossOriginIsolated;
+
+  if (needsCOI && !hasCOI) {
+    document.cookie = "coepEnabled=1; path=/; SameSite=Strict";
+    setCoepAndReload(true);
+    return true;
+  }
+  if (!needsCOI && hasCOI) {
+    document.cookie = "coepEnabled=; path=/; max-age=0";
+    setCoepAndReload(false);
+    return true;
+  }
+  return false;
+}
 
 /**
  * Coordinates event handling for the application.
@@ -210,6 +260,14 @@ export class AppEventHandlers {
       this.boundHandlers.languageChange = /** @type {EventListener} */ (
         async (e) => {
           const newLanguage = /** @type {HTMLSelectElement} */ (e.target).value;
+
+          // Persist language in URL hash
+          window.location.hash = this.urlManager.createParamsUrl({
+            lang: newLanguage,
+          });
+
+          // Check if cross-origin isolation state needs to change
+          if (ensureCrossOriginIsolation(newLanguage)) return;
 
           try {
             // Show loading state

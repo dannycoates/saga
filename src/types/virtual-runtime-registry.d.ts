@@ -3,6 +3,7 @@ declare module "virtual:runtime-registry" {
     id: string;
     displayName: string;
     fileExtension: string;
+    crossOriginIsolated?: "required";
   }
 
   export interface RuntimeModule {

@@ -110,44 +110,6 @@ export class JavaRuntime extends BaseRuntime {
     this.logBuffer = [];
     /** @type {((...args: any[]) => void) | null} Original console.log for restoration */
     this.originalConsoleLog = null;
-    /** @type {((tagName: string, options?: any) => HTMLElement) | null} Original createElement for restoration */
-    this.originalCreateElement = null;
-  }
-
-  /**
-   * Patches document.createElement so CheerpJ's hidden iframes get the
-   * `credentialless` attribute. This is needed because the page uses
-   * Cross-Origin-Embedder-Policy (for SharedArrayBuffer), but CheerpJ's
-   * CDN doesn't return a COEP header on its c.html iframe helper.
-   * @private
-   */
-  patchIframeCreation() {
-    if (this.originalCreateElement) return;
-    this.originalCreateElement = document.createElement.bind(document);
-    const origCreate = /** @type {typeof document.createElement} */ (
-      this.originalCreateElement
-    );
-    document.createElement = function (
-      /** @type {string} */ tagName,
-      /** @type {ElementCreationOptions} */ options,
-    ) {
-      const el = origCreate(/** @type {any} */ (tagName), options);
-      if (tagName.toLowerCase() === "iframe") {
-        /** @type {any} */ (el).credentialless = true;
-      }
-      return el;
-    };
-  }
-
-  /**
-   * Restores the original document.createElement.
-   * @private
-   */
-  unpatchIframeCreation() {
-    if (this.originalCreateElement) {
-      document.createElement = this.originalCreateElement;
-      this.originalCreateElement = null;
-    }
   }
 
   /**
@@ -218,7 +180,6 @@ export class JavaRuntime extends BaseRuntime {
     this.isLoading = true;
     this.resetLogBuffer();
     this.captureConsoleLog();
-    this.patchIframeCreation();
 
     try {
       // Load CheerpJ script with enhanced timeout handling
@@ -495,6 +456,5 @@ class ElevatorController {
     this.controller = null;
     this.restoreConsoleLog();
     this.resetLogBuffer();
-    this.unpatchIframeCreation();
   }
 }

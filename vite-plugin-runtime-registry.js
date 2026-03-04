@@ -50,12 +50,16 @@ function discoverRuntimes(runtimesDir) {
       metadata.displayName &&
       metadata.fileExtension
     ) {
-      runtimes.push({
+      const info = {
         dir: entry.name,
         id: metadata.id,
         displayName: metadata.displayName,
         fileExtension: metadata.fileExtension,
-      });
+      };
+      if (metadata.crossOriginIsolated) {
+        info.crossOriginIsolated = metadata.crossOriginIsolated;
+      }
+      runtimes.push(info);
     }
   }
 
@@ -72,11 +76,17 @@ function discoverRuntimes(runtimesDir) {
 // Generates the virtual module code for the runtime registry.
 function generateRegistryCode(runtimes) {
   const registryArray = JSON.stringify(
-    runtimes.map((r) => ({
-      id: r.id,
-      displayName: r.displayName,
-      fileExtension: r.fileExtension,
-    })),
+    runtimes.map((r) => {
+      const entry = {
+        id: r.id,
+        displayName: r.displayName,
+        fileExtension: r.fileExtension,
+      };
+      if (r.crossOriginIsolated) {
+        entry.crossOriginIsolated = r.crossOriginIsolated;
+      }
+      return entry;
+    }),
     null,
     2,
   );

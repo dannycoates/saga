@@ -65,8 +65,25 @@ const selectiveSourcemapPlugin = () => {
   };
 };
 
+// Conditionally sets Cross-Origin-Embedder-Policy based on a cookie.
+// COEP is only needed for runtimes that require cross-origin isolation
+// (e.g., Rust/SharedArrayBuffer). Other runtimes (e.g., Java/CheerpJ)
+// break under COEP because their CDN resources lack COEP headers.
+const conditionalCOEP = () => ({
+  name: "conditional-coep",
+  configureServer(server) {
+    server.middlewares.use((req, res, next) => {
+      const cookies = req.headers.cookie || "";
+      if (cookies.includes("coepEnabled=1")) {
+        res.setHeader("Cross-Origin-Embedder-Policy", "credentialless");
+      }
+      next();
+    });
+  },
+});
+
 export default defineConfig(({ mode }) => ({
-  plugins: [runtimeRegistryPlugin()],
+  plugins: [runtimeRegistryPlugin(), conditionalCOEP()],
   base: mode === "production" ? "/saga/" : "/",
   root: ".",
   define: {
@@ -139,7 +156,6 @@ export default defineConfig(({ mode }) => ({
     port: 3000,
     headers: {
       "Cross-Origin-Opener-Policy": "same-origin",
-      "Cross-Origin-Embedder-Policy": "credentialless",
     },
   },
   test: {

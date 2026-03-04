@@ -38,4 +38,5 @@ export const metadata = {
   id: "rust",
   displayName: "Rust",
   fileExtension: ".rs",
+  crossOriginIsolated: "required",
 };
