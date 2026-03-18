@@ -10,6 +10,8 @@ import { performanceMonitor } from "./ui/PerformanceMonitor.js";
 import { presentChallenge } from "./ui/presenters.js";
 import { EventBus } from "./utils/EventBus.js";
 import { getRuntimeInfo } from "virtual:runtime-registry";
+import { CollabManager } from "./collab/CollabManager.js";
+import "./collab/CollabUI.js";
 
 /**
  * @typedef {import('./game/GameController.js').Challenge} Challenge
@@ -45,6 +47,8 @@ export class ElevatorApp {
     this.gameController = new GameController(this.eventBus);
     /** @type {URLManager} URL state manager */
     this.urlManager = new URLManager(this);
+    /** @type {CollabManager} Collaborative editing manager */
+    this.collabManager = new CollabManager(this.eventBus, this.editor);
     /** @type {AppEventHandlers} Event handler coordinator */
     this.eventHandlers = new AppEventHandlers(
       this.eventBus,
@@ -68,6 +72,15 @@ export class ElevatorApp {
 
     // Setup all event handlers (must happen after editor.initialize so setLayoutMode works)
     this.eventHandlers.setupAllHandlers();
+
+    // Mount collab panel and wire it up
+    const collabPanel =
+      /** @type {import('./collab/CollabUI.js').CollabPanel} */ (
+        document.createElement("collab-panel")
+      );
+    collabPanel.setCollabManager(this.collabManager);
+    document.body.appendChild(collabPanel);
+    this.collabPanel = collabPanel;
 
     // Set the runtime manager to the editor's current language
     this.runtimeManager.currentLanguage =

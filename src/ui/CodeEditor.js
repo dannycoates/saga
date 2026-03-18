@@ -50,6 +50,7 @@ export class CodeEditor extends EventTarget {
     this.linterCompartment = new Compartment();
     this.themeCompartment = new Compartment();
     this.layoutCompartment = new Compartment();
+    this.collabCompartment = new Compartment();
 
     // Store element for deferred view creation
     this.element = element;
@@ -167,6 +168,7 @@ export class CodeEditor extends EventTarget {
           this.autoSave();
         }
       }),
+      this.collabCompartment.of([]),
     ];
 
     return extensions;
@@ -279,6 +281,30 @@ export class CodeEditor extends EventTarget {
    * Adjusts editor height constraints based on layout.
    * @param {boolean} isSideBySide - Whether to use side-by-side layout
    * @returns {void}
+   */
+  /**
+   * Injects collaborative editing extensions into the editor.
+   * @param {import('@codemirror/state').Extension} extensions
+   */
+  setCollabExtensions(extensions) {
+    if (!this.view) return;
+    this.view.dispatch({
+      effects: this.collabCompartment.reconfigure(extensions),
+    });
+  }
+
+  /**
+   * Removes collaborative editing extensions from the editor.
+   */
+  clearCollabExtensions() {
+    if (!this.view) return;
+    this.view.dispatch({
+      effects: this.collabCompartment.reconfigure([]),
+    });
+  }
+
+  /**
+   * @param {boolean} isSideBySide
    */
   setLayoutMode(isSideBySide) {
     if (!this.view) return;
