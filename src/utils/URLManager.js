@@ -43,7 +43,12 @@ export class URLManager {
   parseParams() {
     const hashParams = window.location.hash.replace(/^#/, "").split(",");
     return Object.fromEntries(
-      hashParams.filter((p) => p.includes("=")).map((p) => p.split("=")),
+      hashParams
+        .filter((p) => p.includes("="))
+        .map((p) => {
+          const i = p.indexOf("=");
+          return [p.slice(0, i), p.slice(i + 1)];
+        }),
     );
   }
 
@@ -99,6 +104,21 @@ export class URLManager {
       if (languageSelect) {
         languageSelect.value = lang;
       }
+    }
+
+    // Check for collab param
+    if (params.collab && this.app.collabPanel) {
+      const collabValue = params.collab;
+      // Defer to allow the panel to be fully mounted
+      setTimeout(() => {
+        if (collabValue === "join") {
+          // Manual join: open modal with paste-offer UI
+          this.app.collabPanel?.open();
+        } else {
+          // Offer embedded in URL: auto-start join flow
+          this.app.collabPanel?.openWithOffer(collabValue);
+        }
+      }, 100);
     }
 
     // Apply settings and start challenge
