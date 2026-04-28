@@ -79,7 +79,7 @@ All components communicate through a shared `EventBus` instance injected via dep
 - Each runtime (`JavaScriptRuntime.js`, `PythonRuntime.js`, `JavaRuntime.js`) implements: `loadRuntime()`, `loadCode()`, `execute()`, `getDefaultTemplate()`
 - JavaScript uses ES modules with `data:text/javascript` imports
 - Python uses Pyodide with wrapper classes that bridge JS objects
-- Java uses CheerpJ with JNI callbacks (`Java_Elevator_jsGoToFloor`)
+- Java uses CheerpJ with JNI callbacks (`Java_Elevator_jsSetDestinationFloor`)
 
 ### Player Code Interface
 
@@ -91,7 +91,7 @@ elevator.currentFloor; // Current floor number
 elevator.destinationFloor; // Destination or null
 elevator.pressedFloorButtons; // Array of pressed floor numbers
 elevator.percentFull; // Load percentage (0-1)
-elevator.goToFloor(floorNum); // Command to move
+elevator.setDestinationFloor(floorNum); // Command to move
 
 // Floor API
 floor.buttons.up; // Boolean - up button pressed

@@ -36,11 +36,13 @@ test.describe("Simulation", () => {
     await expect(elevator).toHaveAttribute("y-position");
   });
 
-  test("elevators move when goToFloor called", async ({ appPage: page }) => {
+  test("elevators move when setDestinationFloor called", async ({
+    appPage: page,
+  }) => {
     // Code that moves elevator to floor 2
     const moveCode = `
 export function tick(elevators, floors) {
-  elevators[0].goToFloor(2);
+  elevators[0].setDestinationFloor(2);
 }`;
     await setEditorCode(page, moveCode);
 
@@ -64,7 +66,7 @@ export function tick(elevators, floors) {
 export function tick(elevators, floors) {
   const elevator = elevators[0];
   if (elevator.currentFloor === 0) {
-    elevator.goToFloor(2);
+    elevator.setDestinationFloor(2);
   }
 }`;
     await setEditorCode(page, moveCode);
@@ -195,7 +197,7 @@ export function tick(elevators, floors) {
   const elevator = elevators[0];
   for (const floor of floors) {
     if (floor.buttons.up || floor.buttons.down) {
-      elevator.goToFloor(floor.level);
+      elevator.setDestinationFloor(floor.level);
       return;
     }
   }
@@ -247,9 +249,9 @@ export function tick(elevators, floors) {
 export function tick(elevators, floors) {
   const elevator = elevators[0];
   if (elevator.currentFloor === 0) {
-    elevator.goToFloor(2);
+    elevator.setDestinationFloor(2);
   } else if (elevator.currentFloor === 2) {
-    elevator.goToFloor(0);
+    elevator.setDestinationFloor(0);
   }
 }`;
     await setEditorCode(page, moveCode);

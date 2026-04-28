@@ -291,7 +291,7 @@ describe("RuntimeManager", () => {
 
   describe("execute", () => {
     it("should execute with current runtime", async () => {
-      const elevators = [{ currentFloor: 0, goToFloor: vi.fn() }];
+      const elevators = [{ currentFloor: 0, setDestinationFloor: vi.fn() }];
       const floors = [{ level: 0, buttons: { up: false, down: false } }];
 
       await manager.loadCurrentRuntime();

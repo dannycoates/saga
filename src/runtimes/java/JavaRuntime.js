@@ -23,15 +23,15 @@ public class Elevator {
     public double percentFull;
 
     // Native method to call JavaScript
-    public static native void jsGoToFloor(int elevator, int floor);
+    public static native void jsSetDestinationFloor(int elevator, int floor);
 
     /**
      * Command the elevator to go to a specific floor
      * @param floor The target floor number
      */
-    public void goToFloor(int floor) {
+    public void setDestinationFloor(int floor) {
         // This will be handled by JavaScript
-        Elevator.jsGoToFloor(this.id, floor);
+        Elevator.jsSetDestinationFloor(this.id, floor);
     }
 }`;
 
@@ -63,18 +63,18 @@ public class Floor {
 let ELEVATORS = [];
 
 /**
- * JNI callback function for Java's Elevator.goToFloor() method.
- * Called by CheerpJ when Java code invokes goToFloor.
+ * JNI callback function for Java's Elevator.setDestinationFloor() method.
+ * Called by CheerpJ when Java code invokes setDestinationFloor.
  * @param {any} lib - CheerpJ library reference
  * @param {number} elevatorId - Elevator index
  * @param {number} floor - Target floor number
  * @returns {Promise<void>}
  */
-async function Java_Elevator_jsGoToFloor(lib, elevatorId, floor) {
+async function Java_Elevator_jsSetDestinationFloor(lib, elevatorId, floor) {
   // Find the corresponding JavaScript elevator
   const jsElevator = ELEVATORS[elevatorId];
   if (jsElevator) {
-    jsElevator.goToFloor(floor);
+    jsElevator.setDestinationFloor(floor);
   }
 }
 
@@ -196,7 +196,7 @@ export class JavaRuntime extends BaseRuntime {
       await window.cheerpjInit({
         status: "none",
         natives: {
-          Java_Elevator_jsGoToFloor,
+          Java_Elevator_jsSetDestinationFloor,
         },
         overrideDocumentBase: __BASE_URL__ ?? "/",
         preloadResources: {
@@ -416,13 +416,14 @@ export class JavaRuntime extends BaseRuntime {
  *     percentFull - double: load percentage (0.0 to 1.0)
  *
  *   Methods:
- *     goToFloor(int floorNum) - command elevator to go to floor
+ *     setDestinationFloor(int floorNum) - command elevator to go to floor
  */
 class ElevatorController {
     private int nextFloor = 1;
 
     /**
-     * Tick gets called on a regular, fast interval (a game loop)
+     * Tick gets called on a regular, fast interval (a game loop).
+     * At each tick we can choose to set a new destination floor or keep it the same.
      * @param elevators Array of all elevators
      * @param floors Array of all floors
      */
@@ -434,7 +435,7 @@ class ElevatorController {
                 nextFloor = 0;
             }
             nextFloor = nextFloor + 1;
-            elevator.goToFloor(nextFloor);
+            elevator.setDestinationFloor(nextFloor);
         }
     }
 }`;

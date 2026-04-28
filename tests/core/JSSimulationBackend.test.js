@@ -516,8 +516,8 @@ describe("JSSimulationBackend", () => {
     });
 
     it("should sum elevator moves", () => {
-      backend.elevators[0].goToFloor(2);
-      backend.elevators[1].goToFloor(1);
+      backend.elevators[0].setDestinationFloor(2);
+      backend.elevators[1].setDestinationFloor(1);
       backend.recalculateStats();
 
       expect(backend.moveCount).toBe(2);
@@ -554,7 +554,7 @@ describe("JSSimulationBackend", () => {
     });
 
     it("should serialize elevators correctly", () => {
-      backend.elevators[0].goToFloor(2);
+      backend.elevators[0].setDestinationFloor(2);
       const state = backend.getState();
 
       expect(state.elevators[0]).toHaveProperty("index", 0);
@@ -612,7 +612,7 @@ describe("JSSimulationBackend", () => {
       expect(capturedElevators[0]).toHaveProperty("destinationFloor");
       expect(capturedElevators[0]).toHaveProperty("pressedFloorButtons");
       expect(capturedElevators[0]).toHaveProperty("percentFull");
-      expect(capturedElevators[0]).toHaveProperty("goToFloor");
+      expect(capturedElevators[0]).toHaveProperty("setDestinationFloor");
     });
   });
 

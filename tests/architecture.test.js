@@ -243,7 +243,7 @@ describe("Modern Architecture", () => {
       });
 
       const elevator = simulation.elevators[0];
-      elevator.goToFloor(2);
+      elevator.setDestinationFloor(2);
 
       const snapshot = elevator.toJSON();
 

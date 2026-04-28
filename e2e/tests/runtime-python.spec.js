@@ -115,7 +115,7 @@ def tick(elevators, floors):
     elevator = elevators[0]
     current = elevator.current_floor
     if current == 0:
-        elevator.go_to_floor(2)
+        elevator.set_destination_floor(2)
 `;
     await setEditorCode(page, apiTestCode);
     await startSimulation(page);

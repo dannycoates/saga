@@ -45,7 +45,7 @@ describe("Elevator", () => {
     });
 
     it("should return destination when moving", () => {
-      elevator.goToFloor(3);
+      elevator.setDestinationFloor(3);
       expect(elevator.destinationFloor).toBe(3);
     });
   });
@@ -56,13 +56,13 @@ describe("Elevator", () => {
     });
 
     it("should return 1 when going up", () => {
-      elevator.goToFloor(3);
+      elevator.setDestinationFloor(3);
       expect(elevator.direction).toBe(1);
     });
 
     it("should return -1 when going down", () => {
       elevator.position = 4;
-      elevator.goToFloor(1);
+      elevator.setDestinationFloor(1);
       expect(elevator.direction).toBe(-1);
     });
   });
@@ -73,30 +73,30 @@ describe("Elevator", () => {
     });
 
     it("should return true when has different destination", () => {
-      elevator.goToFloor(2);
+      elevator.setDestinationFloor(2);
       expect(elevator.isMoving).toBe(true);
     });
   });
 
-  describe("goToFloor", () => {
+  describe("setDestinationFloor", () => {
     it("should set destination and increment moves", () => {
-      elevator.goToFloor(3);
+      elevator.setDestinationFloor(3);
       expect(elevator.destination).toBe(3);
       expect(elevator.moves).toBe(1);
     });
 
     it("should clamp to valid floor range", () => {
-      elevator.goToFloor(-1);
+      elevator.setDestinationFloor(-1);
       expect(elevator.destination).toBe(0);
 
-      elevator.goToFloor(10);
+      elevator.setDestinationFloor(10);
       expect(elevator.destination).toBe(4); // MAXFLOOR - 1
     });
 
     it("should not increment moves if already at destination", () => {
-      elevator.goToFloor(3);
+      elevator.setDestinationFloor(3);
       expect(elevator.moves).toBe(1);
-      elevator.goToFloor(3);
+      elevator.setDestinationFloor(3);
       expect(elevator.moves).toBe(1);
     });
   });
@@ -108,7 +108,7 @@ describe("Elevator", () => {
 
     it("should update position when moving", () => {
       elevator.pause = 0;
-      elevator.goToFloor(2);
+      elevator.setDestinationFloor(2);
       const initialPos = elevator.position;
       // First tick calculates velocity but position update uses previous velocity (0)
       elevator.tick(0.1);
@@ -118,7 +118,7 @@ describe("Elevator", () => {
     });
 
     it("should return true when arriving at destination", () => {
-      elevator.goToFloor(1);
+      elevator.setDestinationFloor(1);
       // Simulate movement close to destination
       elevator.position = 0.99;
       elevator.velocity = 0.1;
@@ -130,7 +130,7 @@ describe("Elevator", () => {
     });
 
     it("should clear floor button when arriving", () => {
-      elevator.goToFloor(2);
+      elevator.setDestinationFloor(2);
       elevator.buttons[2] = true;
       elevator.position = 1.99;
       elevator.velocity = 0.1;
@@ -140,7 +140,7 @@ describe("Elevator", () => {
     });
 
     it("should handle very small time steps", () => {
-      elevator.goToFloor(1);
+      elevator.setDestinationFloor(1);
       elevator.pause = 0;
       const initialPos = elevator.position;
       // First tick to set velocity
@@ -152,7 +152,7 @@ describe("Elevator", () => {
     });
 
     it("should handle arrival within tolerance", () => {
-      elevator.goToFloor(2);
+      elevator.setDestinationFloor(2);
       elevator.position = 1.995;
       elevator.velocity = 0.1;
       elevator.pause = 0;
@@ -164,13 +164,13 @@ describe("Elevator", () => {
 
   describe("calculateVelocity", () => {
     it("should accelerate from rest", () => {
-      elevator.goToFloor(3);
+      elevator.setDestinationFloor(3);
       const velocity = elevator.calculateVelocity(0.1);
       expect(velocity).toBeGreaterThan(0);
     });
 
     it("should decelerate when approaching destination", () => {
-      elevator.goToFloor(1);
+      elevator.setDestinationFloor(1);
       elevator.position = 0.8; // Closer to destination
       elevator.velocity = 1.0; // Max speed
       const newVelocity = elevator.calculateVelocity(0.1);
@@ -180,13 +180,13 @@ describe("Elevator", () => {
     it("should reverse direction when overshooting", () => {
       elevator.position = 2;
       elevator.velocity = 1.0; // Going up
-      elevator.goToFloor(1); // Need to go down
+      elevator.setDestinationFloor(1); // Need to go down
       const newVelocity = elevator.calculateVelocity(0.1);
       expect(newVelocity).toBeLessThan(elevator.velocity);
     });
 
     it("should respect max speed", () => {
-      elevator.goToFloor(4);
+      elevator.setDestinationFloor(4);
       elevator.velocity = 0.9;
       // Large time step that would exceed max speed
       elevator.tick(0.5);
@@ -253,19 +253,19 @@ describe("Elevator", () => {
   describe("edge cases", () => {
     it("should handle zero speed elevator", () => {
       const slowElevator = new Elevator(0, 0, 5, 4);
-      slowElevator.goToFloor(2);
+      slowElevator.setDestinationFloor(2);
       slowElevator.tick(0.1);
       expect(slowElevator.velocity).toBe(0);
     });
 
     it("should handle single floor building", () => {
       const singleFloor = new Elevator(0, 1, 1, 4);
-      singleFloor.goToFloor(5); // Invalid floor
+      singleFloor.setDestinationFloor(5); // Invalid floor
       expect(singleFloor.destination).toBe(0);
     });
 
     it("should handle very large time steps", () => {
-      elevator.goToFloor(4);
+      elevator.setDestinationFloor(4);
       // Multiple ticks to simulate movement over time
       for (let i = 0; i < 20; i++) {
         elevator.tick(0.5);
@@ -276,7 +276,7 @@ describe("Elevator", () => {
 
     it("should handle negative positions gracefully", () => {
       elevator.position = -0.5; // Somehow got negative
-      elevator.goToFloor(2);
+      elevator.setDestinationFloor(2);
       elevator.tick(0.1);
       expect(elevator.direction).toBe(1);
     });
@@ -308,7 +308,7 @@ describe("Elevator", () => {
 
   describe("tick edge cases", () => {
     it("should handle multiple rapid calls", () => {
-      elevator.goToFloor(1);
+      elevator.setDestinationFloor(1);
       // Simulate many small time steps
       for (let i = 0; i < 300; i++) {
         elevator.tick(0.01);
@@ -318,14 +318,14 @@ describe("Elevator", () => {
     });
 
     it("should handle destination changes mid-flight", () => {
-      elevator.goToFloor(4);
+      elevator.setDestinationFloor(4);
       elevator.tick(1.5);
       elevator.tick(0.1);
       const midPosition = elevator.position;
       expect(midPosition).toBeGreaterThan(0);
 
       // Change destination
-      elevator.goToFloor(1);
+      elevator.setDestinationFloor(1);
       expect(elevator.moves).toBe(2);
 
       // Should eventually reach new destination
@@ -336,7 +336,7 @@ describe("Elevator", () => {
     });
 
     it("should handle button state correctly during movement", () => {
-      elevator.goToFloor(3);
+      elevator.setDestinationFloor(3);
       elevator.buttons[3] = true;
 
       // Move partway
@@ -365,7 +365,7 @@ describe("Elevator", () => {
       };
 
       elevator.addPassenger(user1);
-      elevator.goToFloor(3);
+      elevator.setDestinationFloor(3);
 
       // Add passenger while moving
       elevator.tick(0.1);

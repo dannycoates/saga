@@ -167,7 +167,7 @@ runFrame(timestamp)
                     │         │     ├── destinationFloor
                     │         │     ├── pressedFloorButtons
                     │         │     ├── percentFull
-                    │         │     └── goToFloor(n) [bound method]
+                    │         │     └── setDestinationFloor(n) [bound method]
                     │         │
                     │         ├── Wrap floors with state:
                     │         │     floor.toJSON() returns:
@@ -179,7 +179,7 @@ runFrame(timestamp)
                     │                   └── User code runs:
                     │                       ├── Analyze state
                     │                       ├── Make decisions
-                    │                       └── elevator.goToFloor(n)
+                    │                       └── elevator.setDestinationFloor(n)
                     │                               │
                     │                               └── Sets elevator.destination
                     │                                   Increments elevator.moves

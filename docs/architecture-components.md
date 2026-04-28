@@ -47,7 +47,7 @@ SimulationBackend (Abstract)
 │  ├── index: number                   │  ├── tick(dt): boolean              │
 │  ├── position: number (0.0-N)        │  │     Returns true when doors open │
 │  ├── destination: number | null      │  │                                  │
-│  ├── velocity: number                │  ├── goToFloor(floor): void         │
+│  ├── velocity: number                │  ├── setDestinationFloor(floor):void│
 │  ├── buttons: boolean[]              │  │     Sets destination, +moves     │
 │  ├── passengers: Passenger[]         │  │                                  │
 │  ├── capacity: number                │  ├── addPassenger(p): void          │
@@ -277,8 +277,8 @@ ViewModelManager ─────────────────────
 │        @property                                                            │
 │        def current_floor(self):                                             │
 │            return self._js.currentFloor                                     │
-│        def go_to_floor(self, n):                                            │
-│            self._js.goToFloor(n)                                            │
+│        def set_destination_floor(self, n):                                  │
+│            self._js.setDestinationFloor(n)                                  │
 │                                                                             │
 │  Execution:                                                                 │
 │    pyodide.globals.set("_js_elevators", elevators)                         │
@@ -295,12 +295,12 @@ ViewModelManager ─────────────────────
 │                                                                             │
 │  JNI Bridge Pattern:                                                        │
 │    Java side:                                                               │
-│      public static native void jsGoToFloor(int elevator, int floor);        │
+│      public static native void jsSetDestinationFloor(int e, int floor);    │
 │                                                                             │
 │    JavaScript side:                                                         │
-│      async function Java_Elevator_jsGoToFloor(lib, elevatorId, floor) {     │
-│        const jsElevator = ELEVATORS[elevatorId];                            │
-│        jsElevator.goToFloor(floor);                                         │
+│      async function Java_Elevator_jsSetDestinationFloor(lib, id, floor) {   │
+│        const jsElevator = ELEVATORS[id];                                    │
+│        jsElevator.setDestinationFloor(floor);                               │
 │      }                                                                       │
 │                                                                             │
 │  Execution:                                                                 │
@@ -325,7 +325,7 @@ All runtimes expose identical API to user code:
 │  elevator.destinationFloor     // number | null: Target floor               │
 │  elevator.pressedFloorButtons  // number[]: Floors requested by passengers  │
 │  elevator.percentFull          // number: 0.0 to 1.0 capacity used          │
-│  elevator.goToFloor(n)         // void: Command elevator to floor n         │
+│  elevator.setDestinationFloor(n) // void: Command elevator to floor n       │
 │                                                                             │
 │  // Floor Object                                                            │
 │  floor.level                   // number: Floor number (0 to N-1)           │
@@ -335,7 +335,7 @@ All runtimes expose identical API to user code:
 │  // Entry Point                                                             │
 │  function tick(elevators, floors) {                                         │
 │    // Called every game frame (~60 Hz)                                      │
-│    // Analyze state, make decisions, call goToFloor()                       │
+│    // Analyze state, make decisions, call setDestinationFloor()             │
 │  }                                                                           │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘

@@ -48,14 +48,14 @@ export const testCode = {
 
   // Check for pressed floor buttons in elevator
   if (elevator.pressedFloorButtons.length > 0) {
-    elevator.goToFloor(elevator.pressedFloorButtons[0]);
+    elevator.setDestinationFloor(elevator.pressedFloorButtons[0]);
     return;
   }
 
   // Check floors for waiting passengers
   for (const floor of floors) {
     if (floor.buttons.up || floor.buttons.down) {
-      elevator.goToFloor(floor.level);
+      elevator.setDestinationFloor(floor.level);
       return;
     }
   }
@@ -66,7 +66,7 @@ export const testCode = {
    */
   syntaxErrorJS: `export function tick(elevators, floors) {
   const elevator = elevators[0]
-  elevator.goToFloor(  // Missing closing parenthesis and argument
+  elevator.setDestinationFloor(  // Missing closing parenthesis and argument
 }`,
 
   /**
@@ -86,13 +86,13 @@ export const testCode = {
 
     # Check for pressed floor buttons in elevator
     if len(elevator.pressed_floor_buttons) > 0:
-        elevator.go_to_floor(elevator.pressed_floor_buttons[0])
+        elevator.set_destination_floor(elevator.pressed_floor_buttons[0])
         return
 
     # Check floors for waiting passengers
     for floor in floors:
         if floor.buttons.up or floor.buttons.down:
-            elevator.go_to_floor(floor.level)
+            elevator.set_destination_floor(floor.level)
             return
 `,
 
@@ -101,7 +101,7 @@ export const testCode = {
    */
   syntaxErrorPython: `def tick(elevators, floors):
     elevator = elevators[0]
-    elevator.goToFloor(  # Missing closing parenthesis
+    elevator.setDestinationFloor(  # Missing closing parenthesis
 `,
 
   /**
@@ -123,14 +123,14 @@ export const testCode = {
         // Check for pressed floor buttons in elevator
         int[] pressed = elevator.pressedFloorButtons;
         if (pressed.length > 0) {
-            elevator.goToFloor(pressed[0]);
+            elevator.setDestinationFloor(pressed[0]);
             return;
         }
 
         // Check floors for waiting passengers
         for (Floor floor : floors) {
             if (floor.buttons.up || floor.buttons.down) {
-                elevator.goToFloor(floor.level);
+                elevator.setDestinationFloor(floor.level);
                 return;
             }
         }
@@ -143,7 +143,7 @@ export const testCode = {
   syntaxErrorJava: `public class ElevatorController {
     public void tick(Elevator[] elevators, Floor[] floors) {
         Elevator elevator = elevators[0]  // Missing semicolon
-        elevator.goToFloor(0);
+        elevator.setDestinationFloor(0);
     }
 }`,
 

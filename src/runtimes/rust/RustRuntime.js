@@ -29,12 +29,13 @@ const DEFAULT_TEMPLATE = `use game::*;
 ///   destination_floor() -> Option<i32>  - destination or None if idle
 ///   pressed_floor_buttons() -> &[i32]   - floors requested by passengers
 ///   percent_full() -> f32               - load percentage (0.0 to 1.0)
-///   go_to_floor(floor: i32)             - command elevator to a floor
+///   set_destination_floor(floor: i32)   - command elevator to a floor
 
 fn main() {
     let mut next_floor: i32 = 1;
 
     /// The closure passed to game::run is called on every game loop iteration.
+    /// At each tick we can choose to set a new destination floor or keep it the same.
     game::run(|elevators: &mut [Elevator], floors: &[Floor]| {
         let floor_count = floors.len() as i32;
         if let Some(elevator) = elevators.first_mut() {
@@ -43,7 +44,7 @@ fn main() {
                     next_floor = 0;
                 }
                 next_floor += 1;
-                elevator.go_to_floor(next_floor);
+                elevator.set_destination_floor(next_floor);
             }
         }
     });
@@ -320,7 +321,7 @@ export class RustRuntime extends BaseRuntime {
     // Apply commands
     for (const cmd of commands) {
       if (elevators[cmd.elevatorId]) {
-        elevators[cmd.elevatorId].goToFloor(cmd.floor);
+        elevators[cmd.elevatorId].setDestinationFloor(cmd.floor);
       }
     }
 

@@ -63,13 +63,15 @@ export function tick(elevators, floors) {
     expect(tickCount).toBeGreaterThanOrEqual(11);
   });
 
-  test("elevator.goToFloor() moves elevator", async ({ appPage: page }) => {
+  test("elevator.setDestinationFloor() moves elevator", async ({
+    appPage: page,
+  }) => {
     // Code that moves elevator to floor 2
     const moveCode = `
 export function tick(elevators, floors) {
   const elevator = elevators[0];
   if (elevator.currentFloor === 0) {
-    elevator.goToFloor(2);
+    elevator.setDestinationFloor(2);
   }
 }`;
     await setEditorCode(page, moveCode);
@@ -125,7 +127,7 @@ export function tick(elevators, floors) {
   // Move to floors with waiting passengers to eventually get pressed buttons
   for (const floor of floors) {
     if (floor.buttons.up || floor.buttons.down) {
-      elevator.goToFloor(floor.level);
+      elevator.setDestinationFloor(floor.level);
       return;
     }
   }
@@ -164,7 +166,7 @@ export function tick(elevators, floors) {
 
   // First, move elevator to top floor so passengers on floor 0 can't board immediately
   if (!movedAway && elevator.currentFloor === 0) {
-    elevator.goToFloor(floors.length - 1);
+    elevator.setDestinationFloor(floors.length - 1);
     return;
   }
   if (elevator.currentFloor === floors.length - 1) {

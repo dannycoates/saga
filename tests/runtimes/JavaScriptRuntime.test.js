@@ -134,7 +134,7 @@ describe("JavaScriptRuntime", () => {
 
       expect(template).toContain("@class Elevator");
       expect(template).toContain("@class Floor");
-      expect(template).toContain("goToFloor");
+      expect(template).toContain("setDestinationFloor");
     });
 
     it("should be valid JavaScript", async () => {
@@ -172,20 +172,20 @@ describe("JavaScriptRuntime", () => {
         export function tick(elevators, floors) {
           const elevator = elevators[0];
           if (elevator.currentFloor === 0) {
-            elevator.goToFloor(2);
+            elevator.setDestinationFloor(2);
           }
         }
       `;
 
       await runtime.loadCode(code);
 
-      const goToFloorMock = { called: false, floor: null };
+      const setDestinationFloorMock = { called: false, floor: null };
       const elevators = [
         {
           currentFloor: 0,
-          goToFloor: (floor) => {
-            goToFloorMock.called = true;
-            goToFloorMock.floor = floor;
+          setDestinationFloor: (floor) => {
+            setDestinationFloorMock.called = true;
+            setDestinationFloorMock.floor = floor;
           },
         },
       ];
@@ -193,8 +193,8 @@ describe("JavaScriptRuntime", () => {
 
       await runtime.execute(elevators, floors);
 
-      expect(goToFloorMock.called).toBe(true);
-      expect(goToFloorMock.floor).toBe(2);
+      expect(setDestinationFloorMock.called).toBe(true);
+      expect(setDestinationFloorMock.floor).toBe(2);
     });
 
     it("should handle reading floor buttons", async () => {
@@ -202,7 +202,7 @@ describe("JavaScriptRuntime", () => {
         export function tick(elevators, floors) {
           const floor = floors.find(f => f.buttons.up);
           if (floor) {
-            elevators[0].goToFloor(floor.level);
+            elevators[0].setDestinationFloor(floor.level);
           }
         }
       `;
@@ -213,7 +213,7 @@ describe("JavaScriptRuntime", () => {
       const elevators = [
         {
           currentFloor: 0,
-          goToFloor: (floor) => {
+          setDestinationFloor: (floor) => {
             targetFloor = floor;
           },
         },

@@ -209,7 +209,7 @@ User Code                  Simulation                    EventBus               
     │  tick(elevators,floors)  │                            │                            │
     ├─────────────────────────►│                            │                            │
     │                          │                            │                            │
-    │  elevator.goToFloor(n)   │                            │                            │
+    │  elevator.setDestinationFloor(n) │                    │                            │
     ├─────────────────────────►│                            │                            │
     │                          │                            │                            │
     │                          │  backend.tick(dt)          │                            │

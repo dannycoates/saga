@@ -26,7 +26,7 @@ const DEFAULT_TEMPLATE = `const game = @import("game.zig");
 ///   destinationFloor() ?i32         - destination or null if idle
 ///   pressedFloorButtons() Iterator  - floors requested by passengers
 ///   percentFull() f32               - load percentage (0.0 to 1.0)
-///   goToFloor(floor: i32) void      - command elevator to a floor
+///   setDestinationFloor(floor: i32) void - command elevator to a floor
 ///
 /// Global functions (via game.):
 ///   game.getElevators() Iterator  - iterate over all elevators
@@ -37,6 +37,7 @@ const DEFAULT_TEMPLATE = `const game = @import("game.zig");
 var next_floor: i32 = 1;
 
 /// Tick is called on every game loop iteration.
+/// At each tick we can choose to set a new destination floor or keep it the same.
 export fn tick() void {
     var elevators = game.getElevators();
     const floor_count = game.getFloorCount();
@@ -47,7 +48,7 @@ export fn tick() void {
                 next_floor = 0;
             }
             next_floor += 1;
-            elev.goToFloor(next_floor);
+            elev.setDestinationFloor(next_floor);
         }
     }
 }
@@ -292,9 +293,9 @@ export class ZigRuntime extends BaseRuntime {
       ...other,
       env: {
         /** @param {number} id @param {number} floor */
-        js_goToFloor: (id, floor) => {
+        js_setDestinationFloor: (id, floor) => {
           if (this.elevators[id]) {
-            this.elevators[id].goToFloor(floor);
+            this.elevators[id].setDestinationFloor(floor);
           }
         },
         /** @param {number} id */

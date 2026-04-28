@@ -286,7 +286,7 @@ export class Elevator {
    * @param {number} floor - Target floor number (0-indexed)
    * @returns {void}
    */
-  goToFloor(floor) {
+  setDestinationFloor(floor) {
     floor = Math.max(0, Math.min(floor, this.MAXFLOOR - 1));
     if (this.destination !== floor) {
       this.destination = floor;
@@ -342,7 +342,7 @@ export class Elevator {
    *   percentFull: number,
    *   goingUpIndicator: boolean,
    *   goingDownIndicator: boolean,
-   *   goToFloor: (floor: number) => void
+   *   setDestinationFloor: (floor: number) => void
    * }}
    */
   toAPI() {
@@ -355,7 +355,7 @@ export class Elevator {
       percentFull: this.percentFull,
       goingUpIndicator: this.goingUpIndicator,
       goingDownIndicator: this.goingDownIndicator,
-      goToFloor: (floor) => this.goToFloor(floor),
+      setDestinationFloor: (floor) => this.setDestinationFloor(floor),
     };
   }
 }

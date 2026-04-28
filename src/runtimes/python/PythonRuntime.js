@@ -37,8 +37,8 @@ class ElevatorAPI:
     def percent_full(self):
         return self._js_elevator.percentFull
 
-    def go_to_floor(self, floor_num):
-        self._js_elevator.goToFloor(floor_num)
+    def set_destination_floor(self, floor_num):
+        self._js_elevator.setDestinationFloor(floor_num)
 
 class FloorAPI:
     def __init__(self, js_floor):
@@ -221,13 +221,14 @@ Elevator class:
     percent_full: float - Load percentage (0.0 to 1.0)
 
   Methods:
-    go_to_floor(floor_num: int) - Command elevator to go to floor
+    set_destination_floor(floor_num: int) - Command elevator to go to floor
 """
 _next_floor = 1
 
 def tick(elevators, floors):
     """
-    Tick gets called on a regular, fast interval (a game loop)
+    Tick gets called on a regular, fast interval (a game loop).
+    At each tick we can choose to set a new destination floor or keep it the same.
 
     Args:
       elevators: list[Elevator] - List of all elevators
@@ -239,7 +240,7 @@ def tick(elevators, floors):
         if elevator.current_floor == len(floors) - 1:
             _next_floor = 0
         _next_floor += 1
-        elevator.go_to_floor(_next_floor)`;
+        elevator.set_destination_floor(_next_floor)`;
   }
 
   /**

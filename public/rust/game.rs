@@ -26,7 +26,7 @@ impl Elevator {
         &self.pressed_buttons
     }
 
-    pub fn go_to_floor(&mut self, floor: i32) {
+    pub fn set_destination_floor(&mut self, floor: i32) {
         self.commands.push((self.id, floor));
     }
 }

@@ -110,7 +110,7 @@ export class WASMSimulationBackend extends SimulationBackend {
         .map((pressed, floor) => (pressed ? floor : null))
         .filter((floor) => floor !== null),
       percentFull: elevator.percentFull,
-      goToFloor: (floor) => {
+      setDestinationFloor: (floor) => {
         // Call WASM function to set elevator destination
         this.wasmModule.exports.setElevatorDestination(elevator.index, floor);
       },

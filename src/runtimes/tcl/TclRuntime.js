@@ -50,8 +50,8 @@ proc elevator_percent_full {id} {
     _js_elevator_percent_full $id
 }
 
-proc elevator_go_to_floor {id floor} {
-    _js_elevator_go_to_floor "$id $floor"
+proc elevator_set_destination_floor {id floor} {
+    _js_elevator_set_destination_floor "$id $floor"
 }
 
 # Floor procedures
@@ -221,15 +221,15 @@ export class TclRuntime extends BaseRuntime {
       "int",
     );
 
-    // Elevator go to floor (2 args as string: "id floor", returns int)
+    // Elevator set destination floor (2 args as string: "id floor", returns int)
     // WACL jscall only supports single args, so we pass as string and parse
     registerCommand(
-      "_js_elevator_go_to_floor",
+      "_js_elevator_set_destination_floor",
       (/** @type {number} */ argsStr) => {
         const args = interp.ptr2str(argsStr).split(" ");
         const id = parseInt(args[0], 10);
         const floor = parseInt(args[1], 10);
-        self.elevators[id]?.goToFloor(floor);
+        self.elevators[id]?.setDestinationFloor(floor);
         return 0;
       },
       "int",
@@ -336,7 +336,7 @@ export class TclRuntime extends BaseRuntime {
 #   elevator_destination_floor $id    - destination or "" if idle
 #   elevator_pressed_buttons $id      - list of pressed floor buttons
 #   elevator_percent_full $id         - load percentage (0.0 to 1.0)
-#   elevator_go_to_floor $id $floor   - command elevator to floor
+#   elevator_set_destination_floor $id $floor   - command elevator to floor
 #
 # Helpers:
 #   elevator_count                    - number of elevators
@@ -346,7 +346,8 @@ export class TclRuntime extends BaseRuntime {
 
 set next_floor 1
 
-# tick is called on every game loop iteration
+# tick is called on every game loop iteration.
+# At each tick we can choose to set a new destination floor or keep it the same.
 proc tick {} {
     global next_floor
 
@@ -358,7 +359,7 @@ proc tick {} {
             set next_floor 0
         }
         incr next_floor
-        elevator_go_to_floor $elev $next_floor
+        elevator_set_destination_floor $elev $next_floor
     }
 }`;
   }

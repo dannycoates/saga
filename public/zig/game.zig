@@ -1,5 +1,5 @@
 // WASM imports from "env" module - provided by JavaScript at instantiation
-extern "env" fn js_goToFloor(id: u32, floor: i32) void;
+extern "env" fn js_setDestinationFloor(id: u32, floor: i32) void;
 extern "env" fn js_getCurrentFloor(id: u32) i32;
 extern "env" fn js_getDestinationFloor(id: u32) i32;
 extern "env" fn js_getPercentFull(id: u32) f32;
@@ -27,8 +27,8 @@ pub const Elevator = struct {
         return js_getPercentFull(self.id);
     }
 
-    pub fn goToFloor(self: Elevator, floor: i32) void {
-        js_goToFloor(self.id, floor);
+    pub fn setDestinationFloor(self: Elevator, floor: i32) void {
+        js_setDestinationFloor(self.id, floor);
     }
 
     pub fn pressedFloorButtons(self: Elevator) PressedButtonIterator {

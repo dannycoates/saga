@@ -8,7 +8,7 @@
  * @property {number | null} destinationFloor - Destination floor or null if idle
  * @property {number[]} pressedFloorButtons - Array of pressed floor button numbers
  * @property {number} percentFull - Load percentage (0-1)
- * @property {(floorNum: number) => void} goToFloor - Command elevator to go to floor
+ * @property {(floorNum: number) => void} setDestinationFloor - Command elevator to go to floor
  */
 
 /**

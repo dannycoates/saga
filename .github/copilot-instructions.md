@@ -13,7 +13,7 @@ Elevator Saga is a multi-language elevator programming game built with Vite. Pla
 - Each runtime (`javascript.js`, `python.js`, `java.js`) implements: `loadRuntime()`, `loadCode()`, `execute()`, `getDefaultTemplate()`
 - JavaScript uses ES modules with `data:text/javascript` imports
 - Python uses Pyodide with wrapper classes that bridge JS objects
-- Java uses CheerpJ with JNI callbacks (`Java_Elevator_jsGoToFloor`)
+- Java uses CheerpJ with JNI callbacks (`Java_Elevator_jsSetDestinationFloor`)
 
 **Game Engine** (`src/core/`):
 
@@ -28,7 +28,7 @@ All runtimes expose the same API contract:
 
 ```javascript
 // Elevator properties: currentFloor, destinationFloor, pressedFloorButtons[], percentFull
-// Elevator methods: goToFloor(floorNum)
+// Elevator methods: setDestinationFloor(floorNum)
 // Floor properties: buttons.{up,down}, level
 // Entry point: tick(elevators, floors)
 ```
@@ -79,7 +79,7 @@ All runtimes expose the same API contract:
 **Multi-Language Bridging**:
 
 - Python: Wrapper classes (`ElevatorAPI`, `FloorAPI`) bridge JS objects to Pythonic interfaces
-- Java: JNI native methods call back to JavaScript (`Java_Elevator_jsGoToFloor`)
+- Java: JNI native methods call back to JavaScript (`Java_Elevator_jsSetDestinationFloor`)
 - All runtimes maintain global `ELEVATORS` array for callback resolution
 
 **Event System**:

@@ -95,12 +95,13 @@ export class JavaScriptRuntime extends BaseRuntime {
   *    @member percentFull {0..1}
   *
   *   Actions:
-  *    @func goToFloor(floorNum: number)
+  *    @func setDestinationFloor(floorNum: number)
   */
 let nextFloor = 1
 
 /**
- * Tick gets called on a regular, fast interval (a game loop)
+ * Tick gets called on a regular, fast interval (a game loop).
+ * At each tick we can choose to set a new destination floor or keep it the same.
  * @param {Elevator[]} elevators
  * @param {Floor[]} floors
  */
@@ -112,7 +113,7 @@ export function tick(elevators, floors) {
             nextFloor = 0
         }
         nextFloor = nextFloor + 1
-        elevator.goToFloor(nextFloor)
+        elevator.setDestinationFloor(nextFloor)
     }
 }`;
   }

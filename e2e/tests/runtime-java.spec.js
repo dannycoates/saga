@@ -117,7 +117,7 @@ public class ElevatorController {
         Elevator elevator = elevators[0];
         int current = elevator.currentFloor;
         if (current == 0) {
-            elevator.goToFloor(2);
+            elevator.setDestinationFloor(2);
         }
     }
 }`;
